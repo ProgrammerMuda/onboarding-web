@@ -2,14 +2,17 @@ import React from 'react';
 import { Sidebar } from './views/components/Sidebar';
 import { TopNavbar } from './views/components/TopNavbar';
 import { TenantManagementView } from './views/tenant/TenantManagementView';
+import { ApprovalFlowView } from './views/approval/ApprovalFlowView';
 
 // MVP Presenters
 import { useSidebarPresenter } from './presenters/useSidebarPresenter';
 import { useTenantPresenter } from './presenters/useTenantPresenter';
+import { useApprovalFlowPresenter } from './presenters/useApprovalFlowPresenter';
 
 export default function App() {
-  const sidebarPresenter = useSidebarPresenter('tenant-management');
+  const sidebarPresenter = useSidebarPresenter('hr-request-approval');
   const tenantPresenter = useTenantPresenter();
+  const approvalPresenter = useApprovalFlowPresenter();
 
   return (
     <div className="d-flex vh-100 overflow-hidden" style={{ backgroundColor: '#F1F5F9' }}>
@@ -34,6 +37,8 @@ export default function App() {
           <div className="container-fluid p-0">
             {sidebarPresenter.activeItem === 'tenant-management' ? (
               <TenantManagementView presenter={tenantPresenter} />
+            ) : sidebarPresenter.activeItem === 'hr-request-approval' || sidebarPresenter.activeItem === 'approval-flow' ? (
+              <ApprovalFlowView presenter={approvalPresenter} />
             ) : (
               <div className="bg-white p-5 border text-center my-4 shadow-sm" style={{ borderRadius: '12px' }}>
                 <h4 className="fw-bold text-dark mb-2 text-capitalize">

@@ -1081,7 +1081,7 @@ export function TenantDetailView({ presenter }) {
               className="card border bg-white shadow-2xs text-center"
               style={{ borderRadius: '12px', borderColor: '#E2E8F0', padding: '48px 24px' }}
             >
-              <Users size={44} weight="duotone" className="text-muted mb-2.5 mx-auto" />
+              <Users size={44} weight="bold" className="text-muted mb-2.5 mx-auto" />
               <h6 className="fw-bold text-dark mb-1">No Units Assigned</h6>
               <p className="text-muted small mb-0">There are no units or registered members for this tenant yet.</p>
             </div>

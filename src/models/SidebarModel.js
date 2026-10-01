@@ -119,8 +119,14 @@ export const SIDEBAR_SECTIONS = [
         icon: 'Database',
         hasChildren: true,
         children: [
-          { id: 'hr-departments', label: 'Departments' },
-          { id: 'hr-positions', label: 'Positions' }
+          { id: 'hr-jabatan', label: 'Jabatan' },
+          { id: 'hr-shift-type', label: 'Shift Type' },
+          { id: 'hr-departemen', label: 'Departemen' },
+          { id: 'hr-division', label: 'Division' },
+          { id: 'hr-agama', label: 'Agama' },
+          { id: 'hr-kartu-identitas', label: 'Kartu Identitas' },
+          { id: 'hr-jenis-kelamin', label: 'Jenis Kelamin' },
+          { id: 'hr-request-approval', label: 'Request Approval' }
         ]
       },
       {
@@ -201,8 +207,8 @@ export const SIDEBAR_SECTIONS = [
 export class SidebarModel {
   static getDefaultState() {
     return {
-      activeItem: 'tenant-management',
-      activeParent: 'tenant',
+      activeItem: 'hr-request-approval',
+      activeParent: 'hr-parameter',
       expandedItems: {
         'system': false,
         'tenant': true,
@@ -210,7 +216,7 @@ export class SidebarModel {
         'engineering-parameter': false,
         'hk-parameter': false,
         'fin-parameter': false,
-        'hr-parameter': false
+        'hr-parameter': true
       },
       isSidebarOpen: true
     };
