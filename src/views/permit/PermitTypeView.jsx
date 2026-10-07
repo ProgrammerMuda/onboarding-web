@@ -33,6 +33,67 @@ function PermitDialog({ title, description, onClose, children }) {
   </dialog>;
 }
 
+function SuccessDialog({ title, subtext, onClose }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const dialog = ref.current;
+    if (dialog) dialog.showModal();
+    const timer = setTimeout(() => {
+      onClose();
+    }, 2800);
+    return () => {
+      clearTimeout(timer);
+      if (dialog) dialog.close();
+    };
+  }, [onClose]);
+
+  return (
+    <dialog
+      ref={ref}
+      className="permit-dialog permit-success-dialog border-0 shadow-lg p-0"
+      aria-labelledby="permit-success-title"
+      onCancel={onClose}
+      onClick={(e) => {
+        if (e.target === ref.current) onClose();
+      }}
+    >
+      <div className="position-relative p-4 p-md-5 text-center bg-white" style={{ borderRadius: '16px' }}>
+        {/* Close Button */}
+        <button
+          type="button"
+          className="btn btn-link p-1 text-muted text-decoration-none position-absolute top-0 end-0 m-3 d-flex align-items-center justify-content-center border-0 shadow-none permit-dialog-close"
+          aria-label="Close"
+          onClick={onClose}
+        >
+          <X size={20} weight="bold" />
+        </button>
+
+        {/* Filled Circular Checklist Icon */}
+        <div className="d-flex justify-content-center mb-3">
+          <CheckCircle size={64} weight="fill" style={{ color: '#10B981' }} />
+        </div>
+
+        {/* Success Title */}
+        <h3 
+          id="permit-success-title" 
+          className="fw-bold text-dark mb-2"
+          style={{ fontSize: '1.25rem', letterSpacing: '-0.02em' }}
+        >
+          {title || 'Action Completed Successfully!'}
+        </h3>
+
+        {/* Contextual UX Writing Subtext */}
+        <p 
+          className="text-muted mx-auto mb-0" 
+          style={{ fontSize: '0.875rem', lineHeight: '1.55', maxWidth: '360px', color: '#64748B' }}
+        >
+          {subtext || 'The operation has been successfully processed and updated in the system.'}
+        </p>
+      </div>
+    </dialog>
+  );
+}
+
 export function PermitTypeView({ presenter: p }) {
   const [goToPage, setGoToPage] = useState('');
   const [now, setNow] = useState(() => new Date());
@@ -57,8 +118,6 @@ export function PermitTypeView({ presenter: p }) {
       <button className="btn btn-primary d-flex align-items-center gap-2" onClick={() => p.openEditor()}><Plus size={18} weight="bold" /> Add Permit Type</button>
     </header>
 
-    {p.notification && <div className="permit-notification" role="status"><CheckCircle size={20} /><span>{p.notification}</span><button className="permit-icon-button" aria-label="Dismiss notification" onClick={() => p.setNotification('')}><X size={18} /></button></div>}
-
     <div className="permit-table-card">
       <div className="permit-toolbar flex-wrap gap-3">
         <div className="permit-search bg-white shadow-xs"><MagnifyingGlass size={17} className="text-secondary flex-shrink-0" weight="bold" /><input className="form-control border-0 p-0 shadow-none bg-transparent" type="search" aria-label="Search permit types" placeholder="Search permit names or descriptions..." value={p.query} onChange={(e) => p.setQuery(e.target.value)} /></div>
@@ -80,11 +139,11 @@ export function PermitTypeView({ presenter: p }) {
           <thead>
             <tr>
               <th scope="col">PERMIT NAME</th>
-              <th scope="col">STATUS</th>
               <th scope="col">QUOTA PER EMPLOYEE</th>
               <th scope="col">RESET FREQUENCY</th>
               <th scope="col">NEXT RESET</th>
               <th scope="col">ALLOWED DATES</th>
+              <th scope="col">STATUS</th>
               <th scope="col" className="text-end">ACTIONS</th>
             </tr>
           </thead>
@@ -101,6 +160,10 @@ export function PermitTypeView({ presenter: p }) {
                   </div>
                 </div>
               </td>
+              <td>{permit.hasQuota ? <><div className="permit-quota"><strong>{permit.quota}</strong> <span className="text-secondary">{permit.quota === 1 ? 'day' : 'days'}</span> <span>/ {frequency?.period}</span></div><p className="permit-cell-note">For each employee</p></> : <><span className="permit-unlimited">Unlimited</span><p className="permit-cell-note">No quota limit</p></>}</td>
+              <td>{permit.hasQuota ? <><span className="permit-frequency"><ArrowClockwise size={14} />{frequency?.label}</span><p className="permit-cell-note">{frequency?.detail}</p></> : <span className="permit-cell-note">No reset</span>}</td>
+              <td>{permit.hasQuota ? <><strong className="permit-reset-date">{formatPermitReset(permit.frequency, now)}</strong><p className="permit-cell-note">00:00 WIB</p></> : <span className="permit-cell-note">No reset</span>}</td>
+              <td><span className="permit-date-policy">{ALLOWED_DATE_OPTIONS.find((option) => option.value === permit.allowedDates)?.label}</span></td>
               <td>
                 {isActive ? (
                   <span className="permit-status-badge active"><Check size={12} weight="bold" /> Active</span>
@@ -108,10 +171,6 @@ export function PermitTypeView({ presenter: p }) {
                   <span className="permit-status-badge inactive"><Prohibit size={12} weight="bold" /> Inactive</span>
                 )}
               </td>
-              <td>{permit.hasQuota ? <><div className="permit-quota"><strong>{permit.quota}</strong> <span className="text-secondary">{permit.quota === 1 ? 'day' : 'days'}</span> <span>/ {frequency?.period}</span></div><p className="permit-cell-note">For each employee</p></> : <><span className="permit-unlimited">Unlimited</span><p className="permit-cell-note">No quota limit</p></>}</td>
-              <td>{permit.hasQuota ? <><span className="permit-frequency"><ArrowClockwise size={14} />{frequency?.label}</span><p className="permit-cell-note">{frequency?.detail}</p></> : <span className="permit-cell-note">No reset</span>}</td>
-              <td>{permit.hasQuota ? <><strong className="permit-reset-date">{formatPermitReset(permit.frequency, now)}</strong><p className="permit-cell-note">00:00 WIB</p></> : <span className="permit-cell-note">No reset</span>}</td>
-              <td><span className="permit-date-policy">{ALLOWED_DATE_OPTIONS.find((option) => option.value === permit.allowedDates)?.label}</span></td>
               <td>
                 <div className="d-flex gap-2 justify-content-end">
                   <button className="permit-icon-button btn-edit" aria-label={`Edit ${permit.name}`} title="Edit permit type" onClick={() => p.openEditor(permit)}>
@@ -238,13 +297,22 @@ export function PermitTypeView({ presenter: p }) {
         <button type="button" className="btn btn-light bg-white border" onClick={p.closeStatusModal}>Cancel</button>
         <button 
           type="button" 
-          className={`btn ${p.statusTarget.isActive !== false ? 'btn-danger text-white fw-semibold' : 'btn-primary'}`} 
+          className={`btn text-white fw-semibold ${p.statusTarget.isActive !== false ? 'btn-danger' : 'btn-success'}`} 
+          style={p.statusTarget.isActive === false ? { backgroundColor: '#10B981', borderColor: '#10B981' } : undefined}
           onClick={p.confirmToggleStatus}
         >
           {p.statusTarget.isActive !== false ? 'Deactivate Permit Type' : 'Activate Permit Type'}
         </button>
       </div>
     </PermitDialog>}
+
+    {p.successModal && (
+      <SuccessDialog
+        title={p.successModal.title}
+        subtext={p.successModal.subtext}
+        onClose={p.closeSuccessModal}
+      />
+    )}
   </section>;
 }
 

@@ -1276,10 +1276,10 @@ export function TenantDetailView({ presenter }) {
                                   <span 
                                     className="badge fw-semibold rounded-pill px-2.5 py-1"
                                     style={{
-                                      backgroundColor: isPending ? '#FEF3C7' : '#DCFCE7',
-                                      color: isPending ? '#B45309' : '#15803D',
+                                      backgroundColor: isPending ? '#FEF3C7' : '#10B981',
+                                      color: isPending ? '#B45309' : '#FFFFFF',
                                       fontSize: '0.75rem',
-                                      border: isPending ? '1px solid #FDE68A' : '1px solid #BBF7D0'
+                                      border: isPending ? '1px solid #FDE68A' : '1px solid #10B981'
                                     }}
                                   >
                                     {isPending ? 'Pending' : 'Active'}

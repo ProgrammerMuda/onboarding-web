@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { INITIAL_PERMIT_TYPES, PERMIT_STORAGE_KEY, validatePermitType } from '../models/PermitTypeModel';
 
 export function usePermitTypePresenter() {
@@ -32,6 +32,7 @@ export function usePermitTypePresenter() {
   const [statusTarget, setStatusTarget] = useState(null);
   const [error, setError] = useState('');
   const [notification, setNotification] = useState('');
+  const [successModal, setSuccessModal] = useState(null);
 
   function persist(next, message) {
     try {
@@ -58,12 +59,18 @@ export function usePermitTypePresenter() {
   const totalPages = Math.max(1, Math.ceil(filteredPermits.length / pageSize));
   const currentPage = Math.min(page, totalPages);
 
+  const closeSuccessModal = useCallback(() => {
+    setSuccessModal(null);
+  }, []);
+
   return {
     permits, query, frequency, statusFilter, draft, setDraft, statusTarget,
     setQuery(value) { setQuery(value); setPage(1); },
     setFrequency(value) { setFrequency(value); setPage(1); },
     setStatusFilter(value) { setStatusFilter(value); setPage(1); },
     error, notification, setNotification, filteredPermits,
+    successModal,
+    closeSuccessModal,
     currentPage, totalPages, pageSize,
     setCurrentPage(value) {
       if (Number.isInteger(value)) setPage(Math.max(1, Math.min(value, totalPages)));
@@ -80,18 +87,26 @@ export function usePermitTypePresenter() {
       if (!statusTarget) return;
       const willBeActive = statusTarget.isActive === false;
       const next = permits.map((p) => p.id === statusTarget.id ? { ...p, isActive: willBeActive } : p);
-      if (persist(next, `Permit type “${statusTarget.name}” is now ${willBeActive ? 'Active' : 'Deactivated'}.`)) {
+      if (persist(next, '')) {
+        const targetName = statusTarget.name;
         setStatusTarget(null);
+        setSuccessModal({
+          title: willBeActive ? 'Permit Type Activated' : 'Permit Type Deactivated',
+          subtext: willBeActive 
+            ? `“${targetName}” is now active. Employees can immediately select and apply for this permit.`
+            : `“${targetName}” has been deactivated. Employees will no longer see this permit for new requests.`
+        });
       }
     },
     toggleStatusDirect(permit) {
       const willBeActive = permit.isActive === false;
       const next = permits.map((p) => p.id === permit.id ? { ...p, isActive: willBeActive } : p);
-      persist(next, `Permit type “${permit.name}” is now ${willBeActive ? 'Active' : 'Deactivated'}.`);
+      persist(next, '');
     },
     save() {
       const validation = validatePermitType(draft, permits);
       if (validation) { setError(validation); return; }
+      const isEdit = Boolean(draft.id);
       const item = { 
         ...draft, 
         id: draft.id || crypto.randomUUID(), 
@@ -102,7 +117,15 @@ export function usePermitTypePresenter() {
         isActive: draft.isActive !== false
       };
       const next = draft.id ? permits.map((permit) => permit.id === draft.id ? item : permit) : [...permits, item];
-      if (persist(next, `Permit type “${item.name}” ${draft.id ? 'updated' : 'added'} successfully.`)) setDraft(null);
+      if (persist(next, '')) {
+        setDraft(null);
+        setSuccessModal({
+          title: isEdit ? 'Permit Type Updated Successfully!' : 'Permit Type Added Successfully!',
+          subtext: isEdit 
+            ? `Changes to “${item.name}” have been saved. The updated policy rules and quota settings are now live.`
+            : `“${item.name}” has been successfully registered. Employees can now view and submit requests for this permit type.`
+        });
+      }
     },
   };
 }
