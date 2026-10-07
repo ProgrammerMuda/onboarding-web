@@ -19,6 +19,7 @@ import {
   HouseSimple, 
   Hammer, 
   CalendarCheck, 
+  RocketLaunch,
   CaretDown, 
   CaretUp 
 } from '@phosphor-icons/react';
@@ -26,6 +27,7 @@ import logoImg from '../../assets/logo.png';
 
 // Phosphor Icon Mapping
 const iconMap = {
+  Rocket: RocketLaunch,
   FileContract: FileText,
   Settings: GearSix,
   PieChart: ChartPieSlice,

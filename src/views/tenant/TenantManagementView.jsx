@@ -161,8 +161,7 @@ export function TenantManagementView({ presenter }) {
             style={{ 
               backgroundColor: '#002B7F', 
               borderRadius: '8px', 
-              fontSize: '0.875rem',
-              transition: 'background-color 0.15s ease'
+              fontSize: '0.875rem'
             }}
             onClick={() => handleActionClick('Add Tenant')}
           >
@@ -533,18 +532,18 @@ export function TenantManagementView({ presenter }) {
           >
             <div className="table-responsive">
               <table className="table align-middle mb-0 bg-white">
-                <thead style={{ backgroundColor: '#E2E8F0' }}>
-                  <tr className="border-bottom" style={{ borderColor: '#CBD5E1' }}>
-                    <th className="py-3 ps-4 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em', width: '55px' }}>
+                <thead style={{ backgroundColor: '#F8FAFC' }}>
+                  <tr className="border-bottom" style={{ borderColor: '#E2E8F0' }}>
+                    <th className="py-3 ps-4 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em', width: '55px' }}>
                       NO
                     </th>
-                    <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em', width: '250px' }}>
+                    <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em', width: '250px' }}>
                       TENANT
                     </th>
-                    <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                    <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                       ASSIGNED UNITS
                     </th>
-                    <th className="py-3 pe-4 text-uppercase fw-bold text-end" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em', width: '130px' }}>
+                    <th className="py-3 pe-4 text-uppercase fw-bold text-end" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em', width: '130px' }}>
                       ACTION
                     </th>
                   </tr>

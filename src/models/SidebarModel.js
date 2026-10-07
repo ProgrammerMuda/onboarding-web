@@ -9,6 +9,12 @@ export const SIDEBAR_SECTIONS = [
     title: 'MAIN',
     items: [
       {
+        id: 'on-boarding',
+        label: 'Onboarding Wizard',
+        icon: 'Rocket',
+        hasChildren: false
+      },
+      {
         id: 'lease-contract',
         label: 'Lease Contract',
         icon: 'FileContract',
@@ -121,6 +127,7 @@ export const SIDEBAR_SECTIONS = [
         children: [
           { id: 'hr-jabatan', label: 'Jabatan' },
           { id: 'hr-shift-type', label: 'Shift Type' },
+          { id: 'hr-permit-type', label: 'Permit Type' },
           { id: 'hr-departemen', label: 'Departemen' },
           { id: 'hr-division', label: 'Division' },
           { id: 'hr-agama', label: 'Agama' },

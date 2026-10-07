@@ -831,8 +831,7 @@ export function TenantDetailView({ presenter }) {
                 backgroundColor: '#002B7F',
                 borderRadius: '8px',
                 padding: '9px 20px',
-                fontSize: '0.875rem',
-                transition: 'all 0.15s ease'
+                fontSize: '0.875rem'
               }}
               onClick={() => setIsOnboardingModalOpen(true)}
             >
@@ -844,24 +843,24 @@ export function TenantDetailView({ presenter }) {
           {/* Units Table */}
           <div className="table-responsive" style={{ overflow: 'visible' }}>
             <table className="table align-middle mb-0 bg-white">
-              <thead style={{ backgroundColor: '#E2E8F0' }}>
-                <tr className="border-bottom" style={{ borderColor: '#CBD5E1' }}>
-                  <th className="py-3 ps-4 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+              <thead style={{ backgroundColor: '#F8FAFC' }}>
+                <tr className="border-bottom" style={{ borderColor: '#E2E8F0' }}>
+                  <th className="py-3 ps-4 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     UNIT CODE
                   </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     TOWER
                   </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     ROLE / TYPE
                   </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     ENTRY DATE
                   </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     STATUS
                   </th>
-                  <th className="py-3 text-uppercase fw-bold text-center" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em', width: '90px' }}>
+                  <th className="py-3 text-uppercase fw-bold text-center" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em', width: '90px' }}>
                     ACTION
                   </th>
                 </tr>
@@ -1202,24 +1201,24 @@ export function TenantDetailView({ presenter }) {
                   {/* Members Table */}
                   <div className="table-responsive">
                     <table className="table align-middle mb-0 bg-white" style={{ tableLayout: 'fixed', width: '100%' }}>
-                      <thead style={{ backgroundColor: '#E2E8F0' }}>
-                        <tr className="border-bottom" style={{ borderColor: '#CBD5E1' }}>
-                          <th className="py-3 ps-4 text-uppercase fw-bold" style={{ width: '24%', backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                      <thead style={{ backgroundColor: '#F8FAFC' }}>
+                        <tr className="border-bottom" style={{ borderColor: '#E2E8F0' }}>
+                          <th className="py-3 ps-4 text-uppercase fw-bold" style={{ width: '24%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                             MEMBER NAME
                           </th>
-                          <th className="py-3 text-uppercase fw-bold" style={{ width: '15%', backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                          <th className="py-3 text-uppercase fw-bold" style={{ width: '15%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                             RELATIONSHIP
                           </th>
-                          <th className="py-3 text-uppercase fw-bold" style={{ width: '18%', backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                          <th className="py-3 text-uppercase fw-bold" style={{ width: '18%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                             NIK
                           </th>
-                          <th className="py-3 text-uppercase fw-bold" style={{ width: '19%', backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                          <th className="py-3 text-uppercase fw-bold" style={{ width: '19%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                             EMAIL
                           </th>
-                          <th className="py-3 text-uppercase fw-bold" style={{ width: '12%', backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                          <th className="py-3 text-uppercase fw-bold" style={{ width: '12%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                             STATUS
                           </th>
-                          <th className="py-3 pe-4 text-uppercase fw-bold text-end" style={{ width: '12%', backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                          <th className="py-3 pe-4 text-uppercase fw-bold text-end" style={{ width: '12%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                             ACTION
                           </th>
                         </tr>
@@ -1329,24 +1328,24 @@ export function TenantDetailView({ presenter }) {
         >
           <div className="table-responsive">
             <table className="table align-middle mb-0 bg-white">
-              <thead style={{ backgroundColor: '#E2E8F0' }}>
-                <tr className="border-bottom" style={{ borderColor: '#CBD5E1' }}>
-                  <th className="py-3 ps-4 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+              <thead style={{ backgroundColor: '#F8FAFC' }}>
+                <tr className="border-bottom" style={{ borderColor: '#E2E8F0' }}>
+                  <th className="py-3 ps-4 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     LICENSE PLATE
                   </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     TYPE
                   </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     VEHICLE BRAND & MODEL
                   </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     COLOR
                   </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     PARKING SLOT
                   </th>
-                  <th className="py-3 pe-4 text-uppercase fw-bold text-end" style={{ backgroundColor: '#E2E8F0', fontSize: '0.75rem', color: '#475569', letterSpacing: '0.06em' }}>
+                  <th className="py-3 pe-4 text-uppercase fw-bold text-end" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
                     RFID ACCESS
                   </th>
                 </tr>

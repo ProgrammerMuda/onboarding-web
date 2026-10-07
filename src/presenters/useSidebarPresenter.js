@@ -5,11 +5,15 @@ import { SIDEBAR_SECTIONS, SidebarModel } from '../models/SidebarModel';
  * useSidebarPresenter - Presenter Layer (MVP)
  * Mediates between SidebarModel data and the Sidebar View.
  */
-export function useSidebarPresenter(initialActive = 'on-boarding') {
+export function useSidebarPresenter(initialActive = 'hr-permit-type') {
   const [state, setState] = useState(() => {
     const defaultState = SidebarModel.getDefaultState();
     if (initialActive) {
       defaultState.activeItem = initialActive;
+      if (initialActive === 'hr-permit-type') {
+        defaultState.activeParent = 'hr-parameter';
+        defaultState.expandedItems['hr-parameter'] = true;
+      }
     }
     return defaultState;
   });
