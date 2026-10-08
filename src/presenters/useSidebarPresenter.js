@@ -10,7 +10,7 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
     const defaultState = SidebarModel.getDefaultState();
     if (initialActive) {
       defaultState.activeItem = initialActive;
-      if (initialActive === 'hr-permit-type') {
+      if (initialActive === 'hr-permit-type' || initialActive === 'hr-shift-type' || initialActive === 'hr-request-approval') {
         defaultState.activeParent = 'hr-parameter';
         defaultState.expandedItems['hr-parameter'] = true;
       }

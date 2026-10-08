@@ -1,0 +1,625 @@
+/* Shift Type Management - Proapps Design System */
+.shift-page {
+  width: 100%;
+  color: #1E293B;
+}
+
+/* Header & Controls */
+.shift-header .btn-primary {
+  font-size: 0.85rem;
+  min-height: 42px;
+  background-color: #002B7F;
+  border-color: #002B7F;
+  color: #FFFFFF;
+  border-radius: 8px;
+  box-shadow: none;
+}
+.shift-header .btn-primary:hover,
+.shift-header .btn-primary:focus,
+.shift-header .btn-primary:active {
+  background-color: #002B7F !important;
+  border-color: #002B7F !important;
+  color: #FFFFFF !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Stats Cards */
+.shift-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.shift-stat-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.shift-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.shift-stat-card .stat-label {
+  font-size: 0.75rem;
+  color: #64748B;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.shift-stat-card .stat-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0F172A;
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+/* Table Card Container */
+.shift-table-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.shift-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background: #FFFFFF;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.shift-search-box {
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  height: 38px;
+  width: 320px;
+  max-width: 100%;
+  background: #FFFFFF;
+}
+
+.shift-search-box input {
+  border: 0;
+  outline: 0;
+  font-size: 0.85rem;
+  color: #0F172A;
+  width: 100%;
+}
+
+/* Shift Table */
+.shift-table {
+  width: 100%;
+  min-width: 1100px;
+  text-align: left;
+}
+
+.shift-table th {
+  background: #F8FAFC;
+  border-bottom: 1px solid #E2E8F0;
+  padding: 13px 20px;
+  font-size: 0.725rem;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+}
+
+.shift-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid #F1F5F9;
+  vertical-align: middle;
+  background-color: #FFFFFF;
+}
+
+/* Shift Color Pill Indicator */
+.shift-color-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.shift-color-bar {
+  width: 4px;
+  height: 32px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Period Badges */
+.shift-period-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* Department Tags (Clean Neutral Grey) */
+.shift-dept-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.725rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background-color: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+  letter-spacing: 0.01em;
+}
+
+/* Time Cell */
+.shift-time-cell {
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0F172A;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shift-nextday-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background-color: #FEF3C7;
+  color: #B45309;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #FDE68A;
+}
+
+/* Work Hours Secondary Badge (Proapps Secondary Theme) */
+.shift-hours-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: rgba(9, 178, 255, 0.12);
+  border: 1px solid rgba(9, 178, 255, 0.3);
+  color: #0088cc;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.775rem;
+  letter-spacing: 0.01em;
+}
+
+/* Action Icon Buttons (Matches Permit Type) */
+.shift-icon-button { 
+  border: 1px solid #e2e8f0; 
+  border-radius: 7px; 
+  width: 33px; 
+  height: 33px; 
+  background: white; 
+  color: #71829a; 
+  display: inline-grid; 
+  place-items: center; 
+  flex-shrink: 0; 
+  cursor: pointer; 
+  transition: none; 
+}
+.shift-icon-button.btn-edit { 
+  color: #002B7F; 
+  border-color: #CBD5E1; 
+  background: white;
+}
+.shift-icon-button.btn-edit:hover,
+.shift-icon-button.btn-edit:focus,
+.shift-icon-button.btn-edit:active { 
+  background: white !important; 
+  color: #002B7F !important; 
+  border-color: #CBD5E1 !important; 
+  transform: none !important; 
+  box-shadow: none !important; 
+}
+.shift-icon-button.btn-delete { 
+  background-color: #FEF2F2; 
+  color: #DC2626; 
+  border-color: #FCA5A5; 
+}
+.shift-icon-button.btn-delete:hover,
+.shift-icon-button.btn-delete:focus,
+.shift-icon-button.btn-delete:active { 
+  background-color: #FEF2F2 !important; 
+  color: #DC2626 !important; 
+  border-color: #FCA5A5 !important; 
+  transform: none !important; 
+  box-shadow: none !important; 
+}
+
+/* Table Footer */
+.shift-table-footer {
+  padding: 14px 24px;
+  background: #F8FAFC;
+  border-top: 1px solid #E2E8F0;
+  color: #64748B;
+  font-size: 0.825rem;
+}
+
+.shift-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: #0F172A;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.shift-page-btn.active {
+  background-color: #002B7F;
+  border-color: #002B7F;
+  color: #FFFFFF;
+}
+.shift-page-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Dialog Styles */
+.shift-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  background: #FFFFFF;
+  overflow-y: auto;
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 40px);
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  color: #24344D;
+  box-shadow: 0 25px 80px rgba(16, 40, 76, 0.25);
+}
+
+.shift-dialog.shift-success-dialog {
+  width: 440px;
+}
+
+.shift-dialog.shift-delete-dialog {
+  width: 460px;
+}
+
+.shift-dialog::backdrop {
+  background: rgba(20, 39, 67, 0.44);
+  backdrop-filter: blur(3px);
+}
+
+.shift-dialog-header {
+  padding: 24px 24px 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.shift-dialog-header h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #0F172A;
+  letter-spacing: -0.01em;
+}
+
+.shift-dialog-header p {
+  font-size: 0.85rem;
+  color: #64748B;
+  margin: 0;
+}
+
+.shift-dialog-body {
+  padding: 24px 26px;
+  font-size: 13px;
+}
+
+.shift-dialog-body .form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #24344D;
+  margin-bottom: 6px;
+}
+
+.shift-dialog-body .form-control,
+.shift-dialog-body .form-select {
+  font-size: 13px;
+  border-color: #CBD5E1;
+  border-radius: 8px;
+  color: #0F172A;
+  height: 38px;
+}
+
+.shift-dialog-body .form-control:focus,
+.shift-dialog-body .form-select:focus {
+  border-color: #9BCEFF;
+  box-shadow: 0 0 0 3px rgba(155, 206, 255, 0.25);
+}
+
+.shift-color-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 38px;
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 4px 10px 4px 6px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.shift-color-input-group:focus-within {
+  border-color: #9BCEFF;
+  box-shadow: 0 0 0 3px rgba(155, 206, 255, 0.25);
+}
+
+.shift-color-swatch-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.12s ease;
+}
+
+.shift-color-swatch-btn:hover {
+  transform: scale(1.08);
+}
+
+.shift-color-input-group input[type="text"] {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+  font-family: monospace;
+  text-transform: uppercase;
+  color: #0F172A;
+  padding: 0 4px;
+}
+
+.shift-color-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 240px;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 12px;
+  padding: 12px;
+  z-index: 1060;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+  animation: shiftFadeIn 0.15s ease-out;
+}
+
+.shift-color-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.shift-color-grid-item {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.shift-color-grid-item:hover {
+  transform: scale(1.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.shift-color-grid-item.selected {
+  border-color: #002B7F;
+  box-shadow: 0 0 0 2px rgba(0, 43, 127, 0.3);
+}
+
+/* Department Multi-Select Dropdown */
+.shift-multiselect-container {
+  position: relative;
+  width: 100%;
+}
+
+.shift-multiselect-trigger {
+  min-height: 38px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 4px 10px;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.shift-multiselect-trigger:focus,
+.shift-multiselect-trigger.open {
+  border-color: #9BCEFF;
+  box-shadow: 0 0 0 3px rgba(155, 206, 255, 0.25);
+  outline: none;
+}
+
+.shift-multiselect-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+  padding: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.shift-multiselect-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s ease;
+  margin-bottom: 2px;
+}
+
+.shift-multiselect-item:hover {
+  background-color: #F8FAFC;
+}
+
+.shift-multiselect-item.selected {
+  background-color: #EFF6FF;
+}
+
+.shift-multiselect-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.shift-multiselect-chip-remove {
+  border: none;
+  background: transparent;
+  color: #64748B;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.shift-multiselect-chip-remove:hover {
+  color: #DC2626;
+}
+
+.transition-transform {
+  transition: transform 0.2s ease;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.shift-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 17px 26px;
+  background: #fafbfd;
+  border-top: 1px solid #E2E8F0;
+  border-radius: 0 0 16px 16px;
+}
+
+.shift-dialog-footer .btn {
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.shift-dialog-footer .shift-save-button {
+  background-color: #002B7F !important;
+  border-color: #002B7F !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transition: none !important;
+  transform: none !important;
+}
+
+.shift-dialog-footer .shift-save-button:hover,
+.shift-dialog-footer .shift-save-button:focus,
+.shift-dialog-footer .shift-save-button:active {
+  background-color: #002B7F !important;
+  border-color: #002B7F !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+.shift-dialog-footer .shift-save-button:disabled,
+.shift-dialog-footer .shift-save-button:disabled:hover,
+.shift-dialog-footer .shift-save-button:disabled:focus,
+.shift-dialog-footer .shift-save-button:disabled:active {
+  background-color: #E2E8F0 !important;
+  border-color: #E2E8F0 !important;
+  color: #475569 !important;
+  opacity: 1 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  filter: none !important;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .shift-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .shift-stats {
+    grid-template-columns: 1fr;
+  }
+  .shift-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .shift-search-box {
+    width: 100%;
+  }
+}

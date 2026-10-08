@@ -8,6 +8,7 @@ import { DashboardOverviewView } from './views/dashboard/DashboardOverviewView';
 import { TenantManagementView } from './views/tenant/TenantManagementView';
 import { ApprovalFlowView } from './views/approval/ApprovalFlowView';
 import { PermitTypeView } from './views/permit/PermitTypeView';
+import { ShiftTypeView } from './views/shift/ShiftTypeView';
 
 // MVP Presenters
 import { useSidebarPresenter } from './presenters/useSidebarPresenter';
@@ -16,11 +17,13 @@ import { useDashboardPresenter } from './presenters/useDashboardPresenter';
 import { useTenantPresenter } from './presenters/useTenantPresenter';
 import { useApprovalFlowPresenter } from './presenters/useApprovalFlowPresenter';
 import { usePermitTypePresenter } from './presenters/usePermitTypePresenter';
+import { useShiftTypePresenter } from './presenters/useShiftTypePresenter';
 
 export default function App() {
-  const sidebarPresenter = useSidebarPresenter('hr-permit-type');
+  const sidebarPresenter = useSidebarPresenter('hr-shift-type');
   const onboardingPresenter = useOnboardingPresenter();
   const dashboardPresenter = useDashboardPresenter();
+  const shiftPresenter = useShiftTypePresenter();
   const permitPresenter = usePermitTypePresenter();
   const tenantPresenter = useTenantPresenter();
   const approvalPresenter = useApprovalFlowPresenter();
@@ -59,6 +62,8 @@ export default function App() {
               <DashboardOverviewView presenter={dashboardPresenter} />
             ) : sidebarPresenter.activeItem === 'tenant-management' ? (
               <TenantManagementView presenter={tenantPresenter} />
+            ) : sidebarPresenter.activeItem === 'hr-shift-type' ? (
+              <ShiftTypeView presenter={shiftPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-permit-type' ? (
               <PermitTypeView presenter={permitPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-request-approval' || sidebarPresenter.activeItem === 'approval-flow' ? (
