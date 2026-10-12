@@ -21,7 +21,9 @@ import {
   CalendarCheck, 
   RocketLaunch,
   CaretDown, 
-  CaretUp 
+  CaretUp,
+  UsersThree,
+  ClockUser
 } from '@phosphor-icons/react';
 import logoImg from '../../assets/logo.png';
 
@@ -46,7 +48,10 @@ const iconMap = {
   Home: HouseLine,
   Hammer: Hammer,
   CalendarCheck: CalendarCheck,
-  Image: ImageIcon
+  Image: ImageIcon,
+  UsersThree: UsersThree,
+  ClockUser: ClockUser,
+  FileText: FileText
 };
 
 export function Sidebar({ presenter }) {

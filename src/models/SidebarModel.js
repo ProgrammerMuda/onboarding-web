@@ -125,7 +125,7 @@ export const SIDEBAR_SECTIONS = [
         icon: 'Database',
         hasChildren: true,
         children: [
-          { id: 'hr-jabatan', label: 'Jabatan' },
+          { id: 'hr-jabatan', label: 'Positions' },
           { id: 'hr-shift-type', label: 'Shift Type' },
           { id: 'hr-permit-type', label: 'Permit Type' },
           { id: 'hr-departemen', label: 'Departemen' },
@@ -188,6 +188,35 @@ export const SIDEBAR_SECTIONS = [
         label: 'Unit',
         icon: 'Home',
         hasChildren: false
+      }
+    ]
+  },
+  {
+    id: 'hr',
+    title: 'HR',
+    items: [
+      {
+        id: 'hr-data-karyawan',
+        label: 'Data Karyawan',
+        icon: 'UsersThree',
+        hasChildren: false
+      },
+      {
+        id: 'hr-pay-slip',
+        label: 'Pay Slip',
+        icon: 'FileText',
+        hasChildren: false
+      },
+      {
+        id: 'hr-attendance',
+        label: 'Attendance',
+        icon: 'CalendarCheck',
+        hasChildren: true,
+        children: [
+          { id: 'hr-work-schedules', label: 'Work Schedules' },
+          { id: 'hr-checking-coordinate', label: 'Checking Coordinate' },
+          { id: 'hr-report-attendance', label: 'Report Attendance' }
+        ]
       }
     ]
   },

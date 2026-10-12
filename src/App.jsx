@@ -9,6 +9,8 @@ import { TenantManagementView } from './views/tenant/TenantManagementView';
 import { ApprovalFlowView } from './views/approval/ApprovalFlowView';
 import { PermitTypeView } from './views/permit/PermitTypeView';
 import { ShiftTypeView } from './views/shift/ShiftTypeView';
+import { PositionView } from './views/position/PositionView';
+import { usePositionPresenter } from './presenters/usePositionPresenter';
 
 // MVP Presenters
 import { useSidebarPresenter } from './presenters/useSidebarPresenter';
@@ -20,13 +22,14 @@ import { usePermitTypePresenter } from './presenters/usePermitTypePresenter';
 import { useShiftTypePresenter } from './presenters/useShiftTypePresenter';
 
 export default function App() {
-  const sidebarPresenter = useSidebarPresenter('hr-shift-type');
+  const sidebarPresenter = useSidebarPresenter('hr-jabatan');
   const onboardingPresenter = useOnboardingPresenter();
   const dashboardPresenter = useDashboardPresenter();
   const shiftPresenter = useShiftTypePresenter();
   const permitPresenter = usePermitTypePresenter();
   const tenantPresenter = useTenantPresenter();
   const approvalPresenter = useApprovalFlowPresenter();
+  const positionPresenter = usePositionPresenter();
   
   const activeMenu = sidebarPresenter.sections
     .flatMap((section) => section.items.flatMap((item) => [item, ...(item.children || [])]))
@@ -64,6 +67,8 @@ export default function App() {
               <TenantManagementView presenter={tenantPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-shift-type' ? (
               <ShiftTypeView presenter={shiftPresenter} />
+            ) : sidebarPresenter.activeItem === 'hr-jabatan' ? (
+              <PositionView presenter={positionPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-permit-type' ? (
               <PermitTypeView presenter={permitPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-request-approval' || sidebarPresenter.activeItem === 'approval-flow' ? (
