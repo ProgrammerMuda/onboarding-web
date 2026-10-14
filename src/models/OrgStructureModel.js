@@ -6,7 +6,7 @@
 
 import { DEPARTMENT_STORAGE_KEY } from './DepartmentModel';
 import { DIVISION_STORAGE_KEY } from './DivisionModel';
-import { POSITION_STORAGE_KEY, TOP_POSITION_ID, getParentIds } from './PositionModel';
+import { POSITION_STORAGE_KEY, TOP_POSITION_ID, getParentIds, readMasterPositions } from './PositionModel';
 
 export const ORG_STRUCTURE_STORAGE_KEY = 'proapps.hr.org_structure.v3';
 
@@ -292,30 +292,24 @@ export function persistOrgStructure(data) {
       );
     }
 
-    // 3. Sync Positions to master Position storage
+    // 3. Sync Positions to master Position storage (preserve master positions catalogue)
     if (Array.isArray(data.positions)) {
-      const bmPos = {
-        id: TOP_POSITION_ID,
-        code: '001',
-        name: data.rootAuthority?.title || 'Building Manager',
-        parentIds: []
-      };
-      const formattedPositions = [
-        bmPos,
-        ...data.positions.map((p, idx) => ({
-          id: p.id || `pos-${idx + 1}`,
-          code: p.code || String(p.codeNumber || idx + 2).padStart(3, '0'),
-          name: p.name,
-          parentIds: [p.superiorId || TOP_POSITION_ID],
-          divisionId: p.divisionId || '',
-          employeeCount: p.employeeCount || 0,
-          status: p.status || 'Active',
-          description: p.description || ''
-        }))
-      ];
+      const currentMaster = readMasterPositions();
+      const masterNames = new Set(currentMaster.map((m) => (m.name || '').trim().toLowerCase()));
+
+      const newFromOrg = data.positions
+        .filter((p) => p?.name && !masterNames.has(p.name.trim().toLowerCase()))
+        .map((p, idx) => ({
+          id: p.id || `pos-org-${idx + 1}`,
+          code: p.code || String(currentMaster.length + idx + 1).padStart(3, '0'),
+          name: p.name.trim(),
+          parentIds: [p.superiorId || TOP_POSITION_ID]
+        }));
+
+      const finalMaster = [...currentMaster, ...newFromOrg];
       window.localStorage.setItem(
         POSITION_STORAGE_KEY,
-        JSON.stringify({ positions: formattedPositions, isExample: false })
+        JSON.stringify({ positions: finalMaster, isExample: false })
       );
     }
 

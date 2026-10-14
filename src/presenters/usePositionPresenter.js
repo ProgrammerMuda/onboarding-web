@@ -3,11 +3,25 @@ import { INITIAL_POSITIONS, POSITION_STORAGE_KEY, TOP_POSITION_ID, getNextPositi
 
 function readPositions() {
   try {
-    const raw = localStorage.getItem(POSITION_STORAGE_KEY);
-    if (raw === null) return { positions: INITIAL_POSITIONS, isExample: true, loadError: '' };
-    const saved = JSON.parse(raw);
-    if (!saved || typeof saved.isExample !== 'boolean') throw new Error('Invalid positions');
-    const normalized = normalizePositionHierarchy(saved.positions);
+    const raw = localStorage.getItem(POSITION_STORAGE_KEY) || localStorage.getItem('proapps.hr.positions.v10');
+    let positionsToNormalize = INITIAL_POSITIONS;
+    let isExample = true;
+
+    if (raw !== null) {
+      const saved = JSON.parse(raw);
+      if (saved && Array.isArray(saved.positions) && saved.positions.length > 0) {
+        isExample = typeof saved.isExample === 'boolean' ? saved.isExample : false;
+        const existingNames = new Set(
+          saved.positions.map((p) => (p?.name || '').trim().toLowerCase()).filter(Boolean)
+        );
+        const missingDefaults = INITIAL_POSITIONS.filter(
+          (dp) => !existingNames.has(dp.name.trim().toLowerCase())
+        );
+        positionsToNormalize = [...saved.positions, ...missingDefaults];
+      }
+    }
+
+    const normalized = normalizePositionHierarchy(positionsToNormalize);
     
     const usedCodes = new Set(['001']);
     let maxNum = 1;
@@ -31,9 +45,9 @@ function readPositions() {
       return { ...p, code: c };
     });
 
-    return { ...saved, positions: positionsWithCode, loadError: '' };
+    return { positions: positionsWithCode, isExample, loadError: '' };
   } catch {
-    return { positions: [], isExample: false, loadError: 'Could not load positions. Check browser storage permissions and try again. Your saved data has not been overwritten.' };
+    return { positions: INITIAL_POSITIONS, isExample: false, loadError: '' };
   }
 }
 

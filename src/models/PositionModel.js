@@ -1,4 +1,4 @@
-export const POSITION_STORAGE_KEY = 'proapps.hr.positions.v10';
+export const POSITION_STORAGE_KEY = 'proapps.hr.positions.v11';
 export const TOP_POSITION_ID = 'bm';
 
 export const INITIAL_POSITIONS = [
@@ -156,14 +156,22 @@ export function readMasterPositions() {
     if (typeof window === 'undefined' || !window.localStorage) {
       return INITIAL_POSITIONS;
     }
-    const raw = window.localStorage.getItem(POSITION_STORAGE_KEY);
+    const raw = window.localStorage.getItem(POSITION_STORAGE_KEY) || window.localStorage.getItem('proapps.hr.positions.v10');
     if (!raw) return INITIAL_POSITIONS;
     const parsed = JSON.parse(raw);
     const list = Array.isArray(parsed?.positions)
       ? parsed.positions
       : (Array.isArray(parsed) ? parsed : INITIAL_POSITIONS);
     if (!list || list.length <= 1) return INITIAL_POSITIONS;
-    return normalizePositionHierarchy(list);
+
+    // Guarantee that standard master positions always exist
+    const existingNames = new Set(list.map((p) => (p?.name || '').trim().toLowerCase()));
+    const missingDefaults = INITIAL_POSITIONS.filter(
+      (dp) => !existingNames.has(dp.name.trim().toLowerCase())
+    );
+    const merged = [...list, ...missingDefaults];
+
+    return normalizePositionHierarchy(merged);
   } catch {
     return INITIAL_POSITIONS;
   }
