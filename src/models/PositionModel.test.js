@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { INITIAL_POSITIONS, ancestors, descendants, isValidPositionData, normalizePositionHierarchy, validatePosition, validatePositionRemoval, TOP_POSITION_ID } from './PositionModel';
+import { INITIAL_POSITIONS, ancestors, descendants, isValidPositionData, normalizePositionHierarchy, validatePosition, validatePositionRemoval, getNextPositionCode } from './PositionModel';
 
 const SAMPLE_POSITIONS = [
-  { id: 'bm', name: 'Building Manager', parentIds: [] },
-  { id: 'chief', name: 'Chief', parentIds: ['bm'] },
-  { id: 'spv', name: 'Supervisor', parentIds: ['chief'] },
-  { id: 'staff', name: 'Staff', parentIds: ['spv'] },
+  { id: 'bm', code: '001', name: 'Building Manager', parentIds: [] },
+  { id: 'chief', code: '002', name: 'Chief', parentIds: ['bm'] },
+  { id: 'spv', code: '003', name: 'Supervisor', parentIds: ['chief'] },
+  { id: 'staff', code: '004', name: 'Staff', parentIds: ['spv'] },
 ];
 
 describe('position hierarchy integrity', () => {
+  it('generates sequential position codes (001, 002, 003)', () => {
+    expect(getNextPositionCode([])).toBe('001');
+    expect(getNextPositionCode([{ code: '001', name: 'BM' }])).toBe('002');
+    expect(getNextPositionCode([{ id: 'bm', name: 'Building Manager' }])).toBe('002');
+    expect(getNextPositionCode(SAMPLE_POSITIONS)).toBe('005');
+  });
   it('derives all superiors and descendants across branches', () => {
     expect(ancestors(SAMPLE_POSITIONS, 'staff').map((item) => item.id)).toEqual(['spv', 'chief', 'bm']);
     expect([...descendants(SAMPLE_POSITIONS, 'chief')].sort()).toEqual(['spv', 'staff']);

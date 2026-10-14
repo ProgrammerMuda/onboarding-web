@@ -10,7 +10,15 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
     const defaultState = SidebarModel.getDefaultState();
     if (initialActive) {
       defaultState.activeItem = initialActive;
-      if (initialActive === 'hr-permit-type' || initialActive === 'hr-shift-type' || initialActive === 'hr-request-approval' || initialActive === 'hr-jabatan') {
+      if (
+        initialActive === 'hr-permit-type' ||
+        initialActive === 'hr-shift-type' ||
+        initialActive === 'hr-request-approval' ||
+        initialActive === 'hr-org-structure' ||
+        initialActive === 'hr-departemen' ||
+        initialActive === 'hr-division' ||
+        initialActive === 'hr-jabatan'
+      ) {
         defaultState.activeParent = 'hr-parameter';
         defaultState.expandedItems['hr-parameter'] = true;
       }

@@ -11,6 +11,11 @@ import { PermitTypeView } from './views/permit/PermitTypeView';
 import { ShiftTypeView } from './views/shift/ShiftTypeView';
 import { PositionView } from './views/position/PositionView';
 import { usePositionPresenter } from './presenters/usePositionPresenter';
+import { DepartmentView } from './views/department/DepartmentView';
+import { useDepartmentPresenter } from './presenters/useDepartmentPresenter';
+import { DivisionView } from './views/division/DivisionView';
+import { useDivisionPresenter } from './presenters/useDivisionPresenter';
+import OrganizationalStructureView from './views/organization/OrganizationalStructureView';
 
 // MVP Presenters
 import { useSidebarPresenter } from './presenters/useSidebarPresenter';
@@ -22,7 +27,7 @@ import { usePermitTypePresenter } from './presenters/usePermitTypePresenter';
 import { useShiftTypePresenter } from './presenters/useShiftTypePresenter';
 
 export default function App() {
-  const sidebarPresenter = useSidebarPresenter('hr-jabatan');
+  const sidebarPresenter = useSidebarPresenter('hr-org-structure');
   const onboardingPresenter = useOnboardingPresenter();
   const dashboardPresenter = useDashboardPresenter();
   const shiftPresenter = useShiftTypePresenter();
@@ -30,6 +35,8 @@ export default function App() {
   const tenantPresenter = useTenantPresenter();
   const approvalPresenter = useApprovalFlowPresenter();
   const positionPresenter = usePositionPresenter();
+  const departmentPresenter = useDepartmentPresenter();
+  const divisionPresenter = useDivisionPresenter();
   
   const activeMenu = sidebarPresenter.sections
     .flatMap((section) => section.items.flatMap((item) => [item, ...(item.children || [])]))
@@ -69,10 +76,16 @@ export default function App() {
               <ShiftTypeView presenter={shiftPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-jabatan' ? (
               <PositionView presenter={positionPresenter} />
+            ) : sidebarPresenter.activeItem === 'hr-departemen' ? (
+              <DepartmentView presenter={departmentPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-permit-type' ? (
               <PermitTypeView presenter={permitPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-request-approval' || sidebarPresenter.activeItem === 'approval-flow' ? (
               <ApprovalFlowView presenter={approvalPresenter} />
+            ) : sidebarPresenter.activeItem === 'hr-org-structure' ? (
+              <OrganizationalStructureView />
+            ) : sidebarPresenter.activeItem === 'hr-division' ? (
+              <DivisionView presenter={divisionPresenter} />
             ) : (
               <div className="bg-white p-5 border text-center my-4 shadow-sm" style={{ borderRadius: '12px' }}>
                 <h4 className="fw-bold text-dark mb-2 text-capitalize">

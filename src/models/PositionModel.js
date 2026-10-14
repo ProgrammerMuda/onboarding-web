@@ -1,9 +1,48 @@
-export const POSITION_STORAGE_KEY = 'proapps.hr.positions.v8';
+export const POSITION_STORAGE_KEY = 'proapps.hr.positions.v10';
 export const TOP_POSITION_ID = 'bm';
 
 export const INITIAL_POSITIONS = [
-  { id: 'bm', name: 'Building Manager', parentIds: [] },
+  { id: 'bm', code: '001', name: 'Building Manager', parentIds: [] },
+  { id: 'pos-abm', code: '002', name: 'Assistant Building Manager (ABM)', parentIds: ['bm'] },
+  { id: 'pos-chief', code: '003', name: 'Chief', parentIds: ['bm'] },
+  { id: 'pos-spv', code: '004', name: 'Supervisor', parentIds: ['bm'] },
+  { id: 'pos-coord', code: '005', name: 'Coordinator', parentIds: ['bm'] },
+  { id: 'pos-tl', code: '006', name: 'Team Leader', parentIds: ['bm'] },
+  { id: 'pos-danru', code: '007', name: 'Danru', parentIds: ['bm'] },
+  { id: 'pos-admin', code: '008', name: 'Admin', parentIds: ['bm'] },
+  { id: 'pos-staff', code: '009', name: 'Staff', parentIds: ['bm'] },
 ];
+
+export function getNextPositionCode(existingPositions = []) {
+  if (!existingPositions || existingPositions.length === 0) return '001';
+  let maxNum = 0;
+  existingPositions.forEach((pos) => {
+    if (pos) {
+      const codeStr = pos.code || (pos.id === TOP_POSITION_ID ? '001' : '');
+      if (codeStr) {
+        const match = codeStr.trim().match(/^(\d+)$/);
+        if (match) {
+          const val = parseInt(match[1], 10);
+          if (val > maxNum) maxNum = val;
+        }
+      }
+    }
+  });
+  if (existingPositions.some((pos) => pos.id === TOP_POSITION_ID || pos.code === '001') && maxNum < 1) {
+    maxNum = 1;
+  }
+  let nextNum = maxNum >= 1 ? maxNum + 1 : 2;
+  let nextCode = String(nextNum).padStart(3, '0');
+  while (
+    existingPositions.some(
+      (pos) => pos && (pos.code || (pos.id === TOP_POSITION_ID ? '001' : '')).trim().toUpperCase() === nextCode
+    )
+  ) {
+    nextNum += 1;
+    nextCode = String(nextNum).padStart(3, '0');
+  }
+  return nextCode;
+}
 
 export function getParentIds(item) {
   if (!item) return [];
@@ -92,12 +131,13 @@ export function normalizePositionHierarchy(value) {
   if (!Array.isArray(value)) throw new Error('Invalid position hierarchy');
   const existingRoot = value.find((item) => item.id === TOP_POSITION_ID) ||
     value.find((item) => item.name.trim().toLocaleLowerCase('id') === 'building manager' || item.name.trim().toLocaleLowerCase('id') === 'bm');
-  const root = { id: TOP_POSITION_ID, name: existingRoot?.name ?? 'Building Manager', parentIds: [] };
-  const positions = [root, ...value.filter((item) => item.id !== existingRoot?.id).map((item) => {
+  const root = { id: TOP_POSITION_ID, code: existingRoot?.code || '001', name: existingRoot?.name ?? 'Building Manager', parentIds: [] };
+  const positions = [root, ...value.filter((item) => item.id !== existingRoot?.id).map((item, idx) => {
     let pIds = getParentIds(item);
     if (pIds.length === 0) pIds = [TOP_POSITION_ID];
     return {
       ...item,
+      code: item.code || String(idx + 2).padStart(3, '0'),
       parentIds: pIds,
     };
   })];
@@ -109,4 +149,22 @@ export function validatePositionRemoval(position, positions) {
   if (position.id === TOP_POSITION_ID) return 'The top position cannot be deleted. You can rename it to suit your building.';
   if (positions.some((item) => getParentIds(item).includes(position.id))) return 'Assign all direct subordinates to another superior before deleting this position.';
   return '';
+}
+
+export function readMasterPositions() {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return INITIAL_POSITIONS;
+    }
+    const raw = window.localStorage.getItem(POSITION_STORAGE_KEY);
+    if (!raw) return INITIAL_POSITIONS;
+    const parsed = JSON.parse(raw);
+    const list = Array.isArray(parsed?.positions)
+      ? parsed.positions
+      : (Array.isArray(parsed) ? parsed : INITIAL_POSITIONS);
+    if (!list || list.length <= 1) return INITIAL_POSITIONS;
+    return normalizePositionHierarchy(list);
+  } catch {
+    return INITIAL_POSITIONS;
+  }
 }

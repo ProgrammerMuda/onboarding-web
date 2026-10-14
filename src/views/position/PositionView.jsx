@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { MagnifyingGlass, Plus, PencilSimple, TreeStructure, Trash, X, CaretRight, CaretDown, Info, Crown, ArrowElbowDownRight, Users, DotsThreeVertical, ArrowsOut, ArrowsIn, ArrowRight, CheckCircle } from '@phosphor-icons/react';
-import { TOP_POSITION_ID, ancestors, descendants, getParentIds } from '../../models/PositionModel';
+import { MagnifyingGlass, Plus, PencilSimple, Trash, X, Info, Crown, DotsThreeVertical, CheckCircle } from '@phosphor-icons/react';
+import { TOP_POSITION_ID } from '../../models/PositionModel';
 import './position.css';
 
 function PositionSuccessModal({ title, subtext, onClose }) {
@@ -38,7 +38,6 @@ function PositionSuccessModal({ title, subtext, onClose }) {
           <X size={20} weight="bold" />
         </button>
 
-        {/* Solid filled check circle */}
         <div className="d-flex justify-content-center mb-3">
           <CheckCircle size={68} weight="fill" style={{ color: '#10B981' }} />
         </div>
@@ -55,19 +54,19 @@ function PositionSuccessModal({ title, subtext, onClose }) {
   );
 }
 
-function PositionDialog({ title, children, onClose, wide = false }) {
+function PositionDialog({ title, children, onClose }) {
   const ref = useRef(null);
   const titleId = useId();
   useEffect(() => {
     const element = ref.current;
     const opener = document.activeElement;
-    element.showModal();
-    return () => { element.close(); if (opener?.isConnected) opener.focus(); };
+    element?.showModal();
+    return () => { element?.close(); if (opener?.isConnected) opener.focus(); };
   }, []);
   return (
     <dialog 
       ref={ref} 
-      className={`position-dialog${wide ? ' position-dialog-wide' : ''}`} 
+      className="position-dialog" 
       aria-labelledby={titleId} 
       onCancel={(event) => { event.preventDefault(); onClose(); }}
     >
@@ -82,14 +81,7 @@ function PositionDialog({ title, children, onClose, wide = false }) {
   );
 }
 
-function canSetSuperiors(item, positions = []) {
-  if (!item || item.id === TOP_POSITION_ID) return false;
-  const excluded = descendants(positions, item.id);
-  const candidates = positions.filter((pos) => pos.id !== item.id && !excluded.has(pos.id));
-  return candidates.length > 1;
-}
-
-function PositionForm({ p, relationship = false }) {
+function PositionForm({ p }) {
   const isEdit = Boolean(p.dialog?.position);
   const isTop = p.dialog?.position?.id === TOP_POSITION_ID;
 
@@ -97,7 +89,7 @@ function PositionForm({ p, relationship = false }) {
     if (p.dialog?.position) {
       return { 
         ...p.dialog.position, 
-        parentIds: getParentIds(p.dialog.position) 
+        parentIds: p.dialog.position.parentIds || [] 
       };
     }
     const rootPos = p.positions.find((item) => item.id === TOP_POSITION_ID);
@@ -107,114 +99,47 @@ function PositionForm({ p, relationship = false }) {
     };
   });
 
-  const excluded = descendants(p.positions, draft.id);
-  const candidates = p.positions.filter((item) => item.id !== draft.id && !excluded.has(item.id));
-
-  const toggleSuperior = (id) => {
-    const current = draft.parentIds || [];
-    const next = current.includes(id) 
-      ? current.filter((x) => x !== id) 
-      : [...current, id];
-    setDraft({ ...draft, parentIds: next });
-  };
-
-  const title = relationship 
-    ? `Set Direct Superiors: ${draft.name}` 
-    : isEdit 
-      ? 'Edit Position' 
-      : 'Add New Position';
-
-  const isSaveDisabled = relationship
-    ? (!draft.parentIds || draft.parentIds.length === 0)
-    : isTop
-      ? !draft.name?.trim()
-      : (!draft.name?.trim() || !draft.parentIds || draft.parentIds.length === 0);
+  const title = isEdit ? 'Edit Position' : 'Add New Position';
+  const isSaveDisabled = !draft.name?.trim();
 
   return (
     <PositionDialog title={title} onClose={p.close}>
-      <form onSubmit={(event) => { event.preventDefault(); p.save(draft, relationship); }}>
+      <form onSubmit={(event) => { event.preventDefault(); p.save(draft); }}>
         <div className="position-dialog-body">
-          {/* Position Name Input */}
-          {!relationship && (
-            <div className="position-form-group">
-              <label htmlFor="position-name" className="position-form-label">
-                Position Name <span className="position-required">*</span>
-              </label>
-              <input 
-                autoFocus 
-                id="position-name" 
-                required 
-                maxLength={80} 
-                value={draft.name} 
-                placeholder="e.g. Supervisor, Coordinator, Team Leader" 
-                onChange={(event) => setDraft({ ...draft, name: event.target.value })} 
-                className="position-form-input"
-              />
-              <span className="position-form-hint">
-                Enter a clear job title suitable for your organization structure.
-              </span>
+          {isEdit && draft.code && (
+            <div className="d-flex align-items-center gap-2 mb-1">
+              <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Position Code:</span>
+              <span className="position-code-tag">{draft.code}</span>
             </div>
           )}
 
-          {/* Superior Selection */}
-          {isTop ? (
+          {/* Position Name Input */}
+          <div className="position-form-group">
+            <label htmlFor="position-name" className="position-form-label">
+              Position Name <span className="position-required">*</span>
+            </label>
+            <input 
+              autoFocus 
+              id="position-name" 
+              required 
+              maxLength={80} 
+              value={draft.name} 
+              placeholder="e.g. Supervisor, Coordinator, Team Leader" 
+              onChange={(event) => setDraft({ ...draft, name: event.target.value })} 
+              className="position-form-input"
+            />
+            <span className="position-form-hint">
+              Enter a clear job title suitable for your organization structure.
+            </span>
+          </div>
+
+          {isTop && (
             <div className="position-root-banner">
-              <Crown size={26} weight="fill" className="text-amber" />
+              <Crown size={22} weight="fill" className="text-amber" />
               <div>
                 <strong>Highest Authority (Organization Root)</strong>
-                <p>The Building Manager is the top position and cannot be assigned any direct superiors.</p>
+                <p>The Building Manager is the top position in the organization.</p>
               </div>
-            </div>
-          ) : (
-            <div className="position-form-group superior-group">
-              <div className="position-superior-header">
-                <div>
-                  <label id="position-superiors-label" className="position-form-label">
-                    Direct Superior(s) <span className="position-required">*</span>
-                  </label>
-                  <p className="position-form-subtitle">
-                    Select one or more positions that this role directly reports to.
-                  </p>
-                </div>
-                <span className="position-superior-badge">
-                  {(draft.parentIds || []).length} selected
-                </span>
-              </div>
-
-              {candidates.length === 0 ? (
-                <div className="position-empty-candidates">
-                  <Info size={20} />
-                  <span>No other positions available as superior.</span>
-                </div>
-              ) : (
-                <div className="position-candidate-grid" role="group" aria-labelledby="position-superiors-label">
-                  {candidates.map((item) => {
-                    const isChecked = (draft.parentIds || []).includes(item.id);
-                    const isCandidateTop = item.id === TOP_POSITION_ID;
-                    return (
-                      <label 
-                        key={item.id} 
-                        className={`position-candidate-tile ${isChecked ? 'selected' : ''}`}
-                      >
-                        <input 
-                          type="checkbox" 
-                          className="position-candidate-checkbox" 
-                          checked={isChecked}
-                          onChange={() => toggleSuperior(item.id)}
-                        />
-                        <div className="position-candidate-content">
-                          <span className="position-candidate-title">{item.name}</span>
-                          {isCandidateTop && (
-                            <span className="position-top-badge small">
-                              <Crown size={12} weight="fill" /> Highest Level
-                            </span>
-                          )}
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           )}
 
@@ -235,276 +160,10 @@ function PositionForm({ p, relationship = false }) {
             type="submit"
             disabled={isSaveDisabled}
           >
-            {relationship ? 'Save Superiors' : isEdit ? 'Save Changes' : 'Create Position'}
+            {isEdit ? 'Save Changes' : 'Create Position'}
           </button>
         </footer>
       </form>
-    </PositionDialog>
-  );
-}
-
-function Branch({ item, positions, selectedId, expanded, setExpanded, onSelectPosition, depth = 0, query = '' }) {
-  const directChildren = positions.filter((row) => getParentIds(row).includes(item.id));
-  const open = expanded.has(item.id);
-  const childId = useId();
-  const isSelected = item.id === selectedId;
-  const isTop = item.id === TOP_POSITION_ID;
-  const isMatch = query && item.name.toLowerCase().includes(query.toLowerCase());
-
-  return (
-    <li className="position-tree-item">
-      <div className={`position-node-card ${isSelected ? 'selected' : ''} ${isTop ? 'root-node' : ''} ${isMatch ? 'search-match' : ''}`}>
-        <div className="position-node-left">
-          {directChildren.length > 0 ? (
-            <button 
-              type="button"
-              className="position-node-toggle" 
-              aria-label={`${open ? 'Collapse' : 'Expand'} subordinates of ${item.name}`} 
-              aria-expanded={open} 
-              aria-controls={childId} 
-              onClick={() => setExpanded((previous) => { 
-                const next = new Set(previous); 
-                if (open) next.delete(item.id); 
-                else next.add(item.id); 
-                return next; 
-              })}
-            >
-              {open ? (
-                <CaretDown size={17} weight="bold" />
-              ) : (
-                <CaretRight size={17} weight="bold" />
-              )}
-            </button>
-          ) : (
-            <span className="position-node-dot" aria-hidden="true" />
-          )}
-
-          <div className="position-node-badge-icon">
-            {isTop ? <Crown size={17} weight="fill" className="text-amber" /> : <TreeStructure size={17} weight="bold" />}
-          </div>
-
-          <div className="position-node-details">
-            <span className="position-node-title">{item.name}</span>
-            {isTop && <span className="position-top-badge small"><Crown size={12} weight="fill" /> Highest Authority</span>}
-          </div>
-        </div>
-
-        <div className="position-node-right">
-          <span className={`position-node-pill ${directChildren.length > 0 ? 'has-count' : ''}`}>
-            <Users size={14} weight="bold" />
-            <span>{directChildren.length} {directChildren.length === 1 ? 'subordinate' : 'subordinates'}</span>
-          </span>
-          {onSelectPosition && item.id !== selectedId && (
-            <button 
-              type="button" 
-              className="position-node-action-btn"
-              onClick={() => onSelectPosition(item)}
-              title={`Focus ${item.name}`}
-            >
-              Focus
-            </button>
-          )}
-        </div>
-      </div>
-
-      {directChildren.length > 0 && (
-        <ul id={childId} hidden={!open} className={`position-tree-sublist ${depth >= 4 ? 'deep-branch' : ''}`}>
-          {directChildren.map((child) => (
-            <Branch 
-              key={`${item.id}-${child.id}`} 
-              item={child} 
-              positions={positions} 
-              selectedId={selectedId} 
-              expanded={expanded} 
-              setExpanded={setExpanded} 
-              onSelectPosition={onSelectPosition}
-              depth={depth + 1}
-              query={query}
-            />
-          ))}
-        </ul>
-      )}
-    </li>
-  );
-}
-
-function Hierarchy({ p }) {
-  const [selectedPosition, setSelectedPosition] = useState(p.dialog.position);
-  const [treeQuery, setTreeQuery] = useState('');
-  
-  const parents = selectedPosition ? ancestors(p.positions, selectedPosition.id) : [];
-  const directParentIds = selectedPosition ? getParentIds(selectedPosition) : [];
-  const [expanded, setExpanded] = useState(() => new Set(p.positions.map((item) => item.id)));
-  
-  const roots = selectedPosition ? [selectedPosition] : p.positions.filter((item) => getParentIds(item).length === 0);
-  const totalSubordinatesCount = selectedPosition ? descendants(p.positions, selectedPosition.id).size : p.positions.length - 1;
-
-  const isExpanded = expanded.size > 0;
-  const toggleExpandAll = () => {
-    if (isExpanded) {
-      setExpanded(new Set());
-    } else {
-      setExpanded(new Set(p.positions.map((item) => item.id)));
-    }
-  };
-
-  return (
-    <PositionDialog 
-      title={selectedPosition ? `Hierarchy: ${selectedPosition.name}` : 'Organizational Hierarchy'} 
-      onClose={p.close} 
-      wide
-    >
-      <div className="position-dialog-body hierarchy-dialog-body">
-        {/* Top Summary Banner */}
-        <div className="hierarchy-overview-card">
-          <div className="hierarchy-overview-main">
-            <div className="hierarchy-overview-icon">
-              {selectedPosition?.id === TOP_POSITION_ID ? (
-                <Crown size={24} weight="fill" />
-              ) : (
-                <TreeStructure size={24} weight="bold" />
-              )}
-            </div>
-            <div>
-              <h3 className="hierarchy-overview-title">
-                {selectedPosition ? selectedPosition.name : 'All Positions Hierarchy'}
-              </h3>
-              <p className="hierarchy-overview-desc">
-                {selectedPosition 
-                  ? selectedPosition.id === TOP_POSITION_ID 
-                    ? 'Root Level • Head of organization with total reporting authority'
-                    : `${totalSubordinatesCount} total subordinate ${totalSubordinatesCount === 1 ? 'position' : 'positions'} under this branch`
-                  : `${p.positions.length} configured positions across all operational levels`
-                }
-              </p>
-            </div>
-          </div>
-          {selectedPosition && (
-            <button 
-              type="button" 
-              className="position-button hierarchy-view-all-btn"
-              onClick={() => setSelectedPosition(null)}
-            >
-              <TreeStructure size={15} /> View Full Tree
-            </button>
-          )}
-        </div>
-
-        {/* Upstream Reporting Chain (Breadcrumb Cards) */}
-        {selectedPosition && (
-          <div className="hierarchy-chain-section">
-            <div className="hierarchy-section-heading">
-              <h4>Superior Reporting Line</h4>
-            </div>
-            {parents.length > 0 ? (
-              <div className="hierarchy-chain-flow">
-                {/* 1. Current Focus as the starting point */}
-                <div className="hierarchy-chain-step current">
-                  <div className="hierarchy-chain-card active-target">
-                    <div className="hierarchy-chain-card-header">
-                      <span className="hierarchy-chain-role">Current Focus</span>
-                    </div>
-                    <span className="hierarchy-chain-name">{selectedPosition.name}</span>
-                  </div>
-                </div>
-
-                {/* 2. Chain of superiors from Direct Superior up to Root Authority */}
-                {parents.map((item) => {
-                  const isDirect = directParentIds.includes(item.id);
-                  const isRoot = item.id === TOP_POSITION_ID;
-                  return (
-                    <div key={item.id} className="hierarchy-chain-step">
-                      <div className="hierarchy-chain-connector" title="Reports to">
-                        <span className="hierarchy-chain-connector-label">reports to</span>
-                        <ArrowRight size={14} weight="bold" className="hierarchy-chain-arrow" />
-                      </div>
-                      <div className={`hierarchy-chain-card ${isRoot ? 'root' : isDirect ? 'direct' : 'indirect'}`}>
-                        <div className="hierarchy-chain-card-header">
-                          <span className="hierarchy-chain-role">
-                            {isRoot ? 'Root Authority' : isDirect ? 'Direct Superior' : 'Indirect Superior'}
-                          </span>
-                          {isRoot && <Crown size={15} weight="fill" className="chain-crown" />}
-                        </div>
-                        <span className="hierarchy-chain-name">{item.name}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="hierarchy-chain-root-note">
-                <Crown size={22} weight="fill" />
-                <span><strong>{selectedPosition.name}</strong> is the highest authority in the organization and has no superiors above it.</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Tree Toolbar: Search & Expand/Collapse */}
-        <div className="hierarchy-tree-toolbar">
-          <div className="hierarchy-search-box">
-            <MagnifyingGlass size={18} />
-            <input 
-              type="search" 
-              placeholder="Find position in tree..." 
-              value={treeQuery}
-              onChange={(e) => setTreeQuery(e.target.value)}
-            />
-          </div>
-          <div className="hierarchy-tree-actions">
-            <button 
-              type="button" 
-              className="position-button small" 
-              onClick={toggleExpandAll}
-              aria-label={isExpanded ? 'Collapse all tree nodes' : 'Expand all tree nodes'}
-            >
-              {isExpanded ? (
-                <>
-                  <ArrowsIn size={17} weight="bold" /> Collapse All
-                </>
-              ) : (
-                <>
-                  <ArrowsOut size={17} weight="bold" /> Expand All
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Visual Tree */}
-        <div className="hierarchy-tree-container">
-          <ul className="position-tree-root" aria-label="Organization structure tree">
-            {roots.map((item) => (
-              <Branch 
-                key={item.id} 
-                item={item} 
-                positions={p.positions} 
-                selectedId={selectedPosition?.id} 
-                expanded={expanded} 
-                setExpanded={setExpanded}
-                onSelectPosition={setSelectedPosition}
-                query={treeQuery}
-              />
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      <footer className="position-dialog-footer">
-        <button type="button" className="position-button" onClick={p.close}>Close</button>
-        {canSetSuperiors(selectedPosition, p.positions) && (
-          <button 
-            type="button" 
-            className="position-button primary" 
-            onClick={() => {
-              p.close();
-              p.open('relationship', selectedPosition);
-            }}
-          >
-            <ArrowElbowDownRight size={18} weight="bold" /> Set Superiors
-          </button>
-        )}
-      </footer>
     </PositionDialog>
   );
 }
@@ -534,173 +193,234 @@ export function PositionView({ presenter: p }) {
     }
   }, [activeMenuId]);
 
-  return <section className="position-page" aria-labelledby="position-heading">
-    <header className="position-header"><div><h1 id="position-heading">Positions</h1><p>Manage positions and reporting relationships.</p></div><button className="position-button primary" disabled={!!p.loadError} onClick={() => p.open('edit')}><Plus size={20} weight="bold" /> Add position</button></header>
-    {p.loadError ? <div className="position-error" role="alert"><p>{p.loadError}</p><button className="position-button" onClick={p.retry}>Try again</button></div> : <>
-      <div className="position-table-card">
-        <div className="position-toolbar"><div className="position-search"><MagnifyingGlass size={20} aria-hidden="true" /><input type="search" aria-label="Search positions" placeholder="Search position names..." value={p.query} onChange={(event) => p.setQuery(event.target.value)} /></div><button className="position-button" disabled={!p.positions.length} onClick={() => p.open('hierarchy')}><TreeStructure size={20} weight="bold" /> View full hierarchy</button></div>
-        <div className="position-table-responsive">
-          <table className="position-table">
-            <thead>
-              <tr>
-                <th scope="col" className="col-pos-name">Position name</th>
-                <th scope="col" className="col-pos-superior">Direct superior</th>
-                <th scope="col" className="col-pos-subordinates">Subordinates</th>
-                <th scope="col" className="col-pos-actions">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {p.filtered.map((item, index) => {
-                const isTop = item.id === TOP_POSITION_ID;
-                const parentIds = getParentIds(item);
-                const directSuperiors = p.positions.filter((pos) => parentIds.includes(pos.id));
-                const directSubordinates = p.positions.filter((pos) => getParentIds(pos).includes(item.id));
-                const isDropup = index >= Math.max(1, p.filtered.length - 2);
-
-                return (
-                  <tr key={item.id} className={isTop ? 'position-row-top' : ''}>
-                    <th scope="row">
-                      <div className="position-name-main">
-                        <span className="position-name-text">{item.name}</span>
-                        {isTop && (
-                          <span className="position-top-badge">
-                            <Crown size={16} weight="fill" />
-                            Highest Authority
-                          </span>
-                        )}
-                      </div>
-                    </th>
-                    <td>
-                      {isTop ? (
-                        <span className="position-superior-root">
-                          Highest Level (No Superior)
-                        </span>
-                      ) : directSuperiors.length > 0 ? (
-                        <div className="position-superiors-flex">
-                          {directSuperiors.map((sup) => (
-                            <span key={sup.id} className="position-superior-tag">
-                              <ArrowElbowDownRight size={15} weight="bold" />
-                              <span>{sup.name}</span>
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="position-superior-tag none">
-                          <span>None</span>
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`position-subordinate-count ${directSubordinates.length > 0 ? 'has-children' : ''}`}>
-                        <Users size={16} weight="bold" />
-                        <span>{directSubordinates.length} {directSubordinates.length === 1 ? 'position' : 'positions'}</span>
-                      </span>
-                    </td>
-                    <td className="col-pos-actions-cell">
-                      <div className="position-action-dropdown" ref={activeMenuId === item.id ? menuRef : null}>
-                        <button
-                          type="button"
-                          className={`position-action-trigger ${activeMenuId === item.id ? 'active' : ''}`}
-                          aria-label={`Actions for ${item.name}`}
-                          aria-haspopup="menu"
-                          aria-expanded={activeMenuId === item.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setActiveMenuId(activeMenuId === item.id ? null : item.id);
-                          }}
-                        >
-                          <DotsThreeVertical size={24} weight="bold" />
-                        </button>
-                        {activeMenuId === item.id && (
-                          <>
-                            <div 
-                              className="position-backdrop-overlay" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setActiveMenuId(null);
-                              }} 
-                            />
-                            <div className="position-dropdown-menu" role="menu">
-                              <button
-                                type="button"
-                                className="position-dropdown-item"
-                                role="menuitem"
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  p.open('hierarchy', item);
-                                }}
-                              >
-                                <TreeStructure size={18} weight="bold" />
-                                <span>View hierarchy</span>
-                              </button>
-                              {canSetSuperiors(item, p.positions) && (
-                                <button
-                                  type="button"
-                                  className="position-dropdown-item"
-                                  role="menuitem"
-                                  onClick={() => {
-                                    setActiveMenuId(null);
-                                    p.open('relationship', item);
-                                  }}
-                                >
-                                  <ArrowElbowDownRight size={18} weight="bold" />
-                                  <span>Set superiors</span>
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                className="position-dropdown-item"
-                                role="menuitem"
-                                onClick={() => {
-                                  setActiveMenuId(null);
-                                  p.open('edit', item);
-                                }}
-                              >
-                                <PencilSimple size={18} weight="bold" />
-                                <span>Edit position</span>
-                              </button>
-                              {item.id !== TOP_POSITION_ID && (
-                                <button
-                                  type="button"
-                                  className="position-dropdown-item danger"
-                                  role="menuitem"
-                                  onClick={() => {
-                                    setActiveMenuId(null);
-                                    p.open('delete', item);
-                                  }}
-                                >
-                                  <Trash size={18} weight="bold" />
-                                  <span>Delete position</span>
-                                </button>
-                              )}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+  return (
+    <section className="position-page" aria-labelledby="position-heading">
+      <header className="position-header">
+        <div>
+          <h1 className="position-page-title">Positions</h1>
+          <p className="position-page-subtitle">Manage organizational positions and job titles.</p>
         </div>
-        {!p.filtered.length && <div className="position-empty"><h2>{p.query ? 'No matching positions' : 'No positions yet'}</h2><p>{p.query ? 'Try another keyword or clear your search.' : 'Add your first position to start building the hierarchy.'}</p><button className="position-button" onClick={() => p.query ? p.setQuery('') : p.open('edit')}>{p.query ? 'Clear search' : 'Add position'}</button></div>}
-        <footer className="position-table-footer">Showing {p.filtered.length} of {p.positions.length} {p.positions.length === 1 ? 'position' : 'positions'}</footer>
-      </div>
-      <p className="position-bottom-note">You can rename the top position to suit your building, but you cannot delete it. All other positions report to it directly or indirectly.</p>
-    </>}
-    {(p.dialog?.kind === 'edit' || p.dialog?.kind === 'relationship') && <PositionForm key={`${p.dialog.kind}-${p.dialog.position?.id || 'new'}`} p={p} relationship={p.dialog.kind === 'relationship'} />}
-    {p.dialog?.kind === 'hierarchy' && <Hierarchy p={p} />}
-    {p.dialog?.kind === 'delete' && <PositionDialog title={`Delete ${p.dialog.position.name}?`} onClose={p.close}>
-      <div className="position-dialog-body"><p>{p.positions.some((item) => getParentIds(item).includes(p.dialog.position.id)) ? 'This position still has direct subordinates. Assign them to another superior before deleting this position.' : 'This position will be removed from the list and the organizational hierarchy.'}</p>{p.error && <p role="alert" className="position-error">{p.error}</p>}</div>
-      <footer className="position-dialog-footer"><button className="position-button" onClick={p.close}>Cancel</button><button className="position-button destructive" disabled={p.positions.some((item) => getParentIds(item).includes(p.dialog.position.id))} onClick={() => p.remove(p.dialog.position)}>Delete position</button></footer>
-    </PositionDialog>}
-    {p.successModal && (
-      <PositionSuccessModal 
-        title={p.successModal.title} 
-        subtext={p.successModal.subtext} 
-        onClose={p.closeSuccessModal} 
-      />
-    )}
-  </section>;
+        <div>
+          <button
+            type="button"
+            className="position-button primary"
+            disabled={Boolean(p.loadError)}
+            onClick={() => p.open('edit')}
+          >
+            <Plus size={16} weight="bold" />
+            <span>Add Position</span>
+          </button>
+        </div>
+      </header>
+      {p.loadError ? (
+        <div className="position-error" role="alert">
+          <p>{p.loadError}</p>
+          <button className="position-button" onClick={p.retry}>
+            Try again
+          </button>
+        </div>
+      ) : (
+        <>
+          <div className="position-table-card">
+            <div className="position-toolbar">
+              <div className="position-search">
+                <MagnifyingGlass size={18} aria-hidden="true" />
+                <input
+                  type="search"
+                  aria-label="Search positions"
+                  placeholder="Search code or position names..."
+                  value={p.query}
+                  onChange={(event) => p.setQuery(event.target.value)}
+                />
+              </div>
+            </div>
+            <div className="position-table-responsive">
+              <table className="position-table">
+                <thead>
+                  <tr>
+                    <th className="col-pos-code">Code</th>
+                    <th className="col-pos-name">Position Name</th>
+                    <th className="col-pos-actions text-center" style={{ width: '90px' }}>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {p.filtered.map((item) => {
+                    const isTop = item.id === TOP_POSITION_ID;
+
+                    return (
+                      <tr key={item.id} className={isTop ? 'position-row-top' : ''}>
+                        {/* Code */}
+                        <td>
+                          <span className="position-code-tag">{item.code || '001'}</span>
+                        </td>
+
+                        {/* Name */}
+                        <td>
+                          <div className="position-name-main">
+                            <span className="position-name-title">{item.name}</span>
+                            {isTop && (
+                              <span className="position-top-badge">
+                                <Crown size={14} weight="fill" />
+                                Highest Authority
+                              </span>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="text-center position-relative">
+                          <button
+                            type="button"
+                            className="btn btn-sm border-0 d-inline-flex align-items-center justify-content-center shadow-none p-0 mx-auto"
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '8px',
+                              backgroundColor: activeMenuId === item.id ? '#EEF2F6' : 'transparent',
+                              color: '#334155',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease'
+                            }}
+                            aria-label={`Actions for ${item.name}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuId(activeMenuId === item.id ? null : item.id);
+                            }}
+                            onMouseEnter={(e) => {
+                              if (activeMenuId !== item.id) e.currentTarget.style.backgroundColor = '#EEF2F6';
+                            }}
+                            onMouseLeave={(e) => {
+                              if (activeMenuId !== item.id) e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            <DotsThreeVertical size={20} weight="bold" />
+                          </button>
+                          {activeMenuId === item.id && (
+                            <>
+                              <div
+                                className="position-fixed top-0 start-0 w-100 h-100"
+                                style={{ zIndex: 1040 }}
+                                onClick={() => setActiveMenuId(null)}
+                              />
+                              <div
+                                className="position-absolute end-0 bg-white border shadow-lg"
+                                style={{
+                                  top: 'calc(100% + 4px)',
+                                  right: '8px',
+                                  borderRadius: '10px',
+                                  borderColor: '#E2E8F0',
+                                  minWidth: '180px',
+                                  width: 'max-content',
+                                  zIndex: 1050,
+                                  padding: '6px',
+                                  textAlign: 'left',
+                                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)'
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  className="d-flex align-items-center text-dark fw-semibold border-0 w-100 text-start"
+                                  style={{
+                                    gap: '10px',
+                                    padding: '8px 14px',
+                                    fontSize: '0.85rem',
+                                    cursor: 'pointer',
+                                    backgroundColor: 'transparent',
+                                    borderRadius: '6px',
+                                    whiteSpace: 'nowrap',
+                                    transition: 'background-color 0.15s ease'
+                                  }}
+                                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#F1F5F9')}
+                                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                  onClick={() => {
+                                    setActiveMenuId(null);
+                                    p.open('edit', item);
+                                  }}
+                                >
+                                  <PencilSimple size={16} weight="bold" className="flex-shrink-0" style={{ color: '#002B7F' }} />
+                                  <span style={{ whiteSpace: 'nowrap' }}>Edit position</span>
+                                </button>
+                                {item.id !== TOP_POSITION_ID && (
+                                  <>
+                                    <div style={{ height: '1px', backgroundColor: '#F1F5F9', margin: '4px 0' }} />
+                                    <button
+                                      type="button"
+                                      className="d-flex align-items-center text-danger fw-semibold border-0 w-100 text-start"
+                                      style={{
+                                        gap: '10px',
+                                        padding: '8px 14px',
+                                        fontSize: '0.85rem',
+                                        cursor: 'pointer',
+                                        backgroundColor: 'transparent',
+                                        borderRadius: '6px',
+                                        whiteSpace: 'nowrap',
+                                        transition: 'background-color 0.15s ease'
+                                      }}
+                                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#FEF2F2')}
+                                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                      onClick={() => {
+                                        setActiveMenuId(null);
+                                        p.open('delete', item);
+                                      }}
+                                    >
+                                      <Trash size={16} weight="bold" className="flex-shrink-0" style={{ color: '#DC2626' }} />
+                                      <span style={{ whiteSpace: 'nowrap' }}>Delete position</span>
+                                    </button>
+                                  </>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {!p.filtered.length && (
+              <div className="position-empty">
+                <h2>{p.query ? 'No matching positions' : 'No positions yet'}</h2>
+                <p>{p.query ? 'Try another keyword or clear your search.' : 'Add your first position to get started.'}</p>
+                <button className="position-button" onClick={() => p.query ? p.setQuery('') : p.open('edit')}>
+                  {p.query ? 'Clear search' : 'Add position'}
+                </button>
+              </div>
+            )}
+            <footer className="position-table-footer">
+              Showing {p.filtered.length} of {p.positions.length} {p.positions.length === 1 ? 'position' : 'positions'}
+            </footer>
+          </div>
+          <p className="position-bottom-note">You can rename the top position to suit your building, but you cannot delete it.</p>
+        </>
+      )}
+
+      {p.dialog?.kind === 'edit' && (
+        <PositionForm key={`edit-${p.dialog.position?.id || 'new'}`} p={p} />
+      )}
+
+      {p.dialog?.kind === 'delete' && (
+        <PositionDialog title={`Delete ${p.dialog.position.name}?`} onClose={p.close}>
+          <div className="position-dialog-body">
+            <p>
+              Are you sure you want to delete position <strong>{p.dialog.position.name}</strong> ({p.dialog.position.code || '001'})? This action cannot be undone.
+            </p>
+            {p.error && <p role="alert" className="position-error">{p.error}</p>}
+          </div>
+          <footer className="position-dialog-footer">
+            <button className="position-button secondary" onClick={p.close}>Cancel</button>
+            <button className="position-button destructive" onClick={() => p.remove(p.dialog.position)}>Delete position</button>
+          </footer>
+        </PositionDialog>
+      )}
+
+      {p.successModal && (
+        <PositionSuccessModal 
+          title={p.successModal.title} 
+          subtext={p.successModal.subtext} 
+          onClose={p.closeSuccessModal} 
+        />
+      )}
+    </section>
+  );
 }
