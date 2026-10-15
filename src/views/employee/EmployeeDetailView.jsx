@@ -34,7 +34,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
     divisions = []
   } = presenter;
 
-  const [activeTab, setActiveTab] = useState('personal'); // 'personal' | 'job' | 'salary' | 'payslips' | 'documents'
+  const [activeTab, setActiveTab] = useState('personal'); // 'personal' | 'employee' | 'payroll' | 'emergency'
   const [copiedNip, setCopiedNip] = useState(false);
 
   // Fallback defaults if viewing an employee with partial data
@@ -318,7 +318,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
         {/* RIGHT COLUMN: Navigation Tabs & Information Content Cards     */}
         {/* ============================================================ */}
         <div className="emp-detail-right-content">
-          {/* Tab Navigation Bar */}
+          {/* Tab Navigation Bar - 4 Tabs Matching Stepper */}
           <div className="emp-detail-tabs-bar" role="tablist">
             <button
               type="button"
@@ -327,47 +327,38 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               className={`emp-detail-tab-btn ${activeTab === 'personal' ? 'active' : ''}`}
               onClick={() => setActiveTab('personal')}
             >
-              Personal Information
+              Personal Data
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={activeTab === 'job'}
-              className={`emp-detail-tab-btn ${activeTab === 'job' ? 'active' : ''}`}
-              onClick={() => setActiveTab('job')}
+              aria-selected={activeTab === 'employee'}
+              className={`emp-detail-tab-btn ${activeTab === 'employee' ? 'active' : ''}`}
+              onClick={() => setActiveTab('employee')}
             >
-              Job Information
+              Employee Data
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={activeTab === 'salary'}
-              className={`emp-detail-tab-btn ${activeTab === 'salary' ? 'active' : ''}`}
-              onClick={() => setActiveTab('salary')}
+              aria-selected={activeTab === 'payroll'}
+              className={`emp-detail-tab-btn ${activeTab === 'payroll' ? 'active' : ''}`}
+              onClick={() => setActiveTab('payroll')}
             >
-              Salary Information
+              Payroll &amp; Insurance
             </button>
             <button
               type="button"
               role="tab"
-              aria-selected={activeTab === 'payslips'}
-              className={`emp-detail-tab-btn ${activeTab === 'payslips' ? 'active' : ''}`}
-              onClick={() => setActiveTab('payslips')}
+              aria-selected={activeTab === 'emergency'}
+              className={`emp-detail-tab-btn ${activeTab === 'emergency' ? 'active' : ''}`}
+              onClick={() => setActiveTab('emergency')}
             >
-              Payslips
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'documents'}
-              className={`emp-detail-tab-btn ${activeTab === 'documents' ? 'active' : ''}`}
-              onClick={() => setActiveTab('documents')}
-            >
-              Documents
+              Emergency Contact
             </button>
           </div>
 
-          {/* TAB 1: PERSONAL INFORMATION */}
+          {/* TAB 1: PERSONAL DATA */}
           {activeTab === 'personal' && (
             <div>
               {/* Card 1: Professional Information / Identity */}
@@ -428,50 +419,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 </div>
               </div>
 
-              {/* Card 2: Home Address */}
-              <div className="emp-detail-card">
-                <div className="emp-detail-card-head">
-                  <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-orange">
-                      <House size={20} weight="bold" />
-                    </div>
-                    <h3 className="emp-detail-card-title">Home Address</h3>
-                  </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Home Address"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
-                </div>
-
-                <div className="emp-detail-table-wrap">
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Address (ID Card / KTP)</span>
-                    <span className="emp-detail-kv-value">
-                      {emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng'}
-                    </span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Domicile Address</span>
-                    <span className="emp-detail-kv-value">
-                      {emp.domicileAddress || emp.idCardAddress || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng'}
-                    </span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">City</span>
-                    <span className="emp-detail-kv-value">{emp.city || 'Jakarta Selatan'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Postal Code</span>
-                    <span className="emp-detail-kv-value">{emp.postalCode || '12950'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 3: Tax Information */}
+              {/* Card 2: Tax Information */}
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
@@ -507,11 +455,123 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </div>
                 </div>
               </div>
+
+              {/* Card 3: Document Attachments */}
+              <div className="emp-detail-card">
+                <div className="emp-detail-card-head">
+                  <div className="emp-detail-card-head-left">
+                    <div className="emp-detail-card-badge emp-badge-orange">
+                      <FolderSimple size={20} weight="bold" />
+                    </div>
+                    <h3 className="emp-detail-card-title">Document Attachments</h3>
+                  </div>
+                </div>
+
+                <div className="emp-detail-doc-grid">
+                  {emp?.documents && emp.documents.length > 0 ? (
+                    emp.documents.map((doc) => {
+                      const isPdf = doc.isPdf || doc.name?.toLowerCase().endsWith('.pdf');
+                      return (
+                        <div key={doc.id || doc.name} className="emp-detail-doc-card">
+                          <div className="emp-detail-doc-left">
+                            <div className="emp-detail-doc-icon">
+                              {isPdf ? <FileText size={20} weight="bold" /> : <IdentificationCard size={20} weight="bold" />}
+                            </div>
+                            <div className="emp-detail-doc-info">
+                              <span className="emp-detail-doc-title">{doc.categoryLabel || doc.name}</span>
+                              <span className="emp-detail-doc-meta">
+                                {isPdf ? 'PDF' : 'Image'} &bull; {doc.size ? `${(doc.size / 1024).toFixed(0)} KB` : '1.2 MB'} &bull; Verified
+                              </span>
+                            </div>
+                          </div>
+                          {doc.fileData ? (
+                            <a
+                              href={doc.fileData}
+                              download={doc.name}
+                              className="emp-detail-doc-action"
+                              title={`Download ${doc.name}`}
+                              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+                            >
+                              <DownloadSimple size={16} weight="bold" />
+                            </a>
+                          ) : (
+                            <button type="button" className="emp-detail-doc-action" title={`Download ${doc.name}`}>
+                              <DownloadSimple size={16} weight="bold" />
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <>
+                      <div className="emp-detail-doc-card">
+                        <div className="emp-detail-doc-left">
+                          <div className="emp-detail-doc-icon">
+                            <FileText size={20} weight="bold" />
+                          </div>
+                          <div className="emp-detail-doc-info">
+                            <span className="emp-detail-doc-title">ID Card (KTP)</span>
+                            <span className="emp-detail-doc-meta">PDF &bull; 1.2 MB &bull; Verified</span>
+                          </div>
+                        </div>
+                        <button type="button" className="emp-detail-doc-action" title="Download KTP">
+                          <DownloadSimple size={16} weight="bold" />
+                        </button>
+                      </div>
+
+                      <div className="emp-detail-doc-card">
+                        <div className="emp-detail-doc-left">
+                          <div className="emp-detail-doc-icon">
+                            <Receipt size={20} weight="bold" />
+                          </div>
+                          <div className="emp-detail-doc-info">
+                            <span className="emp-detail-doc-title">NPWP Tax Card</span>
+                            <span className="emp-detail-doc-meta">PDF &bull; 850 KB &bull; Verified</span>
+                          </div>
+                        </div>
+                        <button type="button" className="emp-detail-doc-action" title="Download NPWP">
+                          <DownloadSimple size={16} weight="bold" />
+                        </button>
+                      </div>
+
+                      <div className="emp-detail-doc-card">
+                        <div className="emp-detail-doc-left">
+                          <div className="emp-detail-doc-icon">
+                            <Briefcase size={20} weight="bold" />
+                          </div>
+                          <div className="emp-detail-doc-info">
+                            <span className="emp-detail-doc-title">Work Contract (PKWT)</span>
+                            <span className="emp-detail-doc-meta">PDF &bull; 2.4 MB &bull; Signed</span>
+                          </div>
+                        </div>
+                        <button type="button" className="emp-detail-doc-action" title="Download Contract">
+                          <DownloadSimple size={16} weight="bold" />
+                        </button>
+                      </div>
+
+                      <div className="emp-detail-doc-card">
+                        <div className="emp-detail-doc-left">
+                          <div className="emp-detail-doc-icon">
+                            <IdentificationCard size={20} weight="bold" />
+                          </div>
+                          <div className="emp-detail-doc-info">
+                            <span className="emp-detail-doc-title">Training Certificate</span>
+                            <span className="emp-detail-doc-meta">PDF &bull; 1.8 MB &bull; Active</span>
+                          </div>
+                        </div>
+                        <button type="button" className="emp-detail-doc-action" title="Download Certificate">
+                          <DownloadSimple size={16} weight="bold" />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* TAB 2: JOB INFORMATION */}
-          {activeTab === 'job' && (
+          {/* TAB 2: EMPLOYEE DATA */}
+          {activeTab === 'employee' && (
             <div>
               {/* Card 1: Organizational Role */}
               <div className="emp-detail-card">
@@ -608,52 +668,11 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </div>
                 </div>
               </div>
-
-              {/* Card 3: Emergency Contact */}
-              <div className="emp-detail-card">
-                <div className="emp-detail-card-head">
-                  <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-teal">
-                      <Phone size={20} weight="bold" />
-                    </div>
-                    <h3 className="emp-detail-card-title">Primary Emergency Contact</h3>
-                  </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Emergency Contact"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
-                </div>
-
-                <div className="emp-detail-table-wrap">
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Contact Person Name</span>
-                    <span className="emp-detail-kv-value">{emp.emergencyName || 'Dewi Lestari'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Relationship</span>
-                    <span className="emp-detail-kv-value">{emp.emergencyRelation || 'Spouse'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Emergency Phone Number</span>
-                    <span className="emp-detail-kv-value">{emp.emergencyPhone || '0812-8899-0011'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Contact Address</span>
-                    <span className="emp-detail-kv-value">
-                      {emp.emergencyIdAddress || emp.idCardAddress || 'Same as Domicile Address'}
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* TAB 3: SALARY INFORMATION */}
-          {activeTab === 'salary' && (
+          {/* TAB 3: PAYROLL & INSURANCE */}
+          {activeTab === 'payroll' && (
             <div>
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
@@ -695,7 +714,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <div className="emp-detail-card-badge emp-badge-secondary">
                       <ShieldCheck size={20} weight="bold" />
                     </div>
-                    <h3 className="emp-detail-card-title">Insurance</h3>
+                    <h3 className="emp-detail-card-title">Social Security &amp; Insurance</h3>
                   </div>
                   <button
                     type="button"
@@ -709,7 +728,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
 
                 <div className="emp-detail-table-wrap">
                   <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">BPJS Ketenagakerjaan</span>
+                    <span className="emp-detail-kv-label">BPJS Ketenagakerjaan (KPJ)</span>
                     <span className="emp-detail-kv-value font-monospace">{emp.bpjsTk || '000189283921'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
@@ -721,160 +740,91 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
             </div>
           )}
 
-          {/* TAB 4: PAYSLIPS */}
-          {activeTab === 'payslips' && (
-            <div className="emp-detail-card">
-              <div className="emp-detail-card-head">
-                <div className="emp-detail-card-head-left">
-                  <div className="emp-detail-card-badge emp-badge-teal">
-                    <FileText size={20} weight="bold" />
+          {/* TAB 4: EMERGENCY CONTACT */}
+          {activeTab === 'emergency' && (
+            <div>
+              {/* Card 1: Primary Emergency Contact */}
+              <div className="emp-detail-card">
+                <div className="emp-detail-card-head">
+                  <div className="emp-detail-card-head-left">
+                    <div className="emp-detail-card-badge emp-badge-teal">
+                      <Phone size={20} weight="bold" />
+                    </div>
+                    <h3 className="emp-detail-card-title">Primary Emergency Contact</h3>
                   </div>
-                  <h3 className="emp-detail-card-title">Payslip History</h3>
+                  <button
+                    type="button"
+                    className="emp-detail-card-edit-icon"
+                    title="Edit Emergency Contact"
+                    onClick={handleEdit}
+                  >
+                    <PencilSimple size={15} weight="bold" />
+                  </button>
+                </div>
+
+                <div className="emp-detail-table-wrap">
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Contact Person Name</span>
+                    <span className="emp-detail-kv-value">{emp.emergencyName || 'Dewi Lestari'}</span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Relationship</span>
+                    <span className="emp-detail-kv-value">{emp.emergencyRelation || 'Spouse'}</span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Emergency Phone Number</span>
+                    <span className="emp-detail-kv-value">{emp.emergencyPhone || '0812-8899-0011'}</span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Contact Address</span>
+                    <span className="emp-detail-kv-value">
+                      {emp.emergencyIdAddress || emp.idCardAddress || 'Same as Domicile Address'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="emp-detail-table-wrap">
-                <div className="emp-detail-kv-row">
-                  <span className="emp-detail-kv-label">October 2026</span>
-                  <div className="emp-detail-kv-value d-flex justify-content-between align-items-center">
-                    <span>IDR 8,500,000 (Paid)</span>
-                    <button type="button" className="emp-detail-doc-action" title="Download Payslip">
-                      <DownloadSimple size={15} weight="bold" />
-                    </button>
+              {/* Card 2: Home Address */}
+              <div className="emp-detail-card">
+                <div className="emp-detail-card-head">
+                  <div className="emp-detail-card-head-left">
+                    <div className="emp-detail-card-badge emp-badge-orange">
+                      <House size={20} weight="bold" />
+                    </div>
+                    <h3 className="emp-detail-card-title">Home &amp; Domicile Address</h3>
+                  </div>
+                  <button
+                    type="button"
+                    className="emp-detail-card-edit-icon"
+                    title="Edit Home Address"
+                    onClick={handleEdit}
+                  >
+                    <PencilSimple size={15} weight="bold" />
+                  </button>
+                </div>
+
+                <div className="emp-detail-table-wrap">
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Address (ID Card / KTP)</span>
+                    <span className="emp-detail-kv-value">
+                      {emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng'}
+                    </span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Domicile Address</span>
+                    <span className="emp-detail-kv-value">
+                      {emp.domicileAddress || emp.idCardAddress || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng'}
+                    </span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">City</span>
+                    <span className="emp-detail-kv-value">{emp.city || 'Jakarta Selatan'}</span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Postal Code</span>
+                    <span className="emp-detail-kv-value">{emp.postalCode || '12950'}</span>
                   </div>
                 </div>
-                <div className="emp-detail-kv-row">
-                  <span className="emp-detail-kv-label">September 2026</span>
-                  <div className="emp-detail-kv-value d-flex justify-content-between align-items-center">
-                    <span>IDR 8,500,000 (Paid)</span>
-                    <button type="button" className="emp-detail-doc-action" title="Download Payslip">
-                      <DownloadSimple size={15} weight="bold" />
-                    </button>
-                  </div>
-                </div>
-                <div className="emp-detail-kv-row">
-                  <span className="emp-detail-kv-label">August 2026</span>
-                  <div className="emp-detail-kv-value d-flex justify-content-between align-items-center">
-                    <span>IDR 8,500,000 (Paid)</span>
-                    <button type="button" className="emp-detail-doc-action" title="Download Payslip">
-                      <DownloadSimple size={15} weight="bold" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 5: DOCUMENTS */}
-          {activeTab === 'documents' && (
-            <div className="emp-detail-card">
-              <div className="emp-detail-card-head">
-                <div className="emp-detail-card-head-left">
-                  <div className="emp-detail-card-badge emp-badge-orange">
-                    <FolderSimple size={20} weight="bold" />
-                  </div>
-                  <h3 className="emp-detail-card-title">Employee Documents &amp; Files</h3>
-                </div>
-              </div>
-
-              <div className="emp-detail-doc-grid">
-                {emp?.documents && emp.documents.length > 0 ? (
-                  emp.documents.map((doc) => {
-                    const isPdf = doc.isPdf || doc.name?.toLowerCase().endsWith('.pdf');
-                    return (
-                      <div key={doc.id || doc.name} className="emp-detail-doc-card">
-                        <div className="emp-detail-doc-left">
-                          <div className="emp-detail-doc-icon">
-                            {isPdf ? <FileText size={20} weight="bold" /> : <IdentificationCard size={20} weight="bold" />}
-                          </div>
-                          <div className="emp-detail-doc-info">
-                            <span className="emp-detail-doc-title">{doc.categoryLabel || doc.name}</span>
-                            <span className="emp-detail-doc-meta">
-                              {isPdf ? 'PDF' : 'Image'} &bull; {doc.size ? `${(doc.size / 1024).toFixed(0)} KB` : '1.2 MB'} &bull; Verified
-                            </span>
-                          </div>
-                        </div>
-                        {doc.fileData ? (
-                          <a
-                            href={doc.fileData}
-                            download={doc.name}
-                            className="emp-detail-doc-action"
-                            title={`Download ${doc.name}`}
-                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
-                          >
-                            <DownloadSimple size={16} weight="bold" />
-                          </a>
-                        ) : (
-                          <button type="button" className="emp-detail-doc-action" title={`Download ${doc.name}`}>
-                            <DownloadSimple size={16} weight="bold" />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <>
-                    <div className="emp-detail-doc-card">
-                      <div className="emp-detail-doc-left">
-                        <div className="emp-detail-doc-icon">
-                          <FileText size={20} weight="bold" />
-                        </div>
-                        <div className="emp-detail-doc-info">
-                          <span className="emp-detail-doc-title">ID Card (KTP)</span>
-                          <span className="emp-detail-doc-meta">PDF &bull; 1.2 MB &bull; Verified</span>
-                        </div>
-                      </div>
-                      <button type="button" className="emp-detail-doc-action" title="Download KTP">
-                        <DownloadSimple size={16} weight="bold" />
-                      </button>
-                    </div>
-
-                    <div className="emp-detail-doc-card">
-                      <div className="emp-detail-doc-left">
-                        <div className="emp-detail-doc-icon">
-                          <Receipt size={20} weight="bold" />
-                        </div>
-                        <div className="emp-detail-doc-info">
-                          <span className="emp-detail-doc-title">NPWP Tax Card</span>
-                          <span className="emp-detail-doc-meta">PDF &bull; 850 KB &bull; Verified</span>
-                        </div>
-                      </div>
-                      <button type="button" className="emp-detail-doc-action" title="Download NPWP">
-                        <DownloadSimple size={16} weight="bold" />
-                      </button>
-                    </div>
-
-                    <div className="emp-detail-doc-card">
-                      <div className="emp-detail-doc-left">
-                        <div className="emp-detail-doc-icon">
-                          <Briefcase size={20} weight="bold" />
-                        </div>
-                        <div className="emp-detail-doc-info">
-                          <span className="emp-detail-doc-title">Work Contract (PKWT)</span>
-                          <span className="emp-detail-doc-meta">PDF &bull; 2.4 MB &bull; Signed</span>
-                        </div>
-                      </div>
-                      <button type="button" className="emp-detail-doc-action" title="Download Contract">
-                        <DownloadSimple size={16} weight="bold" />
-                      </button>
-                    </div>
-
-                    <div className="emp-detail-doc-card">
-                      <div className="emp-detail-doc-left">
-                        <div className="emp-detail-doc-icon">
-                          <IdentificationCard size={20} weight="bold" />
-                        </div>
-                        <div className="emp-detail-doc-info">
-                          <span className="emp-detail-doc-title">Training Certificate</span>
-                          <span className="emp-detail-doc-meta">PDF &bull; 1.8 MB &bull; Active</span>
-                        </div>
-                      </div>
-                      <button type="button" className="emp-detail-doc-action" title="Download Certificate">
-                        <DownloadSimple size={16} weight="bold" />
-                      </button>
-                    </div>
-                  </>
-                )}
               </div>
             </div>
           )}
