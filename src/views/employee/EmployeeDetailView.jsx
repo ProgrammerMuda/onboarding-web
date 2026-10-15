@@ -396,18 +396,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <span className="emp-detail-kv-value">{emp.educationLevel || 'Higher Education (S1)'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Degree / Major</span>
-                    <span className="emp-detail-kv-value">{emp.degree || 'Facility & Property Management'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Hard Skill</span>
-                    <span className="emp-detail-kv-value">{emp.hardSkill || 'Technical Support & Building Operations'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Soft Skill</span>
-                    <span className="emp-detail-kv-value">{emp.softSkill || 'Communication, Problem Solving, Leadership'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">NIK (ID Card / KTP)</span>
                     <span className="emp-detail-kv-value font-monospace">{emp.ktp || emp.nik || '3171015508920001'}</span>
                   </div>
