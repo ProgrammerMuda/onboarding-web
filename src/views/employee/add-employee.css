@@ -1043,7 +1043,7 @@ input[type="date"].add-emp-input {
   margin: -24px -28px 22px -28px;
   padding: 16px 28px;
   background-color: #fafbfc;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .add-emp-subcard-badge {
