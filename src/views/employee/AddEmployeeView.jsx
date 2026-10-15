@@ -230,10 +230,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
     if (!wizardDraft.maritalStatus) {
       return 'Please select Marital Status.';
     }
-    const citizenshipVal = wizardDraft.citizenship !== undefined && wizardDraft.citizenship !== ''
-      ? wizardDraft.citizenship.trim()
-      : 'Indonesia';
-    if (!citizenshipVal) {
+    if (!wizardDraft.citizenship || !wizardDraft.citizenship.trim()) {
       return 'Citizenship is required.';
     }
     return null;
@@ -738,7 +735,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     type="text"
                     className="form-control add-emp-input"
                     placeholder="e.g. Indonesia"
-                    value={wizardDraft.citizenship !== undefined && wizardDraft.citizenship !== '' ? wizardDraft.citizenship : 'Indonesia'}
+                    value={wizardDraft.citizenship ?? ''}
                     onChange={(e) => updateWizardDraft({ citizenship: e.target.value })}
                   />
                 </div>
