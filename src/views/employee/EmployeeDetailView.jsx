@@ -537,9 +537,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Position</span>
-                    <span className="emp-detail-kv-value" style={{ color: '#002B7F', fontWeight: 700 }}>
-                      {displayPosition}
-                    </span>
+                    <span className="emp-detail-kv-value">{displayPosition}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Employee Status</span>
