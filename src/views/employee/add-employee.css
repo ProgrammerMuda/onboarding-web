@@ -626,6 +626,7 @@
 
 .add-emp-input {
   font-size: 13px !important;
+  font-weight: 500 !important;
   color: #0f172a !important;
   border: 1px solid #cbd5e1 !important;
   border-radius: 6px !important;
@@ -637,11 +638,30 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 
+.add-emp-input::placeholder {
+  font-weight: 400 !important;
+  color: #94a3b8 !important;
+}
+
 select.add-emp-input {
   height: 42px !important;
   min-height: 42px !important;
   line-height: 1.5 !important;
+  font-weight: 500 !important;
   box-sizing: border-box !important;
+}
+
+select.add-emp-input option {
+  font-weight: 500 !important;
+  color: #0f172a !important;
+}
+
+.add-emp-input.font-monospace {
+  font-weight: 500 !important;
+}
+
+input[type="date"].add-emp-input {
+  font-weight: 500 !important;
 }
 
 .add-emp-input:focus {
@@ -656,6 +676,7 @@ select.add-emp-input {
   max-height: 90px !important;
   resize: none !important;
   line-height: 1.4 !important;
+  font-weight: 500 !important;
 }
 
 .add-emp-char-counter {

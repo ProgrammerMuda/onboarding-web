@@ -833,6 +833,18 @@
   margin-left: 2px;
 }
 
+.emp-modal-body .form-control,
+.emp-modal-body .form-select {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.emp-modal-body .form-control::placeholder {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
 .emp-form-error {
   padding: 8px 12px;
   background-color: #fef2f2;
