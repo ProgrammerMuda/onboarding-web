@@ -179,8 +179,9 @@ export default function AddEmployeeView({ presenter, onBack }) {
       return `NIK (ID Card) must be 16 numeric digits (currently ${(wizardDraft.ktp || '').length} digits).`;
     }
     if (wizardDraft.npwp && wizardDraft.npwp.trim()) {
-      if (!/^\d{15,16}$/.test(wizardDraft.npwp.trim())) {
-        return 'NPWP Number must be 15 or 16 numeric digits.';
+      const cleanNpwp = wizardDraft.npwp.replace(/\D/g, '');
+      if (cleanNpwp.length > 16) {
+        return 'NPWP Number cannot exceed 16 digits.';
       }
     }
     if (!wizardDraft.gender) {
@@ -698,19 +699,19 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   </select>
                 </div>
 
-                {/* Row 3: NPWP Number (15-16 Digits) & Citizenship */}
+                {/* Row 3: NPWP Number (16 Digits) & Citizenship */}
                 <div className="col-md-6 add-emp-field-col">
                   <div className="add-emp-label-wrap">
                     <label className="add-emp-label">NPWP Number</label>
                     <span className="add-emp-digit-hint">
-                      {(wizardDraft.npwp || '').length} / 15-16 digits
+                      {(wizardDraft.npwp || '').length} / 16 digits
                     </span>
                   </div>
                   <input
                     type="text"
                     inputMode="numeric"
                     maxLength={16}
-                    placeholder="15 or 16-digit numeric NPWP (e.g. 0925432910130000)"
+                    placeholder="16-digit numeric NPWP (e.g. 0925432910130000)"
                     className="form-control add-emp-input font-monospace"
                     value={wizardDraft.npwp}
                     onChange={handleNpwpChange}
