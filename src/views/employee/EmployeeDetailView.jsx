@@ -85,31 +85,20 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
     return age > 0 ? String(age) : '32';
   }, [emp.dob]);
 
-  // Dual-Level Position presentation (Primary Title + Function/Specialty)
-  const positionMeta = useMemo(() => {
-    const raw = (emp.position || '').trim();
-    if (!raw) {
-      return { title: 'Employee', specialty: '' };
-    }
-
-    const lower = raw.toLowerCase();
+  // Format position cleanly (e.g. normalize to Supervisor)
+  const displayPosition = useMemo(() => {
+    if (!emp.position) return 'Employee';
+    const lower = emp.position.toLowerCase();
     if (
       lower.includes('supervisor account receiveble') ||
       lower.includes('supervisor accounts receivable') ||
       lower.includes('supervisor account receivable') ||
-      (lower === 'supervisor' && (emp.id === 'emp-005' || emp.divisionId === 'div-fin'))
+      lower === 'supervisor'
     ) {
-      return {
-        title: 'Supervisor',
-        specialty: 'Accounts Receivable'
-      };
+      return 'Supervisor';
     }
-
-    return {
-      title: raw,
-      specialty: ''
-    };
-  }, [emp.position, emp.id, emp.divisionId]);
+    return emp.position;
+  }, [emp.position]);
 
   const handleEdit = () => {
     if (typeof openEditModal === 'function') {
@@ -226,24 +215,14 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
             </div>
 
             <div className="emp-detail-role-wrap">
-              <div className="emp-detail-role-main">
-                <span className="emp-detail-role-pill">
-                  <Briefcase size={14} weight="bold" />
-                  <span>{positionMeta.title}</span>
+              <span className="emp-detail-role-pill">
+                <Briefcase size={14} weight="bold" />
+                <span>{displayPosition}</span>
+              </span>
+              {divName && (
+                <span className="emp-detail-dept-pill">
+                  {divName}
                 </span>
-                {divName && (
-                  <span className="emp-detail-dept-pill">
-                    {divName}
-                  </span>
-                )}
-              </div>
-              {positionMeta.specialty && (
-                <div className="emp-detail-specialty-sub">
-                  <span className="emp-detail-specialty-pill">
-                    <Receipt size={12} weight="bold" />
-                    <span>{positionMeta.specialty}</span>
-                  </span>
-                </div>
               )}
             </div>
 
@@ -560,14 +539,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Position</span>
-                    <span className="emp-detail-kv-value">
-                      <span>{positionMeta.title}</span>
-                      {positionMeta.specialty && (
-                        <span className="emp-detail-pos-specialty-tag">
-                          {positionMeta.specialty}
-                        </span>
-                      )}
-                    </span>
+                    <span className="emp-detail-kv-value">{displayPosition}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Employee Status</span>

@@ -243,17 +243,10 @@
 
 .emp-detail-role-wrap {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 7px;
-  margin-bottom: 20px;
-}
-
-.emp-detail-role-main {
-  display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
 .emp-detail-role-pill {
@@ -280,39 +273,6 @@
   font-weight: 500;
   padding: 4px 8px;
   border-radius: 6px;
-}
-
-.emp-detail-specialty-sub {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.emp-detail-specialty-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  font-size: 11.5px;
-  font-weight: 500;
-  padding: 2.5px 8px;
-  border-radius: 5px;
-}
-
-.emp-detail-pos-specialty-tag {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 8px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: #475569;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  padding: 1px 7px;
-  border-radius: 4px;
-  vertical-align: middle;
 }
 
 /* Organizational Hierarchy Trail */
