@@ -914,6 +914,12 @@
   border: 1px solid #cbd5e1;
 }
 
+.emp-pos-badge.secondary {
+  background-color: #eaf8ff;
+  border-color: #bce6fd;
+  color: #0284c7;
+}
+
 /* Status Badges */
 .emp-status-badge {
   display: inline-flex;

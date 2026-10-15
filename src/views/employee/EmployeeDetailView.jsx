@@ -214,7 +214,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
             </div>
 
             <div className="emp-detail-role-wrap">
-              <span className="emp-detail-role-pill">
+              <span className="emp-detail-role-pill secondary">
                 <Briefcase size={14} weight="bold" />
                 <span>{displayPosition}</span>
               </span>

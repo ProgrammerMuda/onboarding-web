@@ -724,11 +724,11 @@ export default function EmployeeView({ presenter }) {
 
                       {/* 4. Jabatan */}
                       <td>
-                        <span className="emp-pos-badge">
+                        <span className={`emp-pos-badge ${(emp.position || '').toLowerCase().includes('account receive') || (emp.position || '').toLowerCase().includes('receiv') ? 'secondary' : ''}`}>
                           {(emp.position || '').toLowerCase().includes('account receive') ||
                           (emp.position || '').toLowerCase().includes('receiveble') ||
                           (emp.position || '').toLowerCase().includes('receivable')
-                            ? 'Supervisor'
+                            ? 'Supervisor Account Receivable'
                             : (emp.position || 'Staff')}
                         </span>
                       </td>
