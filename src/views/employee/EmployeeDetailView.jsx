@@ -420,14 +420,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                       {emp.npwp || '09.254.678.9-012.000'}
                     </span>
                   </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">PTKP Status</span>
-                    <span className="emp-detail-kv-value">TK/0 (Tidak Kawin / 0 Tanggungan)</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Tax Office (KPP)</span>
-                    <span className="emp-detail-kv-value">KPP Pratama Jakarta Kebayoran Baru</span>
-                  </div>
                 </div>
               </div>
 
