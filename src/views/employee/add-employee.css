@@ -1066,6 +1066,12 @@ input[type="date"].add-emp-input {
   color: #2563eb;
 }
 
+.add-emp-subcard-badge.emp-badge-secondary {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
 .add-emp-subcard-title {
   font-size: 15.5px;
   font-weight: 700;

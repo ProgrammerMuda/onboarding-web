@@ -443,6 +443,12 @@
   color: #16a34a;
 }
 
+.emp-badge-secondary {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
 .emp-detail-card-title {
   font-size: 16px;
   font-weight: 700;

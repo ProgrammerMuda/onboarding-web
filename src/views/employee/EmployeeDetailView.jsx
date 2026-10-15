@@ -669,7 +669,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-green">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
                       <Bank size={20} weight="bold" />
                     </div>
                     <h3 className="emp-detail-card-title">Bank Account</h3>
@@ -703,10 +703,10 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-blue">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
                       <ShieldCheck size={20} weight="bold" />
                     </div>
-                    <h3 className="emp-detail-card-title">Social Security &amp; Insurance</h3>
+                    <h3 className="emp-detail-card-title">Insurance</h3>
                   </div>
                   <button
                     type="button"

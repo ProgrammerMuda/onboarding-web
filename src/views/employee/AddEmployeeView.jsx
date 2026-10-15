@@ -1377,7 +1377,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
               {/* Card 1: Bank Account */}
               <div className="add-emp-subcard mb-4">
                 <div className="add-emp-subcard-header">
-                  <div className="add-emp-subcard-badge emp-badge-green">
+                  <div className="add-emp-subcard-badge emp-badge-secondary">
                     <Bank size={20} weight="bold" />
                   </div>
                   <h4 className="add-emp-subcard-title">Bank Account</h4>
@@ -1440,13 +1440,13 @@ export default function AddEmployeeView({ presenter, onBack }) {
                 </div>
               </div>
 
-              {/* Card 2: Social Security & Insurance */}
+              {/* Card 2: Insurance */}
               <div className="add-emp-subcard">
                 <div className="add-emp-subcard-header">
-                  <div className="add-emp-subcard-badge emp-badge-blue">
+                  <div className="add-emp-subcard-badge emp-badge-secondary">
                     <ShieldCheck size={20} weight="bold" />
                   </div>
-                  <h4 className="add-emp-subcard-title">Social Security &amp; Insurance</h4>
+                  <h4 className="add-emp-subcard-title">Insurance</h4>
                 </div>
 
                 <div className="row g-4">
