@@ -289,7 +289,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
         reader.onload = (uploadEvent) => {
           const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
           const lowerName = file.name.toLowerCase();
-          let category = 'Other';
+          let category = 'ID Card (KTP)';
           if (lowerName.includes('ktp')) category = 'ID Card (KTP)';
           else if (lowerName.includes('npwp')) category = 'NPWP Card';
           else if (lowerName.includes('kk') || lowerName.includes('keluarga')) category = 'Family Card (KK)';
@@ -1422,7 +1422,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                             <div className="add-emp-doc-file-category">
                               <select
                                 className="add-emp-doc-type-select"
-                                value={doc.category || 'Other'}
+                                value={doc.category || 'ID Card (KTP)'}
                                 onChange={(e) => handleDocCategoryChange(doc.id, e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
                                 title="Document Category"
@@ -1433,7 +1433,6 @@ export default function AddEmployeeView({ presenter, onBack }) {
                                 <option value="Work Contract">Work Contract</option>
                                 <option value="Diploma">Diploma / Ijazah</option>
                                 <option value="Certificate">Certificate</option>
-                                <option value="Other">Other Document</option>
                               </select>
                             </div>
 
