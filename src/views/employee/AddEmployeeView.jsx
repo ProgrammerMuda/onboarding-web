@@ -1415,26 +1415,26 @@ export default function AddEmployeeView({ presenter, onBack }) {
                               </div>
                               <div className="add-emp-doc-file-info">
                                 <span className="add-emp-doc-file-name" title={doc.name}>{doc.name}</span>
-                                <div className="add-emp-doc-file-meta">
-                                  <span>{formatDocSize(doc.size)}</span>
-                                  <span>&bull;</span>
-                                  <select
-                                    className="add-emp-doc-type-select"
-                                    value={doc.category || 'Other'}
-                                    onChange={(e) => handleDocCategoryChange(doc.id, e.target.value)}
-                                    onClick={(e) => e.stopPropagation()}
-                                    title="Document Category"
-                                  >
-                                    <option value="ID Card (KTP)">ID Card (KTP)</option>
-                                    <option value="NPWP Card">NPWP Card</option>
-                                    <option value="Family Card (KK)">Family Card (KK)</option>
-                                    <option value="Work Contract">Work Contract</option>
-                                    <option value="Diploma">Diploma / Ijazah</option>
-                                    <option value="Certificate">Certificate</option>
-                                    <option value="Other">Other Document</option>
-                                  </select>
-                                </div>
+                                <span className="add-emp-doc-file-meta">{formatDocSize(doc.size)}</span>
                               </div>
+                            </div>
+
+                            <div className="add-emp-doc-file-category">
+                              <select
+                                className="add-emp-doc-type-select"
+                                value={doc.category || 'Other'}
+                                onChange={(e) => handleDocCategoryChange(doc.id, e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                title="Document Category"
+                              >
+                                <option value="ID Card (KTP)">ID Card (KTP)</option>
+                                <option value="NPWP Card">NPWP Card</option>
+                                <option value="Family Card (KK)">Family Card (KK)</option>
+                                <option value="Work Contract">Work Contract</option>
+                                <option value="Diploma">Diploma / Ijazah</option>
+                                <option value="Certificate">Certificate</option>
+                                <option value="Other">Other Document</option>
+                              </select>
                             </div>
 
                             <div className="add-emp-doc-file-actions">

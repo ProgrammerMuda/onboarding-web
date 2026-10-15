@@ -1248,16 +1248,15 @@ input[type="date"].add-emp-input {
 }
 
 .add-emp-doc-file-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px auto;
   align-items: center;
-  justify-content: space-between;
   padding: 12px 16px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   background-color: #ffffff;
-  gap: 14px;
+  gap: 16px;
   transition: all 0.15s ease;
-  flex-wrap: wrap;
 }
 
 .add-emp-doc-file-card:hover {
@@ -1270,7 +1269,6 @@ input[type="date"].add-emp-input {
   align-items: center;
   gap: 12px;
   min-width: 0;
-  flex: 1;
 }
 
 .add-emp-doc-file-icon {
@@ -1294,7 +1292,7 @@ input[type="date"].add-emp-input {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  gap: 3px;
+  gap: 2px;
 }
 
 .add-emp-doc-file-name {
@@ -1304,37 +1302,43 @@ input[type="date"].add-emp-input {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 260px;
+  max-width: 300px;
 }
 
 .add-emp-doc-file-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   font-size: 11.5px;
   color: #64748b;
-  flex-wrap: wrap;
+  font-weight: 500;
+}
+
+.add-emp-doc-file-category {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 
 .add-emp-doc-type-select {
+  width: 100%;
+  height: 36px;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  padding: 4px 28px 4px 10px;
-  font-size: 11.5px;
-  font-weight: 600;
+  padding: 0 30px 0 12px;
+  font-size: 12.5px;
+  font-weight: 500;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   background-color: #f8fafc;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 256 256'%3E%3Cpath fill='%23002B7F' d='m213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 256 256'%3E%3Cpath fill='%23002B7F' d='m213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 10px 10px;
+  background-position: right 11px center;
+  background-size: 11px 11px;
   color: #002B7F;
   cursor: pointer;
   outline: none;
   transition: all 0.15s ease;
   line-height: 1.4;
+  box-sizing: border-box;
 }
 
 .add-emp-doc-type-select:hover {
@@ -1352,6 +1356,17 @@ input[type="date"].add-emp-input {
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .add-emp-doc-file-card {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .add-emp-doc-file-actions {
+    justify-content: flex-start;
+  }
 }
 
 .add-emp-btn-doc-action {
