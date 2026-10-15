@@ -401,6 +401,36 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 </div>
               </div>
 
+              {/* Card 2: Address (Side-by-side: Current & Address ID Card) */}
+              <div className="emp-detail-card">
+                <div className="emp-detail-card-head">
+                  <div className="emp-detail-card-head-left">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
+                      <House size={20} weight="bold" />
+                    </div>
+                    <h3 className="emp-detail-card-title">Address</h3>
+                  </div>
+                </div>
+
+                <div className="emp-detail-address-grid">
+                  {/* Kiri: Current Address */}
+                  <div className="emp-detail-address-panel">
+                    <div className="emp-detail-address-label">Current</div>
+                    <div className="emp-detail-address-text">
+                      {emp.domicileAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan'}
+                    </div>
+                  </div>
+
+                  {/* Kanan: Address ID Card */}
+                  <div className="emp-detail-address-panel">
+                    <div className="emp-detail-address-label">Address ID Card</div>
+                    <div className="emp-detail-address-text">
+                      {emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Card 3: Document Attachments */}
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
