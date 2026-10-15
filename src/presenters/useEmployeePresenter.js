@@ -42,7 +42,7 @@ const EMPTY_DRAFT = {
   departmentId: '',
   divisionId: '',
   position: '',
-  employmentType: '', // Employee Status (Contract, Permanent, Probation, Internship)
+  employmentType: '', // Employee Status (PKWT/KONTRAK, PKWT/PERMANEN, Vendor, Magang)
   joinDate: '',
   endDate: '',
   approvalLine: '',

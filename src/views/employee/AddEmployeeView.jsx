@@ -1211,10 +1211,10 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     onChange={(e) => updateWizardDraft({ employmentType: e.target.value })}
                   >
                     <option value="">-- Select Employee Status --</option>
-                    <option value="Permanent">Permanent</option>
-                    <option value="Contract">Contract</option>
-                    <option value="Probation">Probation</option>
-                    <option value="Internship">Internship</option>
+                    <option value="PKWT/KONTRAK">PKWT/KONTRAK</option>
+                    <option value="PKWT/PERMANEN">PKWT/PERMANEN</option>
+                    <option value="Vendor">Vendor</option>
+                    <option value="Magang">Magang</option>
                   </select>
                 </div>
 

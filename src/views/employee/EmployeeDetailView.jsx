@@ -43,7 +43,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
       ...employee,
       citizenship: employee.citizenship || 'Indonesia',
       gender: employee.gender || 'Male',
-      employmentType: employee.employmentType || 'Contract',
+      employmentType: employee.employmentType || 'PKWT/KONTRAK',
       workLocation: employee.workLocation || 'Head Office',
       shiftSchedule: employee.shiftSchedule || 'Normal (08:00 - 17:00)'
     };
@@ -316,7 +316,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 <div className="emp-detail-info-texts">
                   <span className="emp-detail-info-label">Type of Hire</span>
                   <span className="emp-detail-info-val">
-                    {emp.employmentType ? `${emp.employmentType} Employee` : 'Contract Employee'}
+                    {emp.employmentType || 'PKWT/KONTRAK'}
                   </span>
                 </div>
               </div>
@@ -592,7 +592,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 <div className="emp-detail-table-wrap">
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Employment Status</span>
-                    <span className="emp-detail-kv-value">{emp.employmentType || 'Contract'}</span>
+                    <span className="emp-detail-kv-value">{emp.employmentType || 'PKWT/KONTRAK'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Join Date (Start Date)</span>
