@@ -826,7 +826,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                       Phone Number <span className="req">*</span>
                     </label>
                     <span className="add-emp-digit-hint">
-                      {(wizardDraft.phone || '').length} / max 15 digits
+                      {(wizardDraft.phone || '').length} / 15 digits
                     </span>
                   </div>
                   <div className="input-group">
@@ -1123,7 +1123,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                       Phone Number <span className="req">*</span>
                     </label>
                     <span className="add-emp-digit-hint">
-                      {(wizardDraft.emergencyPhone || '').length} / max 15 digits
+                      {(wizardDraft.emergencyPhone || '').length} / 15 digits
                     </span>
                   </div>
                   <div className="input-group">
