@@ -392,10 +392,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
 
                 <div className="emp-detail-table-wrap">
                   <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Level of Education</span>
-                    <span className="emp-detail-kv-value">{emp.educationLevel || 'Higher Education (S1)'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">NIK (ID Card / KTP)</span>
                     <span className="emp-detail-kv-value font-monospace">{emp.ktp || emp.nik || '3171015508920001'}</span>
                   </div>
