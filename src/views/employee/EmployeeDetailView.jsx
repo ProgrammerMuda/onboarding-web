@@ -20,8 +20,7 @@ import {
   User,
   Buildings,
   CheckCircle,
-  FolderSimple,
-  MapPin
+  FolderSimple
 } from '@phosphor-icons/react';
 import './add-employee.css';
 import './employee.css';
@@ -251,18 +250,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 </div>
               </div>
 
-              {/* 3. Work Location */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <MapPin size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Work Location</span>
-                  <span className="emp-detail-info-val">{emp.workLocation || 'Head Office'}</span>
-                </div>
-              </div>
-
-              {/* 4. Status */}
+              {/* 3. Status */}
               <div className="emp-detail-info-item">
                 <div className="emp-detail-info-icon">
                   <ShieldCheck size={16} weight="bold" />
@@ -572,14 +560,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">End Date</span>
                     <span className="emp-detail-kv-value text-danger">{emp.endDate || '2025-12-31'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Work Location</span>
-                    <span className="emp-detail-kv-value">{emp.workLocation || 'Head Office / Property Site'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Shift Schedule</span>
-                    <span className="emp-detail-kv-value">{emp.shiftSchedule || 'Normal (08:00 - 17:00)'}</span>
                   </div>
                   {emp.resignDate && (
                     <div className="emp-detail-kv-row">
