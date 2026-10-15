@@ -526,14 +526,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </div>
                 </div>
 
-                <div className="emp-detail-org-trail">
-                  <span className="emp-detail-trail-dept">{deptName}</span>
-                  <CaretRight size={12} weight="bold" className="emp-detail-trail-sep" />
-                  <span className="emp-detail-trail-div">{divName}</span>
-                  <CaretRight size={12} weight="bold" className="emp-detail-trail-sep" />
-                  <span className="emp-detail-trail-pos">{displayPosition}</span>
-                </div>
-
                 <div className="emp-detail-table-wrap">
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Department</span>
