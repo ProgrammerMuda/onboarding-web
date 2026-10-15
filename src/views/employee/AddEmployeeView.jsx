@@ -380,7 +380,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
       return 'Account Number is required.';
     }
     if (!wizardDraft.beneficiaryName || !wizardDraft.beneficiaryName.trim()) {
-      return 'Nama di Rekening Bank is required.';
+      return 'Account Holder Name is required.';
     }
     if (wizardDraft.bpjsTk && wizardDraft.bpjsTk.trim()) {
       const cleanBpjs = wizardDraft.bpjsTk.replace(/\D/g, '');
@@ -1421,17 +1421,17 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     />
                   </div>
 
-                  {/* Nama di Rekening Bank */}
+                  {/* Account Holder Name */}
                   <div className="col-md-6 add-emp-field-col">
                     <div className="add-emp-label-wrap">
                       <label className="add-emp-label">
-                        Nama di Rekening Bank <span className="req">*</span>
+                        Account Holder Name <span className="req">*</span>
                       </label>
                     </div>
                     <input
                       type="text"
                       className="form-control add-emp-input"
-                      placeholder="e.g. Raga Murtadha (sesuai buku tabungan)"
+                      placeholder="e.g. Raga Murtadha"
                       value={wizardDraft.beneficiaryName}
                       onChange={(e) => updateWizardDraft({ beneficiaryName: e.target.value })}
                     />

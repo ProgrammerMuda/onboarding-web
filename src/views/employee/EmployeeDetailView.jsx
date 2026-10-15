@@ -693,7 +693,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <span className="emp-detail-kv-value font-monospace">{emp.bankAccount || '8271-9920-112'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Nama di Rekening Bank</span>
+                    <span className="emp-detail-kv-label">Account Holder Name</span>
                     <span className="emp-detail-kv-value">{emp.beneficiaryName || emp.name}</span>
                   </div>
                 </div>
