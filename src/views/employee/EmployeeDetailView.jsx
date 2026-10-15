@@ -20,7 +20,8 @@ import {
   User,
   Buildings,
   CheckCircle,
-  FolderSimple
+  FolderSimple,
+  MapPin
 } from '@phosphor-icons/react';
 import './add-employee.css';
 import './employee.css';
@@ -229,40 +230,18 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 </div>
               </div>
 
-              {/* 3. Nationality */}
+              {/* 3. Work Location */}
               <div className="emp-detail-info-item">
                 <div className="emp-detail-info-icon">
-                  <Globe size={16} weight="bold" />
+                  <MapPin size={16} weight="bold" />
                 </div>
                 <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Nationality</span>
-                  <span className="emp-detail-info-val">{emp.citizenship || 'Indonesia'}</span>
+                  <span className="emp-detail-info-label">Work Location</span>
+                  <span className="emp-detail-info-val">{emp.workLocation || 'Head Office'}</span>
                 </div>
               </div>
 
-              {/* 4. Gender */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <GenderIntersex size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Gender</span>
-                  <span className="emp-detail-info-val">{emp.gender || 'Male'}</span>
-                </div>
-              </div>
-
-              {/* 5. Age */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <CalendarBlank size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Age</span>
-                  <span className="emp-detail-info-val">{calculatedAge}</span>
-                </div>
-              </div>
-
-              {/* 6. Status */}
+              {/* 4. Status */}
               <div className="emp-detail-info-item">
                 <div className="emp-detail-info-icon">
                   <ShieldCheck size={16} weight="bold" />
@@ -281,6 +260,39 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                       </span>
                     )}
                   </span>
+                </div>
+              </div>
+
+              {/* 5. Gender */}
+              <div className="emp-detail-info-item">
+                <div className="emp-detail-info-icon">
+                  <GenderIntersex size={16} weight="bold" />
+                </div>
+                <div className="emp-detail-info-texts">
+                  <span className="emp-detail-info-label">Gender</span>
+                  <span className="emp-detail-info-val">{emp.gender || 'Male'}</span>
+                </div>
+              </div>
+
+              {/* 6. Nationality */}
+              <div className="emp-detail-info-item">
+                <div className="emp-detail-info-icon">
+                  <Globe size={16} weight="bold" />
+                </div>
+                <div className="emp-detail-info-texts">
+                  <span className="emp-detail-info-label">Nationality</span>
+                  <span className="emp-detail-info-val">{emp.citizenship || 'Indonesia'}</span>
+                </div>
+              </div>
+
+              {/* 7. Age */}
+              <div className="emp-detail-info-item">
+                <div className="emp-detail-info-icon">
+                  <CalendarBlank size={16} weight="bold" />
+                </div>
+                <div className="emp-detail-info-texts">
+                  <span className="emp-detail-info-label">Age</span>
+                  <span className="emp-detail-info-val">{calculatedAge}</span>
                 </div>
               </div>
             </div>
