@@ -116,21 +116,33 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
       </nav>
 
       {/* 2. Page Header */}
-      <div className="add-emp-header">
+      <div className="add-emp-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div className="d-flex align-items-center gap-3">
+          <button
+            type="button"
+            className="add-emp-back-btn"
+            onClick={onBack}
+            title="Return to Employee Directory"
+          >
+            <ArrowLeft size={18} weight="bold" />
+          </button>
+          <div>
+            <h1 className="add-emp-title">Employee Profile</h1>
+            <p className="add-emp-subtitle">
+              View detailed employee profile, personal records, job status, and documents.
+            </p>
+          </div>
+        </div>
+
         <button
           type="button"
-          className="add-emp-back-btn"
-          onClick={onBack}
-          title="Return to Employee Directory"
+          className="emp-detail-header-edit-btn"
+          onClick={handleEdit}
+          title="Edit Employee Information"
         >
-          <ArrowLeft size={18} weight="bold" />
+          <PencilSimple size={16} weight="bold" />
+          <span>Edit Employee</span>
         </button>
-        <div>
-          <h1 className="add-emp-title">Employee Profile</h1>
-          <p className="add-emp-subtitle">
-            View detailed employee profile, personal records, job status, and documents.
-          </p>
-        </div>
       </div>
 
       {/* 2. Main 2-Column Grid Layout */}
@@ -187,15 +199,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 </div>
               )}
             </div>
-
-            <button
-              type="button"
-              className="emp-detail-card-edit-icon"
-              title="Edit Employee Information"
-              onClick={handleEdit}
-            >
-              <PencilSimple size={16} weight="bold" />
-            </button>
           </div>
 
           {/* Profile Identity Details */}
@@ -310,6 +313,17 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </span>
                 </div>
               </div>
+
+              {/* Edit Full Profile Action Button */}
+              <button
+                type="button"
+                className="emp-detail-profile-edit-btn"
+                onClick={handleEdit}
+                title="Edit Employee Information"
+              >
+                <PencilSimple size={15} weight="bold" />
+                <span>Edit Full Profile</span>
+              </button>
             </div>
           </div>
         </div>
@@ -370,14 +384,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     </div>
                     <h3 className="emp-detail-card-title">Professional Information</h3>
                   </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Professional Information"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
                 </div>
 
                 <div className="emp-detail-table-wrap">
@@ -428,14 +434,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     </div>
                     <h3 className="emp-detail-card-title">Tax Information</h3>
                   </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Tax Information"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
                 </div>
 
                 <div className="emp-detail-table-wrap">
@@ -582,14 +580,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     </div>
                     <h3 className="emp-detail-card-title">Organizational Placement</h3>
                   </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Organization Placement"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
                 </div>
 
                 <div className="emp-detail-table-wrap">
@@ -629,14 +619,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     </div>
                     <h3 className="emp-detail-card-title">Employment Contract &amp; Tenure</h3>
                   </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Contract Tenure"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
                 </div>
 
                 <div className="emp-detail-table-wrap">
@@ -682,14 +664,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     </div>
                     <h3 className="emp-detail-card-title">Bank Account</h3>
                   </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Bank Information"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
                 </div>
 
                 <div className="emp-detail-table-wrap">
@@ -716,14 +690,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     </div>
                     <h3 className="emp-detail-card-title">Social Security &amp; Insurance</h3>
                   </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Insurance"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
                 </div>
 
                 <div className="emp-detail-table-wrap">
@@ -752,14 +718,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     </div>
                     <h3 className="emp-detail-card-title">Primary Emergency Contact</h3>
                   </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Emergency Contact"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
                 </div>
 
                 <div className="emp-detail-table-wrap">
@@ -793,14 +751,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     </div>
                     <h3 className="emp-detail-card-title">Home &amp; Domicile Address</h3>
                   </div>
-                  <button
-                    type="button"
-                    className="emp-detail-card-edit-icon"
-                    title="Edit Home Address"
-                    onClick={handleEdit}
-                  >
-                    <PencilSimple size={15} weight="bold" />
-                  </button>
                 </div>
 
                 <div className="emp-detail-table-wrap">

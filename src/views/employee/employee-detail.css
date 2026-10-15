@@ -91,26 +91,54 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
 }
 
-.emp-detail-card-edit-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  color: #475569;
+/* Header Global Edit Button */
+.emp-detail-header-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #002B7F;
+  border: 1px solid #002B7F;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  transform: none !important;
+  white-space: nowrap;
+}
+
+.emp-detail-header-edit-btn:hover {
+  background-color: #002266;
+  border-color: #002266;
+  color: #ffffff;
+}
+
+/* Profile Summary Card Edit Button */
+.emp-detail-profile-edit-btn {
+  width: 100%;
+  height: 40px;
+  margin-top: 20px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #0f172a;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
   transform: none !important;
 }
 
-.emp-detail-card-edit-icon:hover {
-  background: #f8fafc;
-  color: #0088cc;
-  border-color: #0088cc;
+.emp-detail-profile-edit-btn:hover {
+  background-color: #f8fafc;
+  border-color: #002B7F;
+  color: #002B7F;
 }
 
 /* Profile Identity */
