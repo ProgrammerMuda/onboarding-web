@@ -49,7 +49,16 @@ const EMPTY_DRAFT = {
   status: 'Active',
   resignDate: '',
 
-  // Step 3: Emergency Contact
+  // Step 3: Payroll & Social Security
+  bankName: '',
+  bankAccount: '',
+  beneficiaryName: '',
+  paymentSchedule: 'Monthly (Every 25th)',
+  bpjsTk: '',
+  bpjsKesehatan: '',
+  coverageTier: 'Class 1 Corporate Comprehensive',
+
+  // Step 4: Emergency Contact
   emergencyName: '',
   emergencyRelation: '',
   emergencyNik: '',

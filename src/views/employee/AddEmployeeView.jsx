@@ -18,9 +18,43 @@ import {
   X,
   CaretDown,
   MagnifyingGlass,
-  Globe
+  Globe,
+  CreditCard,
+  ShieldCheck
 } from '@phosphor-icons/react';
 import './add-employee.css';
+
+const BANK_OPTIONS = [
+  'Bank Central Asia (BCA)',
+  'Bank Mandiri',
+  'Bank Rakyat Indonesia (BRI)',
+  'Bank Negara Indonesia (BNI)',
+  'Bank Syariah Indonesia (BSI)',
+  'Bank CIMB Niaga',
+  'Bank Permata',
+  'Bank Danamon',
+  'Bank Tabungan Pensiunan Nasional (BTPN / Jenius)',
+  'Bank Mega',
+  'Bank Panin',
+  'Bank OCBC NISP',
+  'Bank Maybank Indonesia',
+  'Other'
+];
+
+const PAYMENT_SCHEDULE_OPTIONS = [
+  'Monthly (Every 25th)',
+  'Monthly (End of Month)',
+  'Monthly (Every 1st)',
+  'Bi-weekly',
+  'Weekly'
+];
+
+const COVERAGE_TIER_OPTIONS = [
+  'Class 1 Corporate Comprehensive',
+  'Class 2 Standard Corporate',
+  'Class 3 Basic Corporate',
+  'Executive Tier'
+];
 
 const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
@@ -345,8 +379,37 @@ export default function AddEmployeeView({ presenter, onBack }) {
     return null;
   };
 
-  // Step 3 Validation
+  // Step 3 Validation (Payroll & Social Security)
   const validateStep3 = () => {
+    if (!wizardDraft.bankName || !wizardDraft.bankName.trim()) {
+      return 'Bank Name is required.';
+    }
+    if (!wizardDraft.bankAccount || !wizardDraft.bankAccount.trim()) {
+      return 'Account Number is required.';
+    }
+    if (!wizardDraft.beneficiaryName || !wizardDraft.beneficiaryName.trim()) {
+      return 'Beneficiary Name is required.';
+    }
+    if (!wizardDraft.paymentSchedule || !wizardDraft.paymentSchedule.trim()) {
+      return 'Payment Schedule is required.';
+    }
+    if (wizardDraft.bpjsTk && wizardDraft.bpjsTk.trim()) {
+      const cleanBpjs = wizardDraft.bpjsTk.replace(/\D/g, '');
+      if (cleanBpjs.length > 20) {
+        return 'BPJS Ketenagakerjaan number cannot exceed 20 digits.';
+      }
+    }
+    if (wizardDraft.bpjsKesehatan && wizardDraft.bpjsKesehatan.trim()) {
+      const cleanBpjs = wizardDraft.bpjsKesehatan.replace(/\D/g, '');
+      if (cleanBpjs.length > 20) {
+        return 'BPJS Kesehatan number cannot exceed 20 digits.';
+      }
+    }
+    return null;
+  };
+
+  // Step 4 Validation (Emergency Contact)
+  const validateStep4 = () => {
     if (!wizardDraft.emergencyName || !wizardDraft.emergencyName.trim()) {
       return 'Contact Name is required.';
     }
@@ -410,6 +473,16 @@ export default function AddEmployeeView({ presenter, onBack }) {
   }, [wizardDraft]);
 
   const isStep3Filled = useMemo(() => {
+    const hasBank = Boolean(wizardDraft.bankName && wizardDraft.bankName.trim());
+    const hasAccount = Boolean(wizardDraft.bankAccount && wizardDraft.bankAccount.trim());
+    const hasBeneficiary = Boolean(wizardDraft.beneficiaryName && wizardDraft.beneficiaryName.trim());
+    const hasSchedule = Boolean(wizardDraft.paymentSchedule && wizardDraft.paymentSchedule.trim());
+    const hasCoverage = Boolean(wizardDraft.coverageTier && wizardDraft.coverageTier.trim());
+
+    return hasBank && hasAccount && hasBeneficiary && hasSchedule && hasCoverage;
+  }, [wizardDraft]);
+
+  const isStep4Filled = useMemo(() => {
     const hasName = Boolean(wizardDraft.emergencyName && wizardDraft.emergencyName.trim());
     const hasRel = Boolean(wizardDraft.emergencyRelation);
     const hasPhone = Boolean(wizardDraft.emergencyPhone && wizardDraft.emergencyPhone.trim());
@@ -422,8 +495,9 @@ export default function AddEmployeeView({ presenter, onBack }) {
     if (wizardStep === 1) return !isStep1Filled;
     if (wizardStep === 2) return !isStep2Filled;
     if (wizardStep === 3) return !isStep3Filled;
+    if (wizardStep === 4) return !isStep4Filled;
     return false;
-  }, [wizardStep, isStep1Filled, isStep2Filled, isStep3Filled]);
+  }, [wizardStep, isStep1Filled, isStep2Filled, isStep3Filled, isStep4Filled]);
 
   const handleNext = () => {
     setStepError('');
@@ -446,7 +520,19 @@ export default function AddEmployeeView({ presenter, onBack }) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
+      if (!wizardDraft.beneficiaryName && wizardDraft.name) {
+        updateWizardDraft({ beneficiaryName: wizardDraft.name });
+      }
       setWizardStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (wizardStep === 3) {
+      const err = validateStep3();
+      if (err) {
+        setStepError(err);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+      setWizardStep(4);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -480,6 +566,13 @@ export default function AddEmployeeView({ presenter, onBack }) {
     if (err3) {
       setStepError(err3);
       setWizardStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const err4 = validateStep4();
+    if (err4) {
+      setStepError(err4);
+      setWizardStep(4);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -525,7 +618,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
         <div>
           <h1 className="add-emp-title">Add New Employee</h1>
           <p className="add-emp-subtitle">
-            Complete the 3-step registration form to register a new employee.
+            Complete the 4-step registration form to register a new employee.
           </p>
         </div>
       </div>
@@ -550,7 +643,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
             </div>
             <div className="add-emp-step-content">
               <span className="add-emp-step-title">Step 1: Personal Data</span>
-              <span className="add-emp-step-desc">Identity & Personal Contact</span>
+              <span className="add-emp-step-desc">Identity &amp; Personal Contact</span>
             </div>
           </div>
 
@@ -573,18 +666,41 @@ export default function AddEmployeeView({ presenter, onBack }) {
             </div>
             <div className="add-emp-step-content">
               <span className="add-emp-step-title">Step 2: Employee Data</span>
-              <span className="add-emp-step-desc">Department, Position & Contract</span>
+              <span className="add-emp-step-desc">Department, Position &amp; Contract</span>
             </div>
           </div>
 
           <div className={`add-emp-step-connector ${wizardStep > 2 ? 'completed' : ''}`} />
 
           {/* Step 3 Item */}
-          <div className={`add-emp-step-item ${wizardStep === 3 ? 'active' : ''}`}>
-            <div className="add-emp-step-circle">3</div>
+          <div
+            className={`add-emp-step-item ${wizardStep === 3 ? 'active' : ''} ${
+              wizardStep > 3 ? 'completed' : ''
+            }`}
+            onClick={() => {
+              if (wizardStep > 3) {
+                setStepError('');
+                setWizardStep(3);
+              }
+            }}
+          >
+            <div className="add-emp-step-circle">
+              {wizardStep > 3 ? <Check size={18} weight="bold" /> : '3'}
+            </div>
             <div className="add-emp-step-content">
-              <span className="add-emp-step-title">Step 3: Emergency Contact</span>
-              <span className="add-emp-step-desc">Emergency Contact & Address</span>
+              <span className="add-emp-step-title">Step 3: Payroll &amp; Insurance</span>
+              <span className="add-emp-step-desc">Bank Account &amp; Social Security</span>
+            </div>
+          </div>
+
+          <div className={`add-emp-step-connector ${wizardStep > 3 ? 'completed' : ''}`} />
+
+          {/* Step 4 Item */}
+          <div className={`add-emp-step-item ${wizardStep === 4 ? 'active' : ''}`}>
+            <div className="add-emp-step-circle">4</div>
+            <div className="add-emp-step-content">
+              <span className="add-emp-step-title">Step 4: Emergency Contact</span>
+              <span className="add-emp-step-desc">Emergency Contact &amp; Address</span>
             </div>
           </div>
         </div>
@@ -623,6 +739,20 @@ export default function AddEmployeeView({ presenter, onBack }) {
           )}
 
           {wizardStep === 3 && (
+            <>
+              <div className="add-emp-heading-badge">
+                <CreditCard size={20} weight="bold" color="#0088cc" />
+              </div>
+              <div>
+                <h3 className="add-emp-heading-title">Payroll &amp; Social Security</h3>
+                <p className="add-emp-heading-subtitle">
+                  Bank account details for payroll transfer and BPJS insurance coverage.
+                </p>
+              </div>
+            </>
+          )}
+
+          {wizardStep === 4 && (
             <>
               <div className="add-emp-heading-badge">
                 <Phone size={20} weight="bold" color="#0088cc" />
@@ -1251,9 +1381,180 @@ export default function AddEmployeeView({ presenter, onBack }) {
           )}
 
           {/* ============================================================ */}
-          {/* STEP 3: EMERGENCY CONTACT                                    */}
+          {/* STEP 3: PAYROLL & SOCIAL SECURITY                            */}
           {/* ============================================================ */}
           {wizardStep === 3 && (
+            <div className="add-emp-step-pane">
+              {/* Card 1: Payroll & Bank Account */}
+              <div className="add-emp-subcard mb-4">
+                <div className="add-emp-subcard-header">
+                  <div className="add-emp-subcard-badge emp-badge-green">
+                    <CreditCard size={20} weight="bold" />
+                  </div>
+                  <h4 className="add-emp-subcard-title">Payroll &amp; Bank Account</h4>
+                </div>
+
+                <div className="row g-4">
+                  {/* Bank Name */}
+                  <div className="col-md-6 add-emp-field-col">
+                    <div className="add-emp-label-wrap">
+                      <label className="add-emp-label">
+                        Bank Name <span className="req">*</span>
+                      </label>
+                    </div>
+                    <select
+                      className="form-select add-emp-input"
+                      value={wizardDraft.bankName}
+                      onChange={(e) => updateWizardDraft({ bankName: e.target.value })}
+                      autoFocus
+                    >
+                      <option value="">-- Select Bank Name --</option>
+                      {BANK_OPTIONS.map((bank) => (
+                        <option key={bank} value={bank}>
+                          {bank}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Account Number */}
+                  <div className="col-md-6 add-emp-field-col">
+                    <div className="add-emp-label-wrap">
+                      <label className="add-emp-label">
+                        Account Number <span className="req">*</span>
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      className="form-control add-emp-input font-monospace"
+                      placeholder="e.g. 8271-9920-112"
+                      value={wizardDraft.bankAccount}
+                      onChange={(e) => updateWizardDraft({ bankAccount: e.target.value })}
+                    />
+                  </div>
+
+                  {/* Beneficiary Name */}
+                  <div className="col-md-6 add-emp-field-col">
+                    <div className="add-emp-label-wrap">
+                      <label className="add-emp-label">
+                        Beneficiary Name <span className="req">*</span>
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      className="form-control add-emp-input"
+                      placeholder="e.g. Raga Murtadha"
+                      value={wizardDraft.beneficiaryName}
+                      onChange={(e) => updateWizardDraft({ beneficiaryName: e.target.value })}
+                    />
+                  </div>
+
+                  {/* Payment Schedule */}
+                  <div className="col-md-6 add-emp-field-col">
+                    <div className="add-emp-label-wrap">
+                      <label className="add-emp-label">
+                        Payment Schedule <span className="req">*</span>
+                      </label>
+                    </div>
+                    <select
+                      className="form-select add-emp-input"
+                      value={wizardDraft.paymentSchedule || 'Monthly (Every 25th)'}
+                      onChange={(e) => updateWizardDraft({ paymentSchedule: e.target.value })}
+                    >
+                      {PAYMENT_SCHEDULE_OPTIONS.map((sched) => (
+                        <option key={sched} value={sched}>
+                          {sched}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Social Security & Insurance */}
+              <div className="add-emp-subcard">
+                <div className="add-emp-subcard-header">
+                  <div className="add-emp-subcard-badge emp-badge-blue">
+                    <ShieldCheck size={20} weight="bold" />
+                  </div>
+                  <h4 className="add-emp-subcard-title">Social Security &amp; Insurance</h4>
+                </div>
+
+                <div className="row g-4">
+                  {/* BPJS Ketenagakerjaan */}
+                  <div className="col-md-6 add-emp-field-col">
+                    <div className="add-emp-label-wrap">
+                      <label className="add-emp-label">BPJS Ketenagakerjaan</label>
+                      <span className="add-emp-digit-hint">
+                        {(wizardDraft.bpjsTk || '').length} / 11-16 digits
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={16}
+                      className="form-control add-emp-input font-monospace"
+                      placeholder="e.g. 000189283921"
+                      value={wizardDraft.bpjsTk}
+                      onChange={(e) =>
+                        updateWizardDraft({
+                          bpjsTk: e.target.value.replace(/\D/g, '').slice(0, 16)
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* BPJS Kesehatan */}
+                  <div className="col-md-6 add-emp-field-col">
+                    <div className="add-emp-label-wrap">
+                      <label className="add-emp-label">BPJS Kesehatan</label>
+                      <span className="add-emp-digit-hint">
+                        {(wizardDraft.bpjsKesehatan || '').length} / 11-16 digits
+                      </span>
+                    </div>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={16}
+                      className="form-control add-emp-input font-monospace"
+                      placeholder="e.g. 000293849182"
+                      value={wizardDraft.bpjsKesehatan}
+                      onChange={(e) =>
+                        updateWizardDraft({
+                          bpjsKesehatan: e.target.value.replace(/\D/g, '').slice(0, 16)
+                        })
+                      }
+                    />
+                  </div>
+
+                  {/* Coverage Tier */}
+                  <div className="col-md-6 add-emp-field-col">
+                    <div className="add-emp-label-wrap">
+                      <label className="add-emp-label">
+                        Coverage Tier <span className="req">*</span>
+                      </label>
+                    </div>
+                    <select
+                      className="form-select add-emp-input"
+                      value={wizardDraft.coverageTier || 'Class 1 Corporate Comprehensive'}
+                      onChange={(e) => updateWizardDraft({ coverageTier: e.target.value })}
+                    >
+                      {COVERAGE_TIER_OPTIONS.map((tier) => (
+                        <option key={tier} value={tier}>
+                          {tier}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================ */}
+          {/* STEP 4: EMERGENCY CONTACT                                    */}
+          {/* ============================================================ */}
+          {wizardStep === 4 && (
             <div className="add-emp-step-pane">
               <div className="row g-4">
                 {/* Row 1: Contact Name & Relationship */}
@@ -1407,7 +1708,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                 </button>
               )}
 
-              {wizardStep < 3 ? (
+              {wizardStep < 4 ? (
                 <button
                   type="button"
                   className="btn add-emp-btn-next"

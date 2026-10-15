@@ -686,19 +686,19 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 <div className="emp-detail-table-wrap">
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Bank Name</span>
-                    <span className="emp-detail-kv-value">Bank Central Asia (BCA)</span>
+                    <span className="emp-detail-kv-value">{emp.bankName || 'Bank Central Asia (BCA)'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Account Number</span>
-                    <span className="emp-detail-kv-value font-monospace">8271-9920-112</span>
+                    <span className="emp-detail-kv-value font-monospace">{emp.bankAccount || '8271-9920-112'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Beneficiary Name</span>
-                    <span className="emp-detail-kv-value">{emp.name}</span>
+                    <span className="emp-detail-kv-value">{emp.beneficiaryName || emp.name}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Payment Schedule</span>
-                    <span className="emp-detail-kv-value">Monthly (Every 25th)</span>
+                    <span className="emp-detail-kv-value">{emp.paymentSchedule || 'Monthly (Every 25th)'}</span>
                   </div>
                 </div>
               </div>
@@ -724,15 +724,15 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 <div className="emp-detail-table-wrap">
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">BPJS Ketenagakerjaan</span>
-                    <span className="emp-detail-kv-value font-monospace">000189283921</span>
+                    <span className="emp-detail-kv-value font-monospace">{emp.bpjsTk || '000189283921'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">BPJS Kesehatan</span>
-                    <span className="emp-detail-kv-value font-monospace">000293849182</span>
+                    <span className="emp-detail-kv-value font-monospace">{emp.bpjsKesehatan || '000293849182'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Coverage Tier</span>
-                    <span className="emp-detail-kv-value">Class 1 Corporate Comprehensive</span>
+                    <span className="emp-detail-kv-value">{emp.coverageTier || 'Class 1 Corporate Comprehensive'}</span>
                   </div>
                 </div>
               </div>
