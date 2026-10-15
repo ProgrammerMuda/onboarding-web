@@ -1648,7 +1648,7 @@ export default function EmployeeView({ presenter }) {
             }}
           >
             <Eye size={15} />
-            <span>Detail</span>
+            <span>View</span>
           </button>
           <button
             type="button"
