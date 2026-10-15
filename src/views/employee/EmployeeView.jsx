@@ -36,43 +36,44 @@ import EmployeeDetailView from './EmployeeDetailView';
 
 export default function EmployeeView({ presenter }) {
   const {
-    viewMode,
-    selectedEmployee,
-    openEmployeeDetail,
-    closeEmployeeDetail,
-    openAddEmployeePage,
-    goBackToList,
-    filteredEmployees,
-    departments,
-    divisions,
-    positions,
-    stats,
-    searchQuery,
-    setSearchQuery,
-    statusFilter,
-    setStatusFilter,
-    departmentFilter,
-    setDepartmentFilter,
-    divisionFilter,
-    setDivisionFilter,
-    getDivisionsForDept,
-    getPositionsForDivision,
-    modal,
-    openAddModal,
-    openEditModal,
-    closeModal,
-    saveEmployee,
-    detailModal,
-    openDetailModal,
-    closeDetailModal,
-    deleteModal,
-    openDeleteModal,
-    closeDeleteModal,
-    confirmDelete,
-    successModal,
-    closeSuccessModal,
-    importEmployees
-  } = presenter;
+    viewMode = 'list',
+    selectedEmployee = null,
+    openEmployeeDetail = () => {},
+    closeEmployeeDetail = () => {},
+    openAddEmployeePage = () => {},
+    goBackToList = () => {},
+    employees = [],
+    filteredEmployees = [],
+    departments = [],
+    divisions = [],
+    positions = [],
+    stats = { total: 0, active: 0, resigned: 0 },
+    searchQuery = '',
+    setSearchQuery = () => {},
+    statusFilter = 'all',
+    setStatusFilter = () => {},
+    departmentFilter = 'all',
+    setDepartmentFilter = () => {},
+    divisionFilter = 'all',
+    setDivisionFilter = () => {},
+    getDivisionsForDept = () => [],
+    getPositionsForDivision = () => [],
+    modal = { isOpen: false, data: {} },
+    openAddModal = () => {},
+    openEditModal = () => {},
+    closeModal = () => {},
+    saveEmployee = () => {},
+    detailModal = { isOpen: false, employee: null },
+    openDetailModal = () => {},
+    closeDetailModal = () => {},
+    deleteModal = { isOpen: false, employee: null },
+    openDeleteModal = () => {},
+    closeDeleteModal = () => {},
+    confirmDelete = () => {},
+    successModal = null,
+    closeSuccessModal = () => {},
+    importEmployees = () => {}
+  } = presenter || {};
 
   // Department name lookup helper
   const getDeptName = React.useCallback((deptId) => {
@@ -107,7 +108,7 @@ export default function EmployeeView({ presenter }) {
   }, [divisions]);
 
   // Local form state for Add/Edit modal
-  const [formData, setFormData] = useState({ ...modal.data });
+  const [formData, setFormData] = useState({ ...(modal?.data || {}) });
   const [showFilters, setShowFilters] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
 
