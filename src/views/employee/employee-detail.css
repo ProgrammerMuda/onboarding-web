@@ -241,17 +241,70 @@
   color: #0f172a;
 }
 
+.emp-detail-role-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
 .emp-detail-role-pill {
   display: inline-flex;
   align-items: center;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
+  gap: 6px;
+  background: #eaf8ff;
+  border: 1px solid #c2ebff;
   color: #0088cc;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 3px 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 10px;
   border-radius: 6px;
-  margin-bottom: 20px;
+}
+
+.emp-detail-dept-pill {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+/* Organizational Hierarchy Trail */
+.emp-detail-org-trail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  font-size: 12.5px;
+}
+
+.emp-detail-trail-dept {
+  color: #475569;
+  font-weight: 600;
+}
+
+.emp-detail-trail-div {
+  color: #475569;
+  font-weight: 600;
+}
+
+.emp-detail-trail-pos {
+  color: #002B7F;
+  font-weight: 700;
+}
+
+.emp-detail-trail-sep {
+  color: #94a3b8;
 }
 
 /* Basic Info List */

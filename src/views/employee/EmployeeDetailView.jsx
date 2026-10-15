@@ -86,6 +86,18 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
     return age > 0 ? String(age) : '32';
   }, [emp.dob]);
 
+  // Format position nicely and correct typo if present
+  const displayPosition = useMemo(() => {
+    if (!emp.position) return 'Employee';
+    if (
+      emp.position.toLowerCase().includes('supervisor account receiveble') ||
+      emp.position.toLowerCase().includes('supervisor accounts receivable')
+    ) {
+      return 'Supervisor Accounts Receivable';
+    }
+    return emp.position;
+  }, [emp.position]);
+
   const handleEdit = () => {
     if (typeof openEditModal === 'function') {
       openEditModal(emp);
@@ -200,8 +212,16 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <h2 className="emp-detail-name">{emp.name}</h2>
             </div>
 
-            <div className="emp-detail-role-pill">
-              {emp.position || 'Employee'}
+            <div className="emp-detail-role-wrap">
+              <span className="emp-detail-role-pill">
+                <Briefcase size={14} weight="bold" />
+                <span>{displayPosition}</span>
+              </span>
+              {divName && (
+                <span className="emp-detail-dept-pill">
+                  {divName}
+                </span>
+              )}
             </div>
 
             {/* Basic Information Section */}
@@ -522,6 +542,14 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </div>
                 </div>
 
+                <div className="emp-detail-org-trail">
+                  <span className="emp-detail-trail-dept">{deptName}</span>
+                  <CaretRight size={12} weight="bold" className="emp-detail-trail-sep" />
+                  <span className="emp-detail-trail-div">{divName}</span>
+                  <CaretRight size={12} weight="bold" className="emp-detail-trail-sep" />
+                  <span className="emp-detail-trail-pos">{displayPosition}</span>
+                </div>
+
                 <div className="emp-detail-table-wrap">
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Department</span>
@@ -533,7 +561,9 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Job Position</span>
-                    <span className="emp-detail-kv-value">{emp.position}</span>
+                    <span className="emp-detail-kv-value" style={{ color: '#002B7F', fontWeight: 700 }}>
+                      {displayPosition}
+                    </span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Work Location</span>
