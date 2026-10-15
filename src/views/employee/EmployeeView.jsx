@@ -192,24 +192,18 @@ export default function EmployeeView({ presenter }) {
     }
 
     const rect = e.currentTarget.getBoundingClientRect();
-    const dropdownHeight = 135;
-    const dropdownWidth = 175;
+    const dropdownHeight = 115;
     const spaceBelow = window.innerHeight - rect.bottom;
     const openUp = spaceBelow < dropdownHeight + 15;
 
-    let left = rect.right - dropdownWidth;
-    if (left < 10) left = 10;
-    if (left + dropdownWidth > window.innerWidth - 10) {
-      left = window.innerWidth - dropdownWidth - 10;
-    }
-
     const top = openUp ? rect.top - dropdownHeight - 4 : rect.bottom + 4;
+    const right = Math.max(8, window.innerWidth - rect.right);
 
     setOpenMenuId(emp.id);
     setMenuAnchor({
       employee: emp,
       top,
-      left,
+      right,
       openUp
     });
   };
@@ -1638,7 +1632,7 @@ export default function EmployeeView({ presenter }) {
           style={{
             position: 'fixed',
             top: `${menuAnchor.top}px`,
-            left: `${menuAnchor.left}px`,
+            right: `${menuAnchor.right}px`,
             zIndex: 99999
           }}
           onClick={(e) => e.stopPropagation()}
@@ -1654,7 +1648,7 @@ export default function EmployeeView({ presenter }) {
             }}
           >
             <Eye size={15} />
-            <span>View Full Profile</span>
+            <span>Detail</span>
           </button>
           <button
             type="button"
@@ -1667,7 +1661,7 @@ export default function EmployeeView({ presenter }) {
             }}
           >
             <PencilSimple size={15} />
-            <span>Edit Information</span>
+            <span>Edit</span>
           </button>
           <div className="emp-dropdown-divider" />
           <button
@@ -1681,7 +1675,7 @@ export default function EmployeeView({ presenter }) {
             }}
           >
             <Trash size={15} />
-            <span>Delete Employee</span>
+            <span>Delete</span>
           </button>
         </div>,
         document.body
