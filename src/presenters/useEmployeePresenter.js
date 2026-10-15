@@ -36,6 +36,7 @@ const EMPTY_DRAFT = {
   citizenship: 'Indonesia',
   avatar: '',
   avatarFileName: '',
+  documents: [], // Document attachments (KTP, NPWP, KK, etc.)
 
   // Step 2: Employee Data
   nik: '', // NIP

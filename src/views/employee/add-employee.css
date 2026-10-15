@@ -1078,3 +1078,384 @@ input[type="date"].add-emp-input {
   color: #0f172a;
   margin: 0;
 }
+
+/* ==========================================================================
+   Document Attachments Section (Step 1: Personal Data)
+   ========================================================================== */
+.add-emp-attachment-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-top: 28px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.add-emp-attachment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.add-emp-attachment-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.add-emp-attachment-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  color: #002B7F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.add-emp-attachment-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #002B7F;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.add-emp-attachment-subtitle {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.add-emp-attachment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background-color: #f1f5f9;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+.add-emp-attachment-badge.has-docs {
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+}
+
+.add-emp-doc-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 16px;
+}
+
+.add-emp-doc-slot-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  background-color: #fafbfc;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 155px;
+}
+
+.add-emp-doc-slot-card.is-filled {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.add-emp-doc-slot-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.add-emp-doc-slot-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-emp-doc-slot-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #002B7F;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.add-emp-doc-slot-empty-dropzone {
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 8px;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: #ffffff;
+  gap: 6px;
+  flex: 1;
+}
+
+.add-emp-doc-slot-empty-dropzone:hover {
+  border-color: #002B7F;
+  background-color: #f8fafc;
+}
+
+.add-emp-doc-slot-empty-dropzone .empty-icon {
+  color: #94a3b8;
+  margin-bottom: 2px;
+  transition: color 0.15s ease;
+}
+
+.add-emp-doc-slot-empty-dropzone:hover .empty-icon {
+  color: #002B7F;
+}
+
+.add-emp-doc-slot-upload-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #002B7F;
+}
+
+.add-emp-doc-slot-hint {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.add-emp-doc-slot-filled-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  padding: 8px 0;
+}
+
+.add-emp-doc-slot-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  color: #002B7F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.add-emp-doc-slot-icon-box.is-pdf {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.add-emp-doc-slot-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.add-emp-doc-slot-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+.add-emp-doc-slot-subinfo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.add-emp-doc-slot-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 10px;
+  justify-content: flex-end;
+}
+
+.add-emp-btn-doc-action {
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.add-emp-btn-doc-action:hover {
+  background: #f1f5f9;
+  color: #002B7F;
+  border-color: #cbd5e1;
+}
+
+.add-emp-btn-doc-delete {
+  padding: 5px 9px;
+  border-radius: 6px;
+  border: 1px solid #fee2e2;
+  background: #fff5f5;
+  color: #dc2626;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.add-emp-btn-doc-delete:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Other additional documents list */
+.add-emp-other-docs-section {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.add-emp-other-docs-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.add-emp-other-docs-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.add-emp-btn-add-other {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px dashed #002B7F;
+  background: #f0f7ff;
+  color: #002B7F;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.add-emp-btn-add-other:hover {
+  background: #002B7F;
+  color: #ffffff;
+}
+
+.add-emp-other-docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-emp-other-doc-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  gap: 12px;
+}
+
+.add-emp-other-doc-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.add-emp-other-doc-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.add-emp-other-doc-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.add-emp-other-doc-sub {
+  font-size: 11.5px;
+  color: #64748b;
+}
+
+/* Modal for document preview */
+.add-emp-doc-modal-body {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #0f172a;
+  min-height: 380px;
+  max-height: 75vh;
+  overflow: auto;
+}
+
+.add-emp-doc-modal-img {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 6px;
+}
+
+.add-emp-doc-modal-iframe {
+  width: 100%;
+  height: 65vh;
+  border: none;
+  background: #ffffff;
+  border-radius: 6px;
+}

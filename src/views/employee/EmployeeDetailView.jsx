@@ -789,65 +789,103 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               </div>
 
               <div className="emp-detail-doc-grid">
-                <div className="emp-detail-doc-card">
-                  <div className="emp-detail-doc-left">
-                    <div className="emp-detail-doc-icon">
-                      <FileText size={20} weight="bold" />
+                {selectedEmployee?.documents && selectedEmployee.documents.length > 0 ? (
+                  selectedEmployee.documents.map((doc) => {
+                    const isPdf = doc.isPdf || doc.name?.toLowerCase().endsWith('.pdf');
+                    return (
+                      <div key={doc.id || doc.name} className="emp-detail-doc-card">
+                        <div className="emp-detail-doc-left">
+                          <div className="emp-detail-doc-icon">
+                            {isPdf ? <FileText size={20} weight="bold" /> : <IdentificationCard size={20} weight="bold" />}
+                          </div>
+                          <div className="emp-detail-doc-info">
+                            <span className="emp-detail-doc-title">{doc.categoryLabel || doc.name}</span>
+                            <span className="emp-detail-doc-meta">
+                              {isPdf ? 'PDF' : 'Image'} &bull; {doc.size ? `${(doc.size / 1024).toFixed(0)} KB` : '1.2 MB'} &bull; Verified
+                            </span>
+                          </div>
+                        </div>
+                        {doc.fileData ? (
+                          <a
+                            href={doc.fileData}
+                            download={doc.name}
+                            className="emp-detail-doc-action"
+                            title={`Download ${doc.name}`}
+                            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}
+                          >
+                            <DownloadSimple size={16} weight="bold" />
+                          </a>
+                        ) : (
+                          <button type="button" className="emp-detail-doc-action" title={`Download ${doc.name}`}>
+                            <DownloadSimple size={16} weight="bold" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <>
+                    <div className="emp-detail-doc-card">
+                      <div className="emp-detail-doc-left">
+                        <div className="emp-detail-doc-icon">
+                          <FileText size={20} weight="bold" />
+                        </div>
+                        <div className="emp-detail-doc-info">
+                          <span className="emp-detail-doc-title">ID Card (KTP)</span>
+                          <span className="emp-detail-doc-meta">PDF &bull; 1.2 MB &bull; Verified</span>
+                        </div>
+                      </div>
+                      <button type="button" className="emp-detail-doc-action" title="Download KTP">
+                        <DownloadSimple size={16} weight="bold" />
+                      </button>
                     </div>
-                    <div className="emp-detail-doc-info">
-                      <span className="emp-detail-doc-title">ID Card (KTP)</span>
-                      <span className="emp-detail-doc-meta">PDF &bull; 1.2 MB &bull; Verified</span>
-                    </div>
-                  </div>
-                  <button type="button" className="emp-detail-doc-action" title="Download KTP">
-                    <DownloadSimple size={16} weight="bold" />
-                  </button>
-                </div>
 
-                <div className="emp-detail-doc-card">
-                  <div className="emp-detail-doc-left">
-                    <div className="emp-detail-doc-icon">
-                      <Receipt size={20} weight="bold" />
+                    <div className="emp-detail-doc-card">
+                      <div className="emp-detail-doc-left">
+                        <div className="emp-detail-doc-icon">
+                          <Receipt size={20} weight="bold" />
+                        </div>
+                        <div className="emp-detail-doc-info">
+                          <span className="emp-detail-doc-title">NPWP Tax Card</span>
+                          <span className="emp-detail-doc-meta">PDF &bull; 850 KB &bull; Verified</span>
+                        </div>
+                      </div>
+                      <button type="button" className="emp-detail-doc-action" title="Download NPWP">
+                        <DownloadSimple size={16} weight="bold" />
+                      </button>
                     </div>
-                    <div className="emp-detail-doc-info">
-                      <span className="emp-detail-doc-title">NPWP Tax Card</span>
-                      <span className="emp-detail-doc-meta">PDF &bull; 850 KB &bull; Verified</span>
-                    </div>
-                  </div>
-                  <button type="button" className="emp-detail-doc-action" title="Download NPWP">
-                    <DownloadSimple size={16} weight="bold" />
-                  </button>
-                </div>
 
-                <div className="emp-detail-doc-card">
-                  <div className="emp-detail-doc-left">
-                    <div className="emp-detail-doc-icon">
-                      <Briefcase size={20} weight="bold" />
+                    <div className="emp-detail-doc-card">
+                      <div className="emp-detail-doc-left">
+                        <div className="emp-detail-doc-icon">
+                          <Briefcase size={20} weight="bold" />
+                        </div>
+                        <div className="emp-detail-doc-info">
+                          <span className="emp-detail-doc-title">Work Contract (PKWT)</span>
+                          <span className="emp-detail-doc-meta">PDF &bull; 2.4 MB &bull; Signed</span>
+                        </div>
+                      </div>
+                      <button type="button" className="emp-detail-doc-action" title="Download Contract">
+                        <DownloadSimple size={16} weight="bold" />
+                      </button>
                     </div>
-                    <div className="emp-detail-doc-info">
-                      <span className="emp-detail-doc-title">Work Contract (PKWT)</span>
-                      <span className="emp-detail-doc-meta">PDF &bull; 2.4 MB &bull; Signed</span>
-                    </div>
-                  </div>
-                  <button type="button" className="emp-detail-doc-action" title="Download Contract">
-                    <DownloadSimple size={16} weight="bold" />
-                  </button>
-                </div>
 
-                <div className="emp-detail-doc-card">
-                  <div className="emp-detail-doc-left">
-                    <div className="emp-detail-doc-icon">
-                      <IdentificationCard size={20} weight="bold" />
+                    <div className="emp-detail-doc-card">
+                      <div className="emp-detail-doc-left">
+                        <div className="emp-detail-doc-icon">
+                          <IdentificationCard size={20} weight="bold" />
+                        </div>
+                        <div className="emp-detail-doc-info">
+                          <span className="emp-detail-doc-title">Training Certificate</span>
+                          <span className="emp-detail-doc-meta">PDF &bull; 1.8 MB &bull; Active</span>
+                        </div>
+                      </div>
+                      <button type="button" className="emp-detail-doc-action" title="Download Certificate">
+                        <DownloadSimple size={16} weight="bold" />
+                      </button>
                     </div>
-                    <div className="emp-detail-doc-info">
-                      <span className="emp-detail-doc-title">Training Certificate</span>
-                      <span className="emp-detail-doc-meta">PDF &bull; 1.8 MB &bull; Active</span>
-                    </div>
-                  </div>
-                  <button type="button" className="emp-detail-doc-action" title="Download Certificate">
-                    <DownloadSimple size={16} weight="bold" />
-                  </button>
-                </div>
+                  </>
+                )}
               </div>
             </div>
           )}

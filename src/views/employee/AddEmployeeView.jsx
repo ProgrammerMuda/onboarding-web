@@ -21,7 +21,11 @@ import {
   Globe,
   CreditCard,
   ShieldCheck,
-  Bank
+  Bank,
+  FileText,
+  Trash,
+  Plus,
+  DownloadSimple
 } from '@phosphor-icons/react';
 import './add-employee.css';
 
@@ -123,10 +127,15 @@ export default function AddEmployeeView({ presenter, onBack }) {
 
   const [stepError, setStepError] = useState('');
   const [isPhotoPreviewOpen, setIsPhotoPreviewOpen] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const [countrySearchQuery, setCountrySearchQuery] = useState('');
   const fileInputRef = useRef(null);
   const countryDropdownRef = useRef(null);
+  const ktpInputRef = useRef(null);
+  const npwpInputRef = useRef(null);
+  const kkInputRef = useRef(null);
+  const otherInputRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -158,15 +167,16 @@ export default function AddEmployeeView({ presenter, onBack }) {
 
   useEffect(() => {
     function handleKeyDown(e) {
-      if (e.key === 'Escape' && isPhotoPreviewOpen) {
-        setIsPhotoPreviewOpen(false);
+      if (e.key === 'Escape') {
+        if (isPhotoPreviewOpen) setIsPhotoPreviewOpen(false);
+        if (previewDoc) setPreviewDoc(null);
       }
     }
-    if (isPhotoPreviewOpen) {
+    if (isPhotoPreviewOpen || previewDoc) {
       document.addEventListener('keydown', handleKeyDown);
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isPhotoPreviewOpen]);
+  }, [isPhotoPreviewOpen, previewDoc]);
 
   // Numeric only handler for NIP (max 20 digits)
   const handleNipChange = (e) => {
@@ -256,6 +266,61 @@ export default function AddEmployeeView({ presenter, onBack }) {
     }
     return '380 KB';
   }, [wizardDraft.avatar, wizardDraft.avatarFileSize]);
+
+  const formatDocSize = (bytes) => {
+    if (!bytes) return '0 B';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  };
+
+  const handleDocUpload = (category, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5MB limit.');
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      const newDoc = {
+        id: `doc-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        category,
+        categoryLabel:
+          category === 'ktp'
+            ? 'ID Card (KTP)'
+            : category === 'npwp'
+            ? 'NPWP Tax Card'
+            : category === 'kk'
+            ? 'Family Card (KK)'
+            : file.name,
+        name: file.name,
+        size: file.size,
+        type: file.type || (isPdf ? 'application/pdf' : 'image/jpeg'),
+        isPdf,
+        fileData: uploadEvent.target.result,
+        uploadedAt: new Date().toISOString()
+      };
+
+      const currentDocs = wizardDraft.documents || [];
+      if (['ktp', 'npwp', 'kk'].includes(category)) {
+        const filtered = currentDocs.filter((d) => d.category !== category);
+        updateWizardDraft({ documents: [...filtered, newDoc] });
+      } else {
+        updateWizardDraft({ documents: [...currentDocs, newDoc] });
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleRemoveDoc = (docId) => {
+    const currentDocs = wizardDraft.documents || [];
+    updateWizardDraft({ documents: currentDocs.filter((d) => d.id !== docId) });
+  };
 
   // Step 1 Validation
   const validateStep1 = () => {
@@ -1222,6 +1287,344 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   </select>
                 </div>
               </div>
+
+              {/* Document Attachments Card */}
+              {(() => {
+                const docs = wizardDraft.documents || [];
+                const ktpDoc = docs.find((d) => d.category === 'ktp');
+                const npwpDoc = docs.find((d) => d.category === 'npwp');
+                const kkDoc = docs.find((d) => d.category === 'kk');
+                const otherDocs = docs.filter((d) => !['ktp', 'npwp', 'kk'].includes(d.category));
+
+                return (
+                  <div className="add-emp-attachment-card">
+                    <div className="add-emp-attachment-header">
+                      <div className="add-emp-attachment-title-group">
+                        <div className="add-emp-attachment-icon-box">
+                          <FileText size={20} weight="duotone" />
+                        </div>
+                        <div>
+                          <h4 className="add-emp-attachment-title">Document Attachments</h4>
+                          <p className="add-emp-attachment-subtitle">
+                            Upload employee identity files (KTP, NPWP, Family Card/KK, and supporting documents)
+                          </p>
+                        </div>
+                      </div>
+                      <div className={`add-emp-attachment-badge ${docs.length > 0 ? 'has-docs' : ''}`}>
+                        <CheckCircle size={14} weight={docs.length > 0 ? 'fill' : 'regular'} />
+                        <span>{docs.length} document{docs.length !== 1 ? 's' : ''} attached</span>
+                      </div>
+                    </div>
+
+                    {/* Primary Document Slots (KTP, NPWP, Family Card) */}
+                    <div className="add-emp-doc-slots-grid">
+                      {/* Slot 1: KTP */}
+                      <div className={`add-emp-doc-slot-card ${ktpDoc ? 'is-filled' : ''}`}>
+                        <div className="add-emp-doc-slot-head">
+                          <span className="add-emp-doc-slot-label">
+                            <IdentificationCard size={17} weight="duotone" style={{ color: '#002B7F' }} />
+                            <span>Foto KTP (ID Card)</span>
+                          </span>
+                          <span className="add-emp-doc-slot-tag">Identity</span>
+                        </div>
+
+                        <input
+                          type="file"
+                          ref={ktpInputRef}
+                          className="d-none"
+                          accept=".pdf,image/png,image/jpeg,image/webp"
+                          onChange={(e) => handleDocUpload('ktp', e)}
+                        />
+
+                        {ktpDoc ? (
+                          <>
+                            <div className="add-emp-doc-slot-filled-content">
+                              <div className={`add-emp-doc-slot-icon-box ${ktpDoc.isPdf ? 'is-pdf' : ''}`}>
+                                {ktpDoc.isPdf ? <FileText size={22} weight="duotone" /> : <FileImage size={22} weight="duotone" />}
+                              </div>
+                              <div className="add-emp-doc-slot-meta">
+                                <span className="add-emp-doc-slot-name" title={ktpDoc.name}>{ktpDoc.name}</span>
+                                <span className="add-emp-doc-slot-subinfo">
+                                  <span>{formatDocSize(ktpDoc.size)}</span>
+                                  <span>&bull;</span>
+                                  <span className="text-success fw-semibold">Attached</span>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="add-emp-doc-slot-actions">
+                              <button
+                                type="button"
+                                className="add-emp-btn-doc-action"
+                                onClick={() => setPreviewDoc(ktpDoc)}
+                                title="Preview document"
+                              >
+                                <Eye size={14} weight="bold" />
+                                <span>Preview</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="add-emp-btn-doc-action"
+                                onClick={() => ktpInputRef.current?.click()}
+                                title="Change file"
+                              >
+                                <UploadSimple size={14} weight="bold" />
+                                <span>Change</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="add-emp-btn-doc-delete"
+                                onClick={() => handleRemoveDoc(ktpDoc.id)}
+                                title="Remove document"
+                              >
+                                <Trash size={14} weight="bold" />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            className="add-emp-doc-slot-empty-dropzone"
+                            onClick={() => ktpInputRef.current?.click()}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') ktpInputRef.current?.click();
+                            }}
+                          >
+                            <UploadSimple size={24} weight="bold" className="empty-icon" />
+                            <span className="add-emp-doc-slot-upload-text">Upload KTP</span>
+                            <span className="add-emp-doc-slot-hint">PDF, JPG, PNG up to 5MB</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Slot 2: NPWP */}
+                      <div className={`add-emp-doc-slot-card ${npwpDoc ? 'is-filled' : ''}`}>
+                        <div className="add-emp-doc-slot-head">
+                          <span className="add-emp-doc-slot-label">
+                            <CreditCard size={17} weight="duotone" style={{ color: '#002B7F' }} />
+                            <span>Foto NPWP (Tax Card)</span>
+                          </span>
+                          <span className="add-emp-doc-slot-tag">Tax / NPWP</span>
+                        </div>
+
+                        <input
+                          type="file"
+                          ref={npwpInputRef}
+                          className="d-none"
+                          accept=".pdf,image/png,image/jpeg,image/webp"
+                          onChange={(e) => handleDocUpload('npwp', e)}
+                        />
+
+                        {npwpDoc ? (
+                          <>
+                            <div className="add-emp-doc-slot-filled-content">
+                              <div className={`add-emp-doc-slot-icon-box ${npwpDoc.isPdf ? 'is-pdf' : ''}`}>
+                                {npwpDoc.isPdf ? <FileText size={22} weight="duotone" /> : <FileImage size={22} weight="duotone" />}
+                              </div>
+                              <div className="add-emp-doc-slot-meta">
+                                <span className="add-emp-doc-slot-name" title={npwpDoc.name}>{npwpDoc.name}</span>
+                                <span className="add-emp-doc-slot-subinfo">
+                                  <span>{formatDocSize(npwpDoc.size)}</span>
+                                  <span>&bull;</span>
+                                  <span className="text-success fw-semibold">Attached</span>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="add-emp-doc-slot-actions">
+                              <button
+                                type="button"
+                                className="add-emp-btn-doc-action"
+                                onClick={() => setPreviewDoc(npwpDoc)}
+                                title="Preview document"
+                              >
+                                <Eye size={14} weight="bold" />
+                                <span>Preview</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="add-emp-btn-doc-action"
+                                onClick={() => npwpInputRef.current?.click()}
+                                title="Change file"
+                              >
+                                <UploadSimple size={14} weight="bold" />
+                                <span>Change</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="add-emp-btn-doc-delete"
+                                onClick={() => handleRemoveDoc(npwpDoc.id)}
+                                title="Remove document"
+                              >
+                                <Trash size={14} weight="bold" />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            className="add-emp-doc-slot-empty-dropzone"
+                            onClick={() => npwpInputRef.current?.click()}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') npwpInputRef.current?.click();
+                            }}
+                          >
+                            <UploadSimple size={24} weight="bold" className="empty-icon" />
+                            <span className="add-emp-doc-slot-upload-text">Upload NPWP</span>
+                            <span className="add-emp-doc-slot-hint">PDF, JPG, PNG up to 5MB</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Slot 3: KK */}
+                      <div className={`add-emp-doc-slot-card ${kkDoc ? 'is-filled' : ''}`}>
+                        <div className="add-emp-doc-slot-head">
+                          <span className="add-emp-doc-slot-label">
+                            <UsersThree size={17} weight="duotone" style={{ color: '#002B7F' }} />
+                            <span>Kartu Keluarga (KK)</span>
+                          </span>
+                          <span className="add-emp-doc-slot-tag">Family</span>
+                        </div>
+
+                        <input
+                          type="file"
+                          ref={kkInputRef}
+                          className="d-none"
+                          accept=".pdf,image/png,image/jpeg,image/webp"
+                          onChange={(e) => handleDocUpload('kk', e)}
+                        />
+
+                        {kkDoc ? (
+                          <>
+                            <div className="add-emp-doc-slot-filled-content">
+                              <div className={`add-emp-doc-slot-icon-box ${kkDoc.isPdf ? 'is-pdf' : ''}`}>
+                                {kkDoc.isPdf ? <FileText size={22} weight="duotone" /> : <FileImage size={22} weight="duotone" />}
+                              </div>
+                              <div className="add-emp-doc-slot-meta">
+                                <span className="add-emp-doc-slot-name" title={kkDoc.name}>{kkDoc.name}</span>
+                                <span className="add-emp-doc-slot-subinfo">
+                                  <span>{formatDocSize(kkDoc.size)}</span>
+                                  <span>&bull;</span>
+                                  <span className="text-success fw-semibold">Attached</span>
+                                </span>
+                              </div>
+                            </div>
+                            <div className="add-emp-doc-slot-actions">
+                              <button
+                                type="button"
+                                className="add-emp-btn-doc-action"
+                                onClick={() => setPreviewDoc(kkDoc)}
+                                title="Preview document"
+                              >
+                                <Eye size={14} weight="bold" />
+                                <span>Preview</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="add-emp-btn-doc-action"
+                                onClick={() => kkInputRef.current?.click()}
+                                title="Change file"
+                              >
+                                <UploadSimple size={14} weight="bold" />
+                                <span>Change</span>
+                              </button>
+                              <button
+                                type="button"
+                                className="add-emp-btn-doc-delete"
+                                onClick={() => handleRemoveDoc(kkDoc.id)}
+                                title="Remove document"
+                              >
+                                <Trash size={14} weight="bold" />
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div
+                            className="add-emp-doc-slot-empty-dropzone"
+                            onClick={() => kkInputRef.current?.click()}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') kkInputRef.current?.click();
+                            }}
+                          >
+                            <UploadSimple size={24} weight="bold" className="empty-icon" />
+                            <span className="add-emp-doc-slot-upload-text">Upload KK</span>
+                            <span className="add-emp-doc-slot-hint">PDF, JPG, PNG up to 5MB</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Additional Supporting Documents (Dan lain-lain) */}
+                    <div className="add-emp-other-docs-section">
+                      <div className="add-emp-other-docs-head">
+                        <span className="add-emp-other-docs-title">
+                          Additional Supporting Documents (Dokumen Lainnya)
+                        </span>
+                        <button
+                          type="button"
+                          className="add-emp-btn-add-other"
+                          onClick={() => otherInputRef.current?.click()}
+                        >
+                          <Plus size={14} weight="bold" />
+                          <span>Upload Other Document</span>
+                        </button>
+                        <input
+                          type="file"
+                          ref={otherInputRef}
+                          className="d-none"
+                          accept=".pdf,image/png,image/jpeg,image/webp"
+                          onChange={(e) => handleDocUpload('other', e)}
+                        />
+                      </div>
+
+                      {otherDocs.length > 0 ? (
+                        <div className="add-emp-other-docs-list">
+                          {otherDocs.map((doc) => (
+                            <div key={doc.id} className="add-emp-other-doc-item">
+                              <div className="add-emp-other-doc-left">
+                                <div className={`add-emp-doc-slot-icon-box ${doc.isPdf ? 'is-pdf' : ''}`} style={{ width: '38px', height: '38px' }}>
+                                  {doc.isPdf ? <FileText size={18} weight="duotone" /> : <FileImage size={18} weight="duotone" />}
+                                </div>
+                                <div className="add-emp-other-doc-info">
+                                  <span className="add-emp-other-doc-name" title={doc.name}>{doc.name}</span>
+                                  <span className="add-emp-other-doc-sub">
+                                    {formatDocSize(doc.size)} &bull; Uploaded
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="d-flex align-items-center gap-2">
+                                <button
+                                  type="button"
+                                  className="add-emp-btn-doc-action"
+                                  onClick={() => setPreviewDoc(doc)}
+                                  title="Preview"
+                                >
+                                  <Eye size={13} weight="bold" />
+                                  <span>Preview</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  className="add-emp-btn-doc-delete"
+                                  onClick={() => handleRemoveDoc(doc.id)}
+                                  title="Delete document"
+                                >
+                                  <Trash size={13} weight="bold" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted m-0" style={{ fontSize: '12px', fontStyle: 'italic' }}>
+                          No additional documents attached yet. You can attach documents like employment contracts, certificates, BPJS cards, or diplomas.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -1748,6 +2151,77 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   <UploadSimple size={15} weight="bold" />
                   <span>Change Photo</span>
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DOCUMENT PREVIEW MODAL */}
+      {previewDoc && (
+        <div
+          className="emp-modal-backdrop add-emp-photo-modal-backdrop"
+          onClick={() => setPreviewDoc(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="emp-modal-card add-emp-photo-modal-card"
+            style={{ maxWidth: '820px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="emp-modal-header">
+              <div className="d-flex align-items-center gap-2">
+                <FileText size={20} weight="duotone" style={{ color: '#002B7F' }} />
+                <h3 className="m-0" style={{ fontSize: '15px' }}>
+                  {previewDoc.categoryLabel || previewDoc.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="emp-modal-close"
+                onClick={() => setPreviewDoc(null)}
+                aria-label="Close document preview"
+              >
+                <X size={20} weight="bold" />
+              </button>
+            </div>
+
+            <div className="add-emp-doc-modal-body">
+              {previewDoc.isPdf ? (
+                <iframe
+                  src={previewDoc.fileData}
+                  title={previewDoc.name}
+                  className="add-emp-doc-modal-iframe"
+                />
+              ) : (
+                <img
+                  src={previewDoc.fileData}
+                  alt={previewDoc.name}
+                  className="add-emp-doc-modal-img"
+                />
+              )}
+            </div>
+
+            <div className="add-emp-photo-modal-footer">
+              <div className="add-emp-photo-modal-meta">
+                <span className="add-emp-photo-modal-filename" title={previewDoc.name}>
+                  {previewDoc.name}
+                </span>
+                <span className="add-emp-photo-modal-size">
+                  {formatDocSize(previewDoc.size)}
+                </span>
+              </div>
+              <div className="d-flex align-items-center gap-2">
+                <a
+                  href={previewDoc.fileData}
+                  download={previewDoc.name}
+                  className="btn add-emp-btn-upload-photo"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <DownloadSimple size={15} weight="bold" />
+                  <span>Download</span>
+                </a>
               </div>
             </div>
           </div>
