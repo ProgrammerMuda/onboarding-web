@@ -450,7 +450,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                         <div key={doc.id || doc.name} className="emp-detail-doc-card">
                           <div className="emp-detail-doc-left">
                             <div className="emp-detail-doc-icon">
-                              {isPdf ? <FileText size={20} weight="bold" /> : <IdentificationCard size={20} weight="bold" />}
+                              <FileText size={20} weight="bold" />
                             </div>
                             <div className="emp-detail-doc-info">
                               <span className="emp-detail-doc-title">{doc.categoryLabel || doc.name}</span>
@@ -497,7 +497,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                       <div className="emp-detail-doc-card">
                         <div className="emp-detail-doc-left">
                           <div className="emp-detail-doc-icon">
-                            <Receipt size={20} weight="bold" />
+                            <FileText size={20} weight="bold" />
                           </div>
                           <div className="emp-detail-doc-info">
                             <span className="emp-detail-doc-title">NPWP Tax Card</span>
@@ -512,7 +512,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                       <div className="emp-detail-doc-card">
                         <div className="emp-detail-doc-left">
                           <div className="emp-detail-doc-icon">
-                            <Briefcase size={20} weight="bold" />
+                            <FileText size={20} weight="bold" />
                           </div>
                           <div className="emp-detail-doc-info">
                             <span className="emp-detail-doc-title">Work Contract (PKWT)</span>
@@ -527,7 +527,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                       <div className="emp-detail-doc-card">
                         <div className="emp-detail-doc-left">
                           <div className="emp-detail-doc-icon">
-                            <IdentificationCard size={20} weight="bold" />
+                            <FileText size={20} weight="bold" />
                           </div>
                           <div className="emp-detail-doc-info">
                             <span className="emp-detail-doc-title">Training Certificate</span>
