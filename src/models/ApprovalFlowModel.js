@@ -164,7 +164,7 @@ export const EMPLOYEES = [
     email: 'dewi.lestari@indoland.co.id',
     departmentId: 'dept-fin',
     roleId: 'role-spv',
-    position: 'Supervisor Account Receiveble',
+    position: 'Supervisor',
     avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
     status: 'active'
   },

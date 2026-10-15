@@ -105,7 +105,7 @@ export const DIVISION_POSITIONS_MAP = {
     { id: 'pos-admin-tr', name: 'Admin Tenant Relation' }
   ],
   'div-fin': [
-    { id: 'pos-spv-fin', name: 'Supervisor Account Receiveble' },
+    { id: 'pos-spv-fin', name: 'Supervisor' },
     { id: 'pos-staff-fin', name: 'Staff Finance' },
     { id: 'pos-admin-fin', name: 'Admin Finance' }
   ]
@@ -245,7 +245,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0819-4455-6677',
     departmentId: 'dept-fin',
     divisionId: 'div-fin',
-    position: 'Supervisor Account Receiveble',
+    position: 'Supervisor',
     joinDate: '2024-08-01',
     endDate: '2025-07-31',
     resignDate: '',

@@ -86,14 +86,15 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
     return age > 0 ? String(age) : '32';
   }, [emp.dob]);
 
-  // Format position nicely and correct typo if present
+  // Format position nicely and remove specific department qualifiers if present
   const displayPosition = useMemo(() => {
     if (!emp.position) return 'Employee';
     if (
       emp.position.toLowerCase().includes('supervisor account receiveble') ||
-      emp.position.toLowerCase().includes('supervisor accounts receivable')
+      emp.position.toLowerCase().includes('supervisor accounts receivable') ||
+      emp.position.toLowerCase().includes('supervisor account receivable')
     ) {
-      return 'Supervisor Accounts Receivable';
+      return 'Supervisor';
     }
     return emp.position;
   }, [emp.position]);
