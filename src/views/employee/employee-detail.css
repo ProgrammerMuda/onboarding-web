@@ -7,9 +7,9 @@
    ========================================================================== */
 
 .emp-detail-page {
-  padding: 24px 32px 48px;
-  background-color: #f8fafc;
-  min-height: 100vh;
+  width: 100%;
+  padding: 0 0 48px;
+  min-height: 100%;
 }
 
 /* 1. Top Bar / Breadcrumb & Header */

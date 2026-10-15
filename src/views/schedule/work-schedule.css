@@ -1,9 +1,9 @@
 /* Work Schedule - Modern Proapps B2B Theme */
 
 .ws-container {
-  padding: 24px 32px 64px;
-  background-color: #f8fafc;
-  min-height: calc(100vh - 70px);
+  width: 100%;
+  padding: 0 0 48px;
+  min-height: 100%;
   font-family: inherit;
   color: #0f172a;
 }

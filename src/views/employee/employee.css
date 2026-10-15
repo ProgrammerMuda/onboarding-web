@@ -1,8 +1,7 @@
 /* Employee Directory & Statistics - Modern Proapps B2B Theme */
 
 .emp-container {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
   padding: 0 0 48px;
   font-family: inherit;
   color: #0f172a;
