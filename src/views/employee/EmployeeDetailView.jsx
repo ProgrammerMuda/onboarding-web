@@ -597,7 +597,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <div className="emp-detail-card-badge emp-badge-secondary">
                       <ShieldCheck size={20} weight="bold" />
                     </div>
-                    <h3 className="emp-detail-card-title">Social Security &amp; Insurance</h3>
+                    <h3 className="emp-detail-card-title">Insurance</h3>
                   </div>
                 </div>
 
