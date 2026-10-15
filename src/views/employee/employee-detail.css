@@ -648,6 +648,23 @@
   animation: fadeIn 0.2s ease;
 }
 
+/* Card Sub-Headers / Section Dividers */
+.emp-detail-sub-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 0 6px;
+  margin-bottom: 2px;
+  border-bottom: 1.5px solid #edf2f7;
+}
+
+.emp-detail-sub-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
