@@ -283,19 +283,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </span>
                 </div>
               </div>
-
-              {/* 7. Type of Hire */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <Briefcase size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Type of Hire</span>
-                  <span className="emp-detail-info-val">
-                    {emp.employmentType || 'PKWT/KONTRAK'}
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -362,6 +349,10 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Employee NIP</span>
                     <span className="emp-detail-kv-value font-monospace">{emp.nik || '—'}</span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Type of Hire</span>
+                    <span className="emp-detail-kv-value">{emp.employmentType || 'PKWT/KONTRAK'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">NIK (ID Card / KTP)</span>
