@@ -727,10 +727,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <span className="emp-detail-kv-label">BPJS Kesehatan</span>
                     <span className="emp-detail-kv-value font-monospace">{emp.bpjsKesehatan || '000293849182'}</span>
                   </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Coverage Tier</span>
-                    <span className="emp-detail-kv-value">{emp.coverageTier || 'Class 1 Corporate Comprehensive'}</span>
-                  </div>
                 </div>
               </div>
             </div>

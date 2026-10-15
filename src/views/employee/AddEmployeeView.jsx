@@ -42,13 +42,6 @@ const BANK_OPTIONS = [
   'Other'
 ];
 
-const COVERAGE_TIER_OPTIONS = [
-  'Class 1 Corporate Comprehensive',
-  'Class 2 Standard Corporate',
-  'Class 3 Basic Corporate',
-  'Executive Tier'
-];
-
 const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
@@ -466,9 +459,8 @@ export default function AddEmployeeView({ presenter, onBack }) {
     const hasBank = Boolean(wizardDraft.bankName && wizardDraft.bankName.trim());
     const hasAccount = Boolean(wizardDraft.bankAccount && wizardDraft.bankAccount.trim());
     const hasBeneficiary = Boolean(wizardDraft.beneficiaryName && wizardDraft.beneficiaryName.trim());
-    const hasCoverage = Boolean(wizardDraft.coverageTier && wizardDraft.coverageTier.trim());
 
-    return hasBank && hasAccount && hasBeneficiary && hasCoverage;
+    return hasBank && hasAccount && hasBeneficiary;
   }, [wizardDraft]);
 
   const isStep4Filled = useMemo(() => {
@@ -1494,26 +1486,6 @@ export default function AddEmployeeView({ presenter, onBack }) {
                         })
                       }
                     />
-                  </div>
-
-                  {/* Coverage Tier */}
-                  <div className="col-md-6 add-emp-field-col">
-                    <div className="add-emp-label-wrap">
-                      <label className="add-emp-label">
-                        Coverage Tier <span className="req">*</span>
-                      </label>
-                    </div>
-                    <select
-                      className="form-select add-emp-input"
-                      value={wizardDraft.coverageTier || 'Class 1 Corporate Comprehensive'}
-                      onChange={(e) => updateWizardDraft({ coverageTier: e.target.value })}
-                    >
-                      {COVERAGE_TIER_OPTIONS.map((tier) => (
-                        <option key={tier} value={tier}>
-                          {tier}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 </div>
               </div>
