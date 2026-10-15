@@ -82,8 +82,9 @@ export function useEmployeePresenter() {
     readMasterPositions().filter((p) => p.id !== TOP_POSITION_ID && p.code !== '001')
   );
 
-  // View Mode: 'list' (Employee Directory) | 'add' (3-step Add Employee Page) | 'detail' (Profile Page)
+  // View Mode: 'list' (Employee Directory) | 'add' (3-step Add Employee Page) | 'edit' (Edit Employee Page) | 'detail' (Profile Page)
   const [viewMode, setViewMode] = useState('list');
+  const [returnViewMode, setReturnViewMode] = useState('list');
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [wizardStep, setWizardStep] = useState(1);
   const [wizardDraft, setWizardDraft] = useState(EMPTY_DRAFT);
@@ -186,14 +187,15 @@ export function useEmployeePresenter() {
       avatarFileName: '',
       status: 'Active'
     });
+    setReturnViewMode('list');
     setWizardStep(1);
     setViewMode('add');
   }, []);
 
   const goBackToList = useCallback(() => {
-    setViewMode('list');
+    setViewMode(returnViewMode === 'detail' && selectedEmployee ? 'detail' : 'list');
     setWizardStep(1);
-  }, []);
+  }, [returnViewMode, selectedEmployee]);
 
   const updateWizardDraft = useCallback((fields) => {
     setWizardDraft((prev) => ({ ...prev, ...fields }));
@@ -205,34 +207,90 @@ export function useEmployeePresenter() {
       return { success: false, error: errorMsg };
     }
 
-    const nextList = [draft, ...employees];
+    const isEdit = viewMode === 'edit';
+    const nextList = isEdit
+      ? employees.map((e) => (e.id === draft.id ? draft : e))
+      : [draft, ...employees];
+
     setEmployees(nextList);
     persistEmployees(nextList);
     if (selectedEmployee && selectedEmployee.id === draft.id) {
       setSelectedEmployee(draft);
     }
-    setViewMode('list');
+
+    const targetView = returnViewMode === 'detail' && selectedEmployee ? 'detail' : 'list';
+    setViewMode(targetView);
+    setWizardStep(1);
 
     setSuccessModal({
-      title: 'New Employee Added!',
+      title: isEdit ? 'Employee Profile Updated!' : 'New Employee Added!',
       subtext: `Employee profile for "${draft.name}" (${draft.position}) has been saved successfully.`
     });
     return { success: true };
-  }, [employees, selectedEmployee]);
+  }, [viewMode, returnViewMode, employees, selectedEmployee]);
 
   const openAddModal = useCallback(() => {
-    // Navigate directly to the 3-step Add Employee page
+    // Navigate directly to the 4-step Add Employee page
     openAddEmployeePage();
   }, [openAddEmployeePage]);
 
   const openEditModal = useCallback((emp) => {
-    setModal({
-      isOpen: true,
-      mode: 'edit',
-      data: { ...emp },
-      error: ''
+    if (!emp) return;
+    setReturnViewMode(viewMode === 'detail' ? 'detail' : 'list');
+
+    // Populate all wizard fields from the employee being edited
+    setWizardDraft({
+      ...EMPTY_DRAFT,
+      ...emp,
+      // Step 1: Personal Data
+      name: emp.name || '',
+      nik: emp.nik || '', // NIP
+      ktp: emp.ktp || emp.nik || '3171015508920001',
+      npwp: emp.npwp || '09.254.678.9-012.000',
+      gender: emp.gender || (emp.name?.toLowerCase().includes('dewi') || emp.name?.toLowerCase().includes('jessica') || emp.name?.toLowerCase().includes('ratna') ? 'Female' : 'Male'),
+      citizenship: emp.citizenship || 'Indonesia',
+      idCardAddress: emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan',
+      domicileAddress: emp.domicileAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan',
+      sameAsIdCard: emp.sameAsIdCard !== undefined ? Boolean(emp.sameAsIdCard) : true,
+      birthPlace: emp.birthPlace || 'Jakarta',
+      dob: emp.dob || '1992-05-15',
+      phone: emp.phone ? String(emp.phone).replace(/\D/g, '') : '081234567890',
+      email: emp.email || '',
+      religion: emp.religion || 'Islam',
+      maritalStatus: emp.maritalStatus || 'Married',
+      avatar: emp.avatar || '',
+      documents: Array.isArray(emp.documents) && emp.documents.length > 0 ? emp.documents : [],
+
+      // Step 2: Employee Data
+      departmentId: emp.departmentId || '',
+      divisionId: emp.divisionId || '',
+      position: emp.position || '',
+      employmentType: emp.employmentType || 'PKWT / Kontrak',
+      joinDate: emp.joinDate || '2024-01-01',
+      endDate: emp.endDate || '2025-12-31',
+      approvalLine: emp.approvalLine || 'Direct Manager / Supervisor',
+      status: emp.status || 'Active',
+
+      // Step 3: Payroll & Social Security
+      bankName: emp.bankName || 'Bank Central Asia (BCA)',
+      bankAccount: emp.bankAccount || '8830192841',
+      beneficiaryName: emp.beneficiaryName || emp.name || '',
+      paymentSchedule: emp.paymentSchedule || 'Monthly (Every 25th)',
+      bpjsTk: emp.bpjsTk || '000192837465',
+      bpjsKesehatan: emp.bpjsKesehatan || '000987654321',
+      coverageTier: emp.coverageTier || 'Class 1 Corporate Comprehensive',
+
+      // Step 4: Emergency Contact
+      emergencyName: emp.emergencyName || (emp.name?.toLowerCase().includes('dewi') ? 'Rian Pratama' : 'Siti Rahmawati'),
+      emergencyRelation: emp.emergencyRelation || 'Spouse',
+      emergencyNik: emp.emergencyNik || '3171015508920099',
+      emergencyPhone: emp.emergencyPhone ? String(emp.emergencyPhone).replace(/\D/g, '') : '081399887766',
+      emergencyIdAddress: emp.emergencyIdAddress || emp.idCardAddress || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan',
+      emergencyCurrentAddress: emp.emergencyCurrentAddress || emp.domicileAddress || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan'
     });
-  }, []);
+    setWizardStep(1);
+    setViewMode('edit');
+  }, [viewMode]);
 
   const closeModal = useCallback(() => {
     setModal((prev) => ({ ...prev, isOpen: false, error: '' }));
@@ -381,6 +439,8 @@ export function useEmployeePresenter() {
     // View Mode, Detail View & 3-Step Wizard for Add Employee
     viewMode,
     setViewMode,
+    returnViewMode,
+    setReturnViewMode,
     selectedEmployee,
     setSelectedEmployee,
     openEmployeeDetail,

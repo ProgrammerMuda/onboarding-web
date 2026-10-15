@@ -111,7 +111,8 @@ export const COUNTRY_OPTIONS = [
   { code: 'MX', name: 'Mexico', flag: '🇲🇽' }
 ];
 
-export default function AddEmployeeView({ presenter, onBack }) {
+export default function AddEmployeeView({ presenter, onBack, isEdit }) {
+  const isEditMode = Boolean(isEdit || presenter?.viewMode === 'edit');
   const {
     wizardStep,
     setWizardStep,
@@ -685,7 +686,9 @@ export default function AddEmployeeView({ presenter, onBack }) {
           <span>List Employee</span>
         </button>
         <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
-        <span className="add-emp-breadcrumb-current">Add Employee</span>
+        <span className="add-emp-breadcrumb-current">
+          {isEditMode ? 'Edit Employee' : 'Add Employee'}
+        </span>
       </nav>
 
       {/* 2. Page Header */}
@@ -699,9 +702,13 @@ export default function AddEmployeeView({ presenter, onBack }) {
           <ArrowLeft size={18} weight="bold" />
         </button>
         <div>
-          <h1 className="add-emp-title">Add New Employee</h1>
+          <h1 className="add-emp-title">
+            {isEditMode ? 'Edit Employee' : 'Add New Employee'}
+          </h1>
           <p className="add-emp-subtitle">
-            Complete the 4-step registration form to register a new employee.
+            {isEditMode
+              ? 'Update employee details, organization assignment, and document records.'
+              : 'Complete the 4-step registration form to register a new employee.'}
           </p>
         </div>
       </div>
@@ -1907,10 +1914,10 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   type="submit"
                   className="btn add-emp-btn-submit"
                   disabled={isCurrentStepDisabled}
-                  title={isCurrentStepDisabled ? 'Please fill all required fields to save' : 'Save new employee profile'}
+                  title={isCurrentStepDisabled ? 'Please fill all required fields to save' : (isEditMode ? 'Save changes to employee profile' : 'Save new employee profile')}
                 >
                   <FloppyDisk size={18} weight="bold" />
-                  <span>Save Employee</span>
+                  <span>{isEditMode ? 'Edit Employee' : 'Save Employee'}</span>
                 </button>
               )}
             </div>

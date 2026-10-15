@@ -74,9 +74,15 @@ export default function EmployeeView({ presenter }) {
     importEmployees
   } = presenter;
 
-  // If viewMode is 'add', render the 3-Step Add Employee page
-  if (viewMode === 'add') {
-    return <AddEmployeeView presenter={presenter} onBack={goBackToList} />;
+  // If viewMode is 'add' or 'edit', render the 4-Step Add/Edit Employee page
+  if (viewMode === 'add' || viewMode === 'edit') {
+    return (
+      <AddEmployeeView
+        presenter={presenter}
+        isEdit={viewMode === 'edit'}
+        onBack={goBackToList}
+      />
+    );
   }
 
   // If viewMode is 'detail', render the full Employee Profile Detail page matching the user's design
