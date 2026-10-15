@@ -1023,56 +1023,6 @@ export default function EmployeeView({ presenter }) {
                   </span>
                 )}
               </div>
-
-              {/* Active Filters Summary */}
-              {activeFilterCount > 0 && (
-                <div className="emp-filter-active-summary">
-                  <div className="emp-filter-active-header">
-                    <span>Active Filters ({activeFilterCount})</span>
-                  </div>
-                  <div className="emp-filter-active-tags">
-                    {statusFilter !== 'all' && (
-                      <span className="emp-filter-active-tag">
-                        Status: {statusFilter}
-                        <button
-                          type="button"
-                          onClick={() => setStatusFilter('all')}
-                          aria-label="Remove status filter"
-                        >
-                          <X size={12} weight="bold" />
-                        </button>
-                      </span>
-                    )}
-                    {departmentFilter !== 'all' && (
-                      <span className="emp-filter-active-tag">
-                        Dept: {departments.find((d) => d.id === departmentFilter)?.name || departmentFilter}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDepartmentFilter('all');
-                            setDivisionFilter('all');
-                          }}
-                          aria-label="Remove department filter"
-                        >
-                          <X size={12} weight="bold" />
-                        </button>
-                      </span>
-                    )}
-                    {divisionFilter !== 'all' && (
-                      <span className="emp-filter-active-tag">
-                        Div: {getDivisionsForDept(departmentFilter).find((div) => div.id === divisionFilter)?.name || divisionFilter}
-                        <button
-                          type="button"
-                          onClick={() => setDivisionFilter('all')}
-                          aria-label="Remove division filter"
-                        >
-                          <X size={12} weight="bold" />
-                        </button>
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Drawer Footer */}
