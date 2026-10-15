@@ -324,12 +324,6 @@ export default function AddEmployeeView({ presenter, onBack }) {
     e.target.value = '';
   };
 
-  const handleDocCategoryChange = (docId, newCategory) => {
-    const currentDocs = wizardDraft.documents || [];
-    updateWizardDraft({
-      documents: currentDocs.map((d) => (d.id === docId ? { ...d, category: newCategory } : d))
-    });
-  };
 
   const handleRemoveDoc = (docId) => {
     const currentDocs = wizardDraft.documents || [];
@@ -1417,23 +1411,6 @@ export default function AddEmployeeView({ presenter, onBack }) {
                                 <span className="add-emp-doc-file-name" title={doc.name}>{doc.name}</span>
                                 <span className="add-emp-doc-file-meta">{formatDocSize(doc.size)}</span>
                               </div>
-                            </div>
-
-                            <div className="add-emp-doc-file-category">
-                              <select
-                                className="add-emp-doc-type-select"
-                                value={doc.category || 'ID Card (KTP)'}
-                                onChange={(e) => handleDocCategoryChange(doc.id, e.target.value)}
-                                onClick={(e) => e.stopPropagation()}
-                                title="Document Category"
-                              >
-                                <option value="ID Card (KTP)">ID Card (KTP)</option>
-                                <option value="NPWP Card">NPWP Card</option>
-                                <option value="Family Card (KK)">Family Card (KK)</option>
-                                <option value="Work Contract">Work Contract</option>
-                                <option value="Diploma">Diploma / Ijazah</option>
-                                <option value="Certificate">Certificate</option>
-                              </select>
                             </div>
 
                             <div className="add-emp-doc-file-actions">
