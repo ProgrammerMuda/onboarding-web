@@ -25,6 +25,7 @@ import {
   FolderSimple
 } from '@phosphor-icons/react';
 import './add-employee.css';
+import './employee.css';
 import './employee-detail.css';
 
 export default function EmployeeDetailView({ presenter, employee, onBack }) {
@@ -115,34 +116,40 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
         <span className="add-emp-breadcrumb-current">Employee Profile</span>
       </nav>
 
-      {/* 2. Page Header */}
-      <div className="add-emp-header d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div className="d-flex align-items-center gap-3">
+      {/* 2. Top Hero Banner matching Organization Structure */}
+      <div className="emp-hero-banner">
+        <div className="emp-hero-banner-content">
+          <div className="emp-hero-banner-left">
+            <button
+              type="button"
+              className="emp-hero-back-btn"
+              onClick={onBack}
+              title="Return to Employee Directory"
+            >
+              <ArrowLeft size={18} weight="bold" />
+            </button>
+            <div className="emp-hero-banner-icon-box">
+              <User size={28} weight="bold" />
+            </div>
+            <div>
+              <div className="emp-hero-banner-tag">PEOPLE MANAGEMENT</div>
+              <h1 className="emp-hero-banner-title">Employee Profile</h1>
+              <p className="emp-hero-banner-desc">
+                View detailed employee profile, personal records, job status, and documents.
+              </p>
+            </div>
+          </div>
+
           <button
             type="button"
-            className="add-emp-back-btn"
-            onClick={onBack}
-            title="Return to Employee Directory"
+            className="emp-hero-edit-btn"
+            onClick={handleEdit}
+            title="Edit Employee Information"
           >
-            <ArrowLeft size={18} weight="bold" />
+            <PencilSimple size={16} weight="bold" />
+            <span>Edit Employee</span>
           </button>
-          <div>
-            <h1 className="add-emp-title">Employee Profile</h1>
-            <p className="add-emp-subtitle">
-              View detailed employee profile, personal records, job status, and documents.
-            </p>
-          </div>
         </div>
-
-        <button
-          type="button"
-          className="emp-detail-header-edit-btn"
-          onClick={handleEdit}
-          title="Edit Employee Information"
-        >
-          <PencilSimple size={16} weight="bold" />
-          <span>Edit Employee</span>
-        </button>
       </div>
 
       {/* 2. Main 2-Column Grid Layout */}
