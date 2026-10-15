@@ -1085,7 +1085,7 @@ input[type="date"].add-emp-input {
 }
 
 /* ==========================================================================
-   Document Attachments Section (Step 1: Personal Data)
+   Document Attachments Section (Step 1: Personal Data) - Single Unified Form
    ========================================================================== */
 .add-emp-attachment-card {
   background-color: #ffffff;
@@ -1100,7 +1100,7 @@ input[type="date"].add-emp-input {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   flex-wrap: wrap;
   gap: 12px;
 }
@@ -1156,111 +1156,126 @@ input[type="date"].add-emp-input {
   color: #065f46;
 }
 
-.add-emp-doc-slots-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: 16px;
-}
-
-.add-emp-doc-slot-card {
-  border: 1px solid #e2e8f0;
+/* Single Unified Multiple-Upload Dropzone */
+.add-emp-unified-dropzone {
+  border: 2px dashed #cbd5e1;
   border-radius: 10px;
-  padding: 16px;
+  padding: 28px 20px;
   background-color: #fafbfc;
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 155px;
-}
-
-.add-emp-doc-slot-card.is-filled {
-  background-color: #ffffff;
-  border-color: #cbd5e1;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-}
-
-.add-emp-doc-slot-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.add-emp-doc-slot-label {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.add-emp-doc-slot-tag {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #002B7F;
-  background: #eff6ff;
-  border: 1px solid #dbeafe;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.add-emp-doc-slot-empty-dropzone {
-  border: 1.5px dashed #cbd5e1;
-  border-radius: 8px;
-  padding: 20px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
   cursor: pointer;
-  transition: all 0.15s ease;
-  background: #ffffff;
-  gap: 6px;
-  flex: 1;
+  transition: all 0.2s ease;
+  gap: 8px;
 }
 
-.add-emp-doc-slot-empty-dropzone:hover {
+.add-emp-unified-dropzone:hover,
+.add-emp-unified-dropzone.is-dragging {
   border-color: #002B7F;
-  background-color: #f8fafc;
+  background-color: #f0f7ff;
 }
 
-.add-emp-doc-slot-empty-dropzone .empty-icon {
-  color: #94a3b8;
-  margin-bottom: 2px;
-  transition: color 0.15s ease;
-}
-
-.add-emp-doc-slot-empty-dropzone:hover .empty-icon {
+.add-emp-unified-dropzone .dropzone-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #edf3fc;
   color: #002B7F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  transition: transform 0.2s ease;
 }
 
-.add-emp-doc-slot-upload-text {
+.add-emp-unified-dropzone:hover .dropzone-icon-box {
+  transform: translateY(-2px);
+}
+
+.add-emp-dropzone-headline {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.add-emp-dropzone-sub {
+  font-size: 12px;
+  color: #64748b;
+  max-width: 480px;
+}
+
+.add-emp-dropzone-browse-btn {
+  margin-top: 6px;
+  padding: 6px 16px;
+  border-radius: 6px;
   font-size: 12.5px;
   font-weight: 600;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
   color: #002B7F;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
 }
 
-.add-emp-doc-slot-hint {
-  font-size: 11px;
-  color: #94a3b8;
+.add-emp-unified-dropzone:hover .add-emp-dropzone-browse-btn {
+  background-color: #002B7F;
+  color: #ffffff;
+  border-color: #002B7F;
 }
 
-.add-emp-doc-slot-filled-content {
+/* Uploaded Documents List */
+.add-emp-doc-files-wrap {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-emp-doc-files-header {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.add-emp-doc-file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  gap: 14px;
+  transition: all 0.15s ease;
+  flex-wrap: wrap;
+}
+
+.add-emp-doc-file-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.add-emp-doc-file-left {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
   flex: 1;
-  padding: 8px 0;
 }
 
-.add-emp-doc-slot-icon-box {
-  width: 44px;
-  height: 44px;
+.add-emp-doc-file-icon {
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   background-color: #eff6ff;
   color: #002B7F;
@@ -1270,49 +1285,62 @@ input[type="date"].add-emp-input {
   flex-shrink: 0;
 }
 
-.add-emp-doc-slot-icon-box.is-pdf {
+.add-emp-doc-file-icon.is-pdf {
   background-color: #fef2f2;
   color: #dc2626;
 }
 
-.add-emp-doc-slot-meta {
+.add-emp-doc-file-info {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  flex: 1;
+  gap: 3px;
 }
 
-.add-emp-doc-slot-name {
-  font-size: 13px;
+.add-emp-doc-file-name {
+  font-size: 13.5px;
   font-weight: 600;
   color: #0f172a;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 190px;
+  max-width: 260px;
 }
 
-.add-emp-doc-slot-subinfo {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: #64748b;
-  margin-top: 3px;
-}
-
-.add-emp-doc-slot-actions {
+.add-emp-doc-file-meta {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 12px;
-  border-top: 1px solid #f1f5f9;
-  padding-top: 10px;
-  justify-content: flex-end;
+  font-size: 11.5px;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.add-emp-doc-type-select {
+  padding: 3px 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background-color: #f8fafc;
+  color: #002B7F;
+  cursor: pointer;
+  outline: none;
+}
+
+.add-emp-doc-type-select:focus {
+  border-color: #002B7F;
+  background-color: #ffffff;
+}
+
+.add-emp-doc-file-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .add-emp-btn-doc-action {
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 6px;
   font-size: 12px;
   font-weight: 500;
@@ -1324,6 +1352,7 @@ input[type="date"].add-emp-input {
   gap: 5px;
   cursor: pointer;
   transition: all 0.12s ease;
+  text-decoration: none;
 }
 
 .add-emp-btn-doc-action:hover {
@@ -1333,7 +1362,7 @@ input[type="date"].add-emp-input {
 }
 
 .add-emp-btn-doc-delete {
-  padding: 5px 9px;
+  padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid #fee2e2;
   background: #fff5f5;
@@ -1349,93 +1378,6 @@ input[type="date"].add-emp-input {
 .add-emp-btn-doc-delete:hover {
   background: #fee2e2;
   color: #b91c1c;
-}
-
-/* Other additional documents list */
-.add-emp-other-docs-section {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid #e2e8f0;
-}
-
-.add-emp-other-docs-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.add-emp-other-docs-title {
-  font-size: 13.5px;
-  font-weight: 700;
-  color: #334155;
-}
-
-.add-emp-btn-add-other {
-  padding: 6px 14px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1px dashed #002B7F;
-  background: #f0f7ff;
-  color: #002B7F;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.15s ease;
-}
-
-.add-emp-btn-add-other:hover {
-  background: #002B7F;
-  color: #ffffff;
-}
-
-.add-emp-other-docs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.add-emp-other-doc-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  background-color: #ffffff;
-  gap: 12px;
-}
-
-.add-emp-other-doc-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-  flex: 1;
-}
-
-.add-emp-other-doc-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.add-emp-other-doc-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #0f172a;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.add-emp-other-doc-sub {
-  font-size: 11.5px;
-  color: #64748b;
 }
 
 /* Modal for document preview */
