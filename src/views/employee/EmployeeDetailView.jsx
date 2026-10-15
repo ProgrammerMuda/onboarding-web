@@ -90,9 +90,9 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
     if (!emp.position) return 'Employee';
     const lower = emp.position.toLowerCase();
     if (
-      lower.includes('supervisor account receiveble') ||
-      lower.includes('supervisor accounts receivable') ||
-      lower.includes('supervisor account receivable') ||
+      lower.includes('account receive') ||
+      lower.includes('receiveble') ||
+      lower.includes('receivable') ||
       lower === 'supervisor'
     ) {
       return 'Supervisor';
@@ -219,11 +219,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 <Briefcase size={14} weight="bold" />
                 <span>{displayPosition}</span>
               </span>
-              {divName && (
-                <span className="emp-detail-dept-pill">
-                  {divName}
-                </span>
-              )}
             </div>
 
             {/* Basic Information Section */}

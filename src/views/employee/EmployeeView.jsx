@@ -724,7 +724,13 @@ export default function EmployeeView({ presenter }) {
 
                       {/* 4. Jabatan */}
                       <td>
-                        <span className="emp-pos-badge">{emp.position || 'Staff'}</span>
+                        <span className="emp-pos-badge">
+                          {(emp.position || '').toLowerCase().includes('account receive') ||
+                          (emp.position || '').toLowerCase().includes('receiveble') ||
+                          (emp.position || '').toLowerCase().includes('receivable')
+                            ? 'Supervisor'
+                            : (emp.position || 'Staff')}
+                        </span>
                       </td>
 
                       {/* 5. Masa Kerja: Join Date & End Date Kontrak */}
@@ -1285,7 +1291,11 @@ export default function EmployeeView({ presenter }) {
                     {detailModal.employee.name}
                   </h4>
                   <div style={{ fontSize: '13px', color: '#64748b' }}>
-                    {detailModal.employee.position} &bull; Fixed-term Contract
+                    {(detailModal.employee.position || '').toLowerCase().includes('account receive') ||
+                    (detailModal.employee.position || '').toLowerCase().includes('receiveble') ||
+                    (detailModal.employee.position || '').toLowerCase().includes('receivable')
+                      ? 'Supervisor'
+                      : detailModal.employee.position} &bull; Fixed-term Contract
                   </div>
                 </div>
               </div>

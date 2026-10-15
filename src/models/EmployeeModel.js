@@ -457,6 +457,15 @@ export function readEmployees() {
           }
         }
 
+        if (
+          (updated.position || '').toLowerCase().includes('account receive') ||
+          (updated.position || '').toLowerCase().includes('receiveble') ||
+          (updated.position || '').toLowerCase().includes('receivable')
+        ) {
+          updated.position = 'Supervisor';
+          changed = true;
+        }
+
         return updated;
       });
 

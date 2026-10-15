@@ -11,7 +11,7 @@ export const INITIAL_POSITIONS = [
   { id: 'pos-danru', code: '007', name: 'Danru', departmentId: 'dept-bs', divisionId: 'div-sec', parentIds: ['bm'] },
   { id: 'pos-admin', code: '008', name: 'Admin', departmentId: 'dept-fin', divisionId: 'div-fin', parentIds: ['bm'] },
   { id: 'pos-staff', code: '009', name: 'Staff', departmentId: 'dept-bs', divisionId: 'div-sec', parentIds: ['bm'] },
-  { id: 'pos-spv-ar', code: '010', name: 'Supervisor Account Receiveble', departmentId: 'dept-fin', divisionId: 'div-fin', parentIds: ['bm'] },
+  { id: 'pos-spv-ar', code: '010', name: 'Supervisor Finance', departmentId: 'dept-fin', divisionId: 'div-fin', parentIds: ['bm'] },
 ];
 
 /**
@@ -177,10 +177,20 @@ export function readMasterPositions() {
     const raw = window.localStorage.getItem(POSITION_STORAGE_KEY) || window.localStorage.getItem('proapps.hr.positions.v10');
     if (!raw) return INITIAL_POSITIONS;
     const parsed = JSON.parse(raw);
-    const list = Array.isArray(parsed?.positions)
+    const rawList = Array.isArray(parsed?.positions)
       ? parsed.positions
       : (Array.isArray(parsed) ? parsed : INITIAL_POSITIONS);
-    if (!list || list.length <= 1) return INITIAL_POSITIONS;
+    if (!rawList || rawList.length <= 1) return INITIAL_POSITIONS;
+
+    // Sanitize any legacy 'Account Receiveble' positions
+    const list = rawList.map((p) => {
+      if (!p) return p;
+      const lower = (p.name || '').toLowerCase();
+      if (lower.includes('account receive') || lower.includes('receiveble') || lower.includes('receivable')) {
+        return { ...p, name: 'Supervisor Finance' };
+      }
+      return p;
+    });
 
     // Guarantee that standard master positions always exist
     const existingNames = new Set(list.map((p) => (p?.name || '').trim().toLowerCase()));
