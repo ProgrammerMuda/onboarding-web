@@ -11,6 +11,7 @@ export const INITIAL_POSITIONS = [
   { id: 'pos-danru', code: '007', name: 'Danru', departmentId: 'dept-bs', divisionId: 'div-sec', parentIds: ['bm'] },
   { id: 'pos-admin', code: '008', name: 'Admin', departmentId: 'dept-fin', divisionId: 'div-fin', parentIds: ['bm'] },
   { id: 'pos-staff', code: '009', name: 'Staff', departmentId: 'dept-bs', divisionId: 'div-sec', parentIds: ['bm'] },
+  { id: 'pos-spv-ar', code: '010', name: 'Supervisor Account Receiveble', departmentId: 'dept-fin', divisionId: 'div-fin', parentIds: ['bm'] },
 ];
 
 /**

@@ -105,7 +105,7 @@ export const DIVISION_POSITIONS_MAP = {
     { id: 'pos-admin-tr', name: 'Admin Tenant Relation' }
   ],
   'div-fin': [
-    { id: 'pos-spv-fin', name: 'Supervisor Finance' },
+    { id: 'pos-spv-fin', name: 'Supervisor Account Receiveble' },
     { id: 'pos-staff-fin', name: 'Staff Finance' },
     { id: 'pos-admin-fin', name: 'Admin Finance' }
   ]
@@ -245,7 +245,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0819-4455-6677',
     departmentId: 'dept-fin',
     divisionId: 'div-fin',
-    position: 'Supervisor',
+    position: 'Supervisor Account Receiveble',
     joinDate: '2024-08-01',
     endDate: '2025-07-31',
     resignDate: '',
@@ -423,13 +423,17 @@ export function readEmployees() {
         const seedMatch = INITIAL_EMPLOYEES.find((s) => s.id === updated.id);
 
         if (seedMatch) {
-          // Guarantee dummy employees always maintain their verified department and division pairings
+          // Guarantee dummy employees always maintain their verified department, division, and position
           if (
             updated.departmentId !== seedMatch.departmentId ||
-            updated.divisionId !== seedMatch.divisionId
+            updated.divisionId !== seedMatch.divisionId ||
+            (updated.id === 'emp-005' && updated.position !== seedMatch.position)
           ) {
             updated.departmentId = seedMatch.departmentId;
             updated.divisionId = seedMatch.divisionId;
+            if (updated.id === 'emp-005') {
+              updated.position = seedMatch.position;
+            }
             changed = true;
           }
         } else {
