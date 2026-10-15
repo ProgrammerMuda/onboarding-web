@@ -42,7 +42,7 @@ const EMPTY_DRAFT = {
   departmentId: '',
   divisionId: '',
   position: '',
-  employmentType: 'Contract', // Employee Status (Contract, Permanent, Probation, Internship)
+  employmentType: '', // Employee Status (Contract, Permanent, Probation, Internship)
   joinDate: '',
   endDate: '',
   approvalLine: '',
@@ -162,17 +162,14 @@ export function useEmployeePresenter() {
     nextYear.setFullYear(today.getFullYear() + 1);
     const defaultJoin = today.toISOString().slice(0, 10);
     const defaultEnd = nextYear.toISOString().slice(0, 10);
-    const initialDept = departments[0]?.id || 'dept-bm';
-    const deptDivs = divisions.filter((d) => d.departmentId === initialDept);
-    const initialDiv = deptDivs[0]?.id || (divisions[0]?.id || '');
-    const divPositions = getPositionsForDivision(initialDiv);
 
     setWizardDraft({
       ...EMPTY_DRAFT,
       id: `emp-${Date.now()}`,
-      departmentId: initialDept,
-      divisionId: initialDiv,
-      position: divPositions[0]?.name || positions[0]?.name || 'Staff',
+      departmentId: '',
+      divisionId: '',
+      position: '',
+      employmentType: '',
       joinDate: defaultJoin,
       endDate: defaultEnd,
       avatar: '',
@@ -181,7 +178,7 @@ export function useEmployeePresenter() {
     });
     setWizardStep(1);
     setViewMode('add');
-  }, [departments, divisions, positions]);
+  }, []);
 
   const goBackToList = useCallback(() => {
     setViewMode('list');

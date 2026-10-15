@@ -324,6 +324,9 @@ export default function AddEmployeeView({ presenter, onBack }) {
     if (!wizardDraft.departmentId) {
       return 'Please select a Department.';
     }
+    if (!wizardDraft.divisionId) {
+      return 'Please select a Division.';
+    }
     if (!wizardDraft.position) {
       return 'Please select a Position.';
     }
@@ -397,12 +400,13 @@ export default function AddEmployeeView({ presenter, onBack }) {
 
   const isStep2Filled = useMemo(() => {
     const hasDept = Boolean(wizardDraft.departmentId);
+    const hasDiv = Boolean(wizardDraft.divisionId);
     const hasPos = Boolean(wizardDraft.position);
     const hasStatus = Boolean(wizardDraft.employmentType);
     const hasJoinDate = Boolean(wizardDraft.joinDate && wizardDraft.joinDate.trim());
     const hasEndDate = Boolean(wizardDraft.endDate && wizardDraft.endDate.trim());
 
-    return hasDept && hasPos && hasStatus && hasJoinDate && hasEndDate;
+    return hasDept && hasDiv && hasPos && hasStatus && hasJoinDate && hasEndDate;
   }, [wizardDraft]);
 
   const isStep3Filled = useMemo(() => {
@@ -1121,15 +1125,10 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     value={wizardDraft.departmentId}
                     onChange={(e) => {
                       const newDeptId = e.target.value;
-                      const newDivs = getDivisionsForDept(newDeptId);
-                      const nextDivId = newDivs[0]?.id || '';
-                      const nextPositions = typeof getPositionsForDivision === 'function'
-                        ? getPositionsForDivision(nextDivId)
-                        : [];
                       updateWizardDraft({
                         departmentId: newDeptId,
-                        divisionId: nextDivId,
-                        position: nextPositions[0]?.name || ''
+                        divisionId: '',
+                        position: ''
                       });
                     }}
                     autoFocus
@@ -1152,19 +1151,20 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   <select
                     className="form-select add-emp-input"
                     value={wizardDraft.divisionId}
+                    disabled={!wizardDraft.departmentId}
                     onChange={(e) => {
                       const nextDivId = e.target.value;
-                      const nextPositions = typeof getPositionsForDivision === 'function'
-                        ? getPositionsForDivision(nextDivId)
-                        : [];
-                      const isStillValid = nextPositions.some((p) => p.name === wizardDraft.position);
                       updateWizardDraft({
                         divisionId: nextDivId,
-                        position: isStillValid ? wizardDraft.position : (nextPositions[0]?.name || '')
+                        position: ''
                       });
                     }}
                   >
-                    <option value="">-- Select Division --</option>
+                    <option value="">
+                      {!wizardDraft.departmentId
+                        ? '-- Please Select Department First --'
+                        : '-- Select Division --'}
+                    </option>
                     {availableDivisions.map((div) => (
                       <option key={div.id} value={div.id}>
                         {div.name}
@@ -1210,7 +1210,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     value={wizardDraft.employmentType}
                     onChange={(e) => updateWizardDraft({ employmentType: e.target.value })}
                   >
-                    <option value="">-- Select Status --</option>
+                    <option value="">-- Select Employee Status --</option>
                     <option value="Permanent">Permanent</option>
                     <option value="Contract">Contract</option>
                     <option value="Probation">Probation</option>
