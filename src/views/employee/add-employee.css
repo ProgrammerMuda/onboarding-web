@@ -2,9 +2,11 @@
 
 .add-emp-container {
   width: 100%;
-  max-width: 1040px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding-bottom: 48px;
+  padding: 0 0 48px;
+  font-family: inherit;
+  color: #0f172a;
 }
 
 /* 1. Breadcrumb */
