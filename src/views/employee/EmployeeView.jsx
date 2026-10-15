@@ -110,6 +110,56 @@ export default function EmployeeView({ presenter }) {
   const [isDragging, setIsDragging] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null); // { employee, top, left, openUp }
 
+  // Resigned History Modal states
+  const [resignedModalOpen, setResignedModalOpen] = useState(false);
+  const [resignedSearchQuery, setResignedSearchQuery] = useState('');
+
+  // Resigned employees list & search filter
+  const resignedEmployees = React.useMemo(() => {
+    return employees.filter((e) => e.status !== 'Active');
+  }, [employees]);
+
+  const filteredResignedEmployees = React.useMemo(() => {
+    const q = resignedSearchQuery.trim().toLowerCase();
+    if (!q) return resignedEmployees;
+    return resignedEmployees.filter((e) => {
+      const name = (e.name || '').toLowerCase();
+      const nik = (e.nik || '').toLowerCase();
+      const email = (e.email || '').toLowerCase();
+      const pos = (e.position || '').toLowerCase();
+      const dept = (getDeptName(e.departmentId) || '').toLowerCase();
+      const div = (getDivName(e.divisionId, e.departmentId) || '').toLowerCase();
+      return name.includes(q) || nik.includes(q) || email.includes(q) || pos.includes(q) || dept.includes(q) || div.includes(q);
+    });
+  }, [resignedEmployees, resignedSearchQuery, departments, divisions]);
+
+  const handleExportResignedCsv = () => {
+    if (resignedEmployees.length === 0) return;
+    const headers = ['NIP', 'Name', 'Email', 'Phone', 'Department', 'Division', 'Position', 'Join Date', 'Resign Date', 'Status'];
+    const rows = resignedEmployees.map((emp) => [
+      `"${emp.nik || ''}"`,
+      `"${emp.name || ''}"`,
+      `"${emp.email || ''}"`,
+      `"${emp.phone || ''}"`,
+      `"${getDeptName(emp.departmentId)}"`,
+      `"${getDivName(emp.divisionId, emp.departmentId)}"`,
+      `"${emp.position || ''}"`,
+      `"${emp.joinDate || ''}"`,
+      `"${emp.resignDate || emp.endDate || ''}"`,
+      `"${emp.status || 'Resigned'}"`
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `resigned_employees_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Pagination state (10 records per page)
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -447,7 +497,15 @@ export default function EmployeeView({ presenter }) {
           </div>
         </div>
 
-        <div className="emp-stat-card">
+        <div
+          className="emp-stat-card"
+          onClick={() => {
+            setResignedSearchQuery('');
+            setResignedModalOpen(true);
+          }}
+          style={{ cursor: 'pointer' }}
+          title="Click to view resigned employee history"
+        >
           <div className="emp-stat-icon-wrap resigned">
             <UserMinus size={22} weight="bold" />
           </div>
@@ -480,9 +538,12 @@ export default function EmployeeView({ presenter }) {
             </button>
             <button
               type="button"
-              className={`emp-btn-secondary ${statusFilter === 'Resigned' ? 'active' : ''}`}
-              onClick={() => setStatusFilter((prev) => (prev === 'Resigned' ? 'all' : 'Resigned'))}
-              title="Show resigned / inactive employee history"
+              className="emp-btn-secondary"
+              onClick={() => {
+                setResignedSearchQuery('');
+                setResignedModalOpen(true);
+              }}
+              title="View resigned employee history"
             >
               <ClockCounterClockwise size={15} weight="bold" />
               <span>Resigned History</span>
@@ -1641,7 +1702,210 @@ export default function EmployeeView({ presenter }) {
         </div>
       )}
 
-      {/* 11. Action Dropdown rendered in Portal (in front of table card, never clipped on bottom rows) */}
+      {/* 11. Resigned History Modal */}
+      {resignedModalOpen && (
+        <div
+          className="emp-modal-backdrop"
+          onClick={() => setResignedModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="emp-modal-card emp-resigned-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="emp-modal-header emp-resigned-modal-header">
+              <div className="d-flex align-items-center gap-3">
+                <div className="emp-resigned-header-icon">
+                  <ClockCounterClockwise size={22} weight="bold" />
+                </div>
+                <div>
+                  <div className="d-flex align-items-center gap-2">
+                    <h3 className="emp-resigned-modal-title">Resigned History</h3>
+                    <span className="emp-resigned-count-pill">
+                      {resignedEmployees.length} {resignedEmployees.length === 1 ? 'Record' : 'Records'}
+                    </span>
+                  </div>
+                  <p className="emp-resigned-modal-desc">
+                    Historical directory of previous personnel who have resigned or left the company.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="emp-modal-close"
+                onClick={() => setResignedModalOpen(false)}
+                aria-label="Close resigned history modal"
+              >
+                <X size={20} weight="bold" />
+              </button>
+            </div>
+
+            {/* Modal Controls (Search & Counter) */}
+            <div className="emp-resigned-controls">
+              <div className="emp-resigned-search-wrap">
+                <MagnifyingGlass size={16} weight="bold" className="emp-resigned-search-icon" />
+                <input
+                  type="text"
+                  className="emp-resigned-search-input"
+                  placeholder="Search resigned staff by name, NIP, position, or department..."
+                  value={resignedSearchQuery}
+                  onChange={(e) => setResignedSearchQuery(e.target.value)}
+                />
+                {resignedSearchQuery && (
+                  <button
+                    type="button"
+                    className="emp-resigned-clear-search"
+                    onClick={() => setResignedSearchQuery('')}
+                    title="Clear search"
+                  >
+                    <X size={14} weight="bold" />
+                  </button>
+                )}
+              </div>
+              <div className="emp-resigned-stats-pill">
+                Showing <strong>{filteredResignedEmployees.length}</strong> of {resignedEmployees.length}
+              </div>
+            </div>
+
+            {/* Modal Body / Table List */}
+            <div className="emp-modal-body emp-resigned-modal-body">
+              {filteredResignedEmployees.length === 0 ? (
+                <div className="emp-resigned-empty">
+                  <div className="emp-resigned-empty-icon">
+                    <UserMinus size={38} weight="duotone" />
+                  </div>
+                  <h4>No Resigned Employees Found</h4>
+                  <p>
+                    {resignedSearchQuery
+                      ? `No resigned records match "${resignedSearchQuery}".`
+                      : 'There are currently no resigned employees on record.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="emp-resigned-table-responsive">
+                  <table className="emp-resigned-table">
+                    <thead>
+                      <tr>
+                        <th>Employee</th>
+                        <th>NIP</th>
+                        <th>Department &amp; Division</th>
+                        <th>Jabatan</th>
+                        <th>Masa Kerja</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: 'center' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredResignedEmployees.map((emp) => {
+                        const dept = departments.find((d) => d.id === emp.departmentId);
+                        const div = divisions.find((d) => d.id === emp.divisionId);
+                        return (
+                          <tr key={emp.id} className="emp-resigned-tr">
+                            {/* 1. Employee */}
+                            <td>
+                              <div className="emp-user-cell">
+                                <img
+                                  src={emp.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
+                                  alt={emp.name}
+                                  className="emp-avatar-small"
+                                />
+                                <div className="emp-user-meta">
+                                  <span className="emp-user-name">{emp.name}</span>
+                                  <span className="emp-user-email">{emp.email}</span>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* 2. NIP */}
+                            <td>
+                              <span className="emp-nip-pill">{emp.nik}</span>
+                            </td>
+
+                            {/* 3. Dept & Div */}
+                            <td>
+                              <div className="emp-org-dept-text">
+                                {dept ? dept.name : getDeptName(emp.departmentId)}
+                              </div>
+                              <div className="emp-org-div-text">
+                                Division: {div ? div.name : getDivName(emp.divisionId, emp.departmentId)}
+                              </div>
+                            </td>
+
+                            {/* 4. Jabatan */}
+                            <td>
+                              <span className="emp-pos-badge">{emp.position || 'Staff'}</span>
+                            </td>
+
+                            {/* 5. Masa Kerja */}
+                            <td>
+                              <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '12.5px' }}>
+                                <span style={{ color: '#002B7F', fontWeight: 700 }}>Join:</span> {emp.joinDate || '—'}
+                              </div>
+                              <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '2px', fontWeight: 600 }}>
+                                <span>Resigned:</span> {emp.resignDate || emp.endDate || '—'}
+                              </div>
+                            </td>
+
+                            {/* 6. Status */}
+                            <td>
+                              <span className="emp-status-badge resigned">
+                                <span className="emp-dot" />
+                                Resigned
+                              </span>
+                            </td>
+
+                            {/* 7. Action */}
+                            <td style={{ textAlign: 'center' }}>
+                              <button
+                                type="button"
+                                className="emp-resigned-action-btn"
+                                onClick={() => {
+                                  setResignedModalOpen(false);
+                                  openEmployeeDetail(emp);
+                                }}
+                                title="View full profile"
+                              >
+                                <Eye size={15} weight="bold" />
+                                <span>Detail</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="emp-modal-footer emp-resigned-modal-footer">
+              <button
+                type="button"
+                className="emp-btn-secondary"
+                onClick={handleExportResignedCsv}
+                disabled={resignedEmployees.length === 0}
+                title="Export resigned list to CSV"
+              >
+                <FileXls size={16} weight="bold" />
+                <span>Export Resigned List</span>
+              </button>
+
+              <button
+                type="button"
+                className="emp-btn-cancel"
+                onClick={() => setResignedModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 12. Action Dropdown rendered in Portal */}
       {openMenuId && menuAnchor && typeof document !== 'undefined' && createPortal(
         <div
           className="emp-action-dropdown-portal"
