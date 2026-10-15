@@ -650,12 +650,13 @@ export default function AddEmployeeView({ presenter, onBack }) {
     <div className="add-emp-container">
       {/* 1. Breadcrumbs */}
       <nav className="add-emp-breadcrumb" aria-label="Breadcrumb">
+        <span className="add-emp-breadcrumb-item">HR Parameter</span>
+        <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
         <button type="button" className="add-emp-breadcrumb-link" onClick={onBack}>
-          <UsersThree size={16} weight="bold" />
-          <span>Employees</span>
+          <span>List Employee</span>
         </button>
         <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
-        <span className="add-emp-breadcrumb-current">Add New Employee</span>
+        <span className="add-emp-breadcrumb-current">Add Employee</span>
       </nav>
 
       {/* 2. Page Header */}

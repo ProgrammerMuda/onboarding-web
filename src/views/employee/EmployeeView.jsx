@@ -393,12 +393,12 @@ export default function EmployeeView({ presenter }) {
 
   return (
     <div className="emp-container">
-      {/* 1. Breadcrumb matching screenshot */}
-      <div className="emp-breadcrumb">
+      {/* 1. Breadcrumb matching Add Employee */}
+      <nav className="emp-breadcrumb" aria-label="Breadcrumb">
         <span className="emp-breadcrumb-item">HR Parameter</span>
-        <span className="emp-breadcrumb-sep">&gt;</span>
-        <span className="emp-breadcrumb-current">Employees</span>
-      </div>
+        <CaretRight size={14} weight="bold" className="emp-breadcrumb-sep" />
+        <span className="emp-breadcrumb-current">List Employee</span>
+      </nav>
 
       {/* 2. Top Hero Banner matching Organization Structure */}
       <div className="emp-hero-banner">

@@ -107,14 +107,15 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
     <div className="emp-detail-page">
       {/* 1. Top Bar / Breadcrumbs & Action Controls */}
       <div className="emp-detail-topbar">
-        <div className="emp-detail-breadcrumb">
-          <button type="button" className="emp-detail-back-link" onClick={onBack}>
-            <ArrowLeft size={14} weight="bold" />
-            <span>Employees</span>
+        <nav className="emp-detail-breadcrumb" aria-label="Breadcrumb">
+          <span className="add-emp-breadcrumb-item">HR Parameter</span>
+          <CaretRight size={14} weight="bold" className="emp-detail-sep" />
+          <button type="button" className="add-emp-breadcrumb-link" onClick={onBack}>
+            <span>List Employee</span>
           </button>
-          <CaretRight size={13} weight="bold" className="emp-detail-sep" />
+          <CaretRight size={14} weight="bold" className="emp-detail-sep" />
           <span className="emp-detail-current-crumb">Employee Profile</span>
-        </div>
+        </nav>
 
         <div className="emp-detail-top-actions">
           <button

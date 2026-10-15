@@ -17,6 +17,11 @@
   color: #64748b;
 }
 
+.add-emp-breadcrumb-item {
+  color: #334155;
+  font-weight: 600;
+}
+
 .add-emp-breadcrumb-link {
   display: inline-flex;
   align-items: center;
