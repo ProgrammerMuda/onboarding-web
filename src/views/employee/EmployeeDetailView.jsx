@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Briefcase,
   IdentificationCard,
-  House,
   Receipt,
   CreditCard,
   Bank,
@@ -620,14 +619,13 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
           {/* TAB 4: EMERGENCY CONTACT */}
           {activeTab === 'emergency' && (
             <div>
-              {/* Card 1: Primary Emergency Contact */}
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
                     <div className="emp-detail-card-badge emp-badge-secondary">
                       <Phone size={20} weight="bold" />
                     </div>
-                    <h3 className="emp-detail-card-title">Primary Emergency Contact</h3>
+                    <h3 className="emp-detail-card-title">Emergency Contact</h3>
                   </div>
                 </div>
 
@@ -650,40 +648,11 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                       {emp.emergencyIdAddress || emp.idCardAddress || 'Same as Domicile Address'}
                     </span>
                   </div>
-                </div>
-              </div>
-
-              {/* Card 2: Home Address */}
-              <div className="emp-detail-card">
-                <div className="emp-detail-card-head">
-                  <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-secondary">
-                      <House size={20} weight="bold" />
-                    </div>
-                    <h3 className="emp-detail-card-title">Home &amp; Domicile Address</h3>
-                  </div>
-                </div>
-
-                <div className="emp-detail-table-wrap">
                   <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Address (ID Card / KTP)</span>
+                    <span className="emp-detail-kv-label">Current Address</span>
                     <span className="emp-detail-kv-value">
-                      {emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng'}
+                      {emp.domicileAddress || emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng'}
                     </span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Domicile Address</span>
-                    <span className="emp-detail-kv-value">
-                      {emp.domicileAddress || emp.idCardAddress || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng'}
-                    </span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">City</span>
-                    <span className="emp-detail-kv-value">{emp.city || 'Jakarta Selatan'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Postal Code</span>
-                    <span className="emp-detail-kv-value">{emp.postalCode || '12950'}</span>
                   </div>
                 </div>
               </div>
