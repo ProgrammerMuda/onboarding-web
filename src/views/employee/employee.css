@@ -446,10 +446,12 @@
    ========================================================================== */
 @keyframes empDrawerSlideIn {
   from {
-    transform: translateX(100%);
+    opacity: 0;
+    transform: translateX(36px) scale(0.97);
   }
   to {
-    transform: translateX(0);
+    opacity: 1;
+    transform: translateX(0) scale(1);
   }
 }
 
@@ -457,23 +459,41 @@
   position: fixed;
   inset: 0;
   background-color: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(4px);
   z-index: 1050;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  padding: 20px;
   animation: empFadeIn 0.2s ease-out;
 }
 
 .emp-filter-drawer {
-  width: 400px;
-  max-width: 90vw;
-  height: 100vh;
+  width: 420px;
+  max-width: calc(100vw - 40px);
+  height: calc(100vh - 40px);
+  max-height: calc(100vh - 40px);
   background-color: #ffffff;
   display: flex;
   flex-direction: column;
-  box-shadow: -8px 0 32px rgba(15, 23, 42, 0.15);
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(15, 23, 42, 0.05);
   animation: empDrawerSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .emp-filter-drawer-backdrop {
+    padding: 12px;
+  }
+  .emp-filter-drawer {
+    width: 100%;
+    max-width: 100%;
+    height: calc(100vh - 24px);
+    max-height: calc(100vh - 24px);
+    border-radius: 16px;
+  }
 }
 
 .emp-filter-drawer-header {
