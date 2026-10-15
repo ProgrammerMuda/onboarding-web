@@ -671,7 +671,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <div className="emp-detail-card-badge emp-badge-green">
                       <CreditCard size={20} weight="bold" />
                     </div>
-                    <h3 className="emp-detail-card-title">Payroll &amp; Bank Account</h3>
+                    <h3 className="emp-detail-card-title">Bank Account</h3>
                   </div>
                   <button
                     type="button"
@@ -693,12 +693,8 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <span className="emp-detail-kv-value font-monospace">{emp.bankAccount || '8271-9920-112'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Beneficiary Name</span>
+                    <span className="emp-detail-kv-label">Nama di Rekening Bank</span>
                     <span className="emp-detail-kv-value">{emp.beneficiaryName || emp.name}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Payment Schedule</span>
-                    <span className="emp-detail-kv-value">{emp.paymentSchedule || 'Monthly (Every 25th)'}</span>
                   </div>
                 </div>
               </div>

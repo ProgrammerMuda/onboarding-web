@@ -41,14 +41,6 @@ const BANK_OPTIONS = [
   'Other'
 ];
 
-const PAYMENT_SCHEDULE_OPTIONS = [
-  'Monthly (Every 25th)',
-  'Monthly (End of Month)',
-  'Monthly (Every 1st)',
-  'Bi-weekly',
-  'Weekly'
-];
-
 const COVERAGE_TIER_OPTIONS = [
   'Class 1 Corporate Comprehensive',
   'Class 2 Standard Corporate',
@@ -379,7 +371,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
     return null;
   };
 
-  // Step 3 Validation (Payroll & Social Security)
+  // Step 3 Validation (Bank Account & Social Security)
   const validateStep3 = () => {
     if (!wizardDraft.bankName || !wizardDraft.bankName.trim()) {
       return 'Bank Name is required.';
@@ -388,10 +380,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
       return 'Account Number is required.';
     }
     if (!wizardDraft.beneficiaryName || !wizardDraft.beneficiaryName.trim()) {
-      return 'Beneficiary Name is required.';
-    }
-    if (!wizardDraft.paymentSchedule || !wizardDraft.paymentSchedule.trim()) {
-      return 'Payment Schedule is required.';
+      return 'Nama di Rekening Bank is required.';
     }
     if (wizardDraft.bpjsTk && wizardDraft.bpjsTk.trim()) {
       const cleanBpjs = wizardDraft.bpjsTk.replace(/\D/g, '');
@@ -476,10 +465,9 @@ export default function AddEmployeeView({ presenter, onBack }) {
     const hasBank = Boolean(wizardDraft.bankName && wizardDraft.bankName.trim());
     const hasAccount = Boolean(wizardDraft.bankAccount && wizardDraft.bankAccount.trim());
     const hasBeneficiary = Boolean(wizardDraft.beneficiaryName && wizardDraft.beneficiaryName.trim());
-    const hasSchedule = Boolean(wizardDraft.paymentSchedule && wizardDraft.paymentSchedule.trim());
     const hasCoverage = Boolean(wizardDraft.coverageTier && wizardDraft.coverageTier.trim());
 
-    return hasBank && hasAccount && hasBeneficiary && hasSchedule && hasCoverage;
+    return hasBank && hasAccount && hasBeneficiary && hasCoverage;
   }, [wizardDraft]);
 
   const isStep4Filled = useMemo(() => {
@@ -688,7 +676,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
               {wizardStep > 3 ? <Check size={18} weight="bold" /> : '3'}
             </div>
             <div className="add-emp-step-content">
-              <span className="add-emp-step-title">Step 3: Payroll &amp; Insurance</span>
+              <span className="add-emp-step-title">Step 3: Bank Account</span>
               <span className="add-emp-step-desc">Bank Account &amp; Social Security</span>
             </div>
           </div>
@@ -744,9 +732,9 @@ export default function AddEmployeeView({ presenter, onBack }) {
                 <CreditCard size={20} weight="bold" color="#0088cc" />
               </div>
               <div>
-                <h3 className="add-emp-heading-title">Payroll &amp; Social Security</h3>
+                <h3 className="add-emp-heading-title">Bank Account</h3>
                 <p className="add-emp-heading-subtitle">
-                  Bank account details for payroll transfer and BPJS insurance coverage.
+                  Bank account details and BPJS insurance coverage.
                 </p>
               </div>
             </>
@@ -1385,13 +1373,13 @@ export default function AddEmployeeView({ presenter, onBack }) {
           {/* ============================================================ */}
           {wizardStep === 3 && (
             <div className="add-emp-step-pane">
-              {/* Card 1: Payroll & Bank Account */}
+              {/* Card 1: Bank Account */}
               <div className="add-emp-subcard mb-4">
                 <div className="add-emp-subcard-header">
                   <div className="add-emp-subcard-badge emp-badge-green">
                     <CreditCard size={20} weight="bold" />
                   </div>
-                  <h4 className="add-emp-subcard-title">Payroll &amp; Bank Account</h4>
+                  <h4 className="add-emp-subcard-title">Bank Account</h4>
                 </div>
 
                 <div className="row g-4">
@@ -1433,40 +1421,20 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     />
                   </div>
 
-                  {/* Beneficiary Name */}
+                  {/* Nama di Rekening Bank */}
                   <div className="col-md-6 add-emp-field-col">
                     <div className="add-emp-label-wrap">
                       <label className="add-emp-label">
-                        Beneficiary Name <span className="req">*</span>
+                        Nama di Rekening Bank <span className="req">*</span>
                       </label>
                     </div>
                     <input
                       type="text"
                       className="form-control add-emp-input"
-                      placeholder="e.g. Raga Murtadha"
+                      placeholder="e.g. Raga Murtadha (sesuai buku tabungan)"
                       value={wizardDraft.beneficiaryName}
                       onChange={(e) => updateWizardDraft({ beneficiaryName: e.target.value })}
                     />
-                  </div>
-
-                  {/* Payment Schedule */}
-                  <div className="col-md-6 add-emp-field-col">
-                    <div className="add-emp-label-wrap">
-                      <label className="add-emp-label">
-                        Payment Schedule <span className="req">*</span>
-                      </label>
-                    </div>
-                    <select
-                      className="form-select add-emp-input"
-                      value={wizardDraft.paymentSchedule || 'Monthly (Every 25th)'}
-                      onChange={(e) => updateWizardDraft({ paymentSchedule: e.target.value })}
-                    >
-                      {PAYMENT_SCHEDULE_OPTIONS.map((sched) => (
-                        <option key={sched} value={sched}>
-                          {sched}
-                        </option>
-                      ))}
-                    </select>
                   </div>
                 </div>
               </div>
