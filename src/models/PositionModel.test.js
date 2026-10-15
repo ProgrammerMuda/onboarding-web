@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { INITIAL_POSITIONS, ancestors, descendants, isValidPositionData, normalizePositionHierarchy, validatePosition, validatePositionRemoval, getNextPositionCode } from './PositionModel';
+import { INITIAL_POSITIONS, ancestors, descendants, isValidPositionData, normalizePositionHierarchy, validatePosition, validatePositionRemoval, getNextPositionCode, formatPositionNameWithDivision } from './PositionModel';
 
 const SAMPLE_POSITIONS = [
   { id: 'bm', code: '001', name: 'Building Manager', parentIds: [] },
@@ -53,5 +53,13 @@ describe('position hierarchy integrity', () => {
     const normalized = normalizePositionHierarchy(raw);
     expect(isValidPositionData(normalized)).toBe(true);
     expect(normalized.find((item) => item.id === 'staff').parentIds).toEqual(['bm']);
+  });
+
+  it('formats position name with division correctly and prevents duplicates', () => {
+    expect(formatPositionNameWithDivision('Staff', 'Security')).toBe('Staff Security');
+    expect(formatPositionNameWithDivision('Supervisor', 'Engineering')).toBe('Supervisor Engineering');
+    expect(formatPositionNameWithDivision('Staff Security', 'Security')).toBe('Staff Security');
+    expect(formatPositionNameWithDivision('Staff', '')).toBe('Staff');
+    expect(formatPositionNameWithDivision('', 'Security')).toBe('');
   });
 });

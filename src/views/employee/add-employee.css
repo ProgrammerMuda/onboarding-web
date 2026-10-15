@@ -1,0 +1,651 @@
+/* add-employee.css - Add Employee 3-Step Wizard Styling */
+
+.add-emp-container {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-bottom: 48px;
+}
+
+/* 1. Breadcrumb */
+.add-emp-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.add-emp-breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  transform: none !important;
+}
+
+.add-emp-breadcrumb-link:hover {
+  color: #002B7F;
+  text-decoration: underline;
+}
+
+.add-emp-breadcrumb-sep {
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+.add-emp-breadcrumb-current {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+/* 2. Page Header */
+.add-emp-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.add-emp-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #475569;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transform: none !important;
+}
+
+.add-emp-back-btn:hover {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.add-emp-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.add-emp-subtitle {
+  font-size: 13.5px;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+/* 3. Stepper Card */
+.add-emp-stepper-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.add-emp-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.add-emp-step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: default;
+  user-select: none;
+}
+
+.add-emp-step-item.completed {
+  cursor: pointer;
+}
+
+.add-emp-step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  border: 2px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #64748b;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.add-emp-step-item.active .add-emp-step-circle {
+  border-color: #002B7F;
+  background-color: #002B7F;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(0, 43, 127, 0.15);
+}
+
+.add-emp-step-item.completed .add-emp-step-circle {
+  border-color: #10b981;
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.add-emp-step-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.add-emp-step-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
+  line-height: 1.3;
+}
+
+.add-emp-step-item.active .add-emp-step-title {
+  color: #002B7F;
+  font-weight: 700;
+}
+
+.add-emp-step-item.completed .add-emp-step-title {
+  color: #0f172a;
+}
+
+.add-emp-step-desc {
+  font-size: 11.5px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+.add-emp-step-connector {
+  flex: 1;
+  height: 2px;
+  background-color: #e2e8f0;
+  margin: 0 16px;
+  transition: background-color 0.2s ease;
+}
+
+.add-emp-step-connector.completed {
+  background-color: #10b981;
+}
+
+@media (max-width: 768px) {
+  .add-emp-step-desc {
+    display: none;
+  }
+  .add-emp-step-title {
+    font-size: 12px;
+  }
+  .add-emp-stepper-card {
+    padding: 16px;
+  }
+}
+
+/* 4. Form Card */
+.add-emp-form-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.add-emp-error-banner {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 12px 18px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 28px 0;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.add-emp-step-pane {
+  padding: 28px 32px 36px;
+}
+
+/* Card Header matching Screenshot */
+.add-emp-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 28px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.add-emp-heading-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #f0f9ff;
+  border: 1px solid #e0f2fe;
+  color: #0088cc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.add-emp-heading-badge svg {
+  color: #0088cc !important;
+}
+
+.add-emp-heading-title {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #002B7F;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.add-emp-heading-subtitle {
+  font-size: 13px;
+  color: #64748b;
+  margin: 2px 0 0;
+  line-height: 1.4;
+}
+
+/* Also retain section heading class in case it is used internally */
+.add-emp-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* DEDICATED PROFILE PICTURE SECTION */
+.add-emp-avatar-card {
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+}
+
+.add-emp-avatar-card-header {
+  margin-bottom: 16px;
+}
+
+.add-emp-avatar-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.add-emp-avatar-card-body {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.add-emp-avatar-display-wrap {
+  flex-shrink: 0;
+}
+
+.add-emp-avatar-large {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.add-emp-avatar-empty {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-emp-avatar-empty:hover {
+  border-color: #0088cc;
+  background-color: #f0f9ff;
+  color: #0088cc;
+}
+
+.add-emp-avatar-empty:hover svg {
+  color: #0088cc !important;
+}
+
+.add-emp-avatar-actions-wrap {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 260px;
+}
+
+.add-emp-btn-upload-photo {
+  background-color: #002B7F !important;
+  border: 1px solid #002B7F !important;
+  color: #ffffff !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  padding: 8px 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transform: none !important;
+}
+
+.add-emp-btn-upload-photo:hover {
+  background-color: #002266 !important;
+}
+
+.add-emp-btn-reset-photo {
+  border: 1px solid #fecaca !important;
+  background-color: #ffffff !important;
+  color: #dc2626 !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 8px 14px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transform: none !important;
+}
+
+.add-emp-btn-reset-photo:hover {
+  background-color: #fee2e2 !important;
+  color: #b91c1c !important;
+}
+
+.add-emp-avatar-hint-inline {
+  font-size: 13px;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.4;
+}
+
+/* Labels, Hints, and Inputs */
+.add-emp-field-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.add-emp-label-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 24px;
+  min-height: 24px;
+  max-height: 24px;
+  margin-bottom: 8px;
+}
+
+.add-emp-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.add-emp-label .req {
+  color: #dc2626;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.add-emp-digit-hint {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+  font-family: monospace;
+  line-height: 1;
+}
+
+.add-emp-input {
+  font-size: 13px !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  background-color: #ffffff !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+select.add-emp-input {
+  height: 42px !important;
+  min-height: 42px !important;
+  line-height: 1.5 !important;
+  box-sizing: border-box !important;
+}
+
+.add-emp-input:focus {
+  border-color: #0088cc !important;
+  box-shadow: 0 0 0 3px rgba(9, 178, 255, 0.15) !important;
+  outline: none !important;
+}
+
+.add-emp-textarea {
+  height: 90px !important;
+  min-height: 90px !important;
+  max-height: 90px !important;
+  resize: none !important;
+  line-height: 1.4 !important;
+}
+
+.add-emp-char-counter {
+  height: 18px;
+  line-height: 18px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+  user-select: none;
+}
+
+/* Phone Prefix Prepend Badge matching screenshot */
+.input-group {
+  height: 42px !important;
+}
+
+.add-emp-phone-prefix {
+  background-color: #f1f5f9 !important;
+  border: 1px solid #cbd5e1 !important;
+  border-right: none !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  padding: 0 14px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  display: flex !important;
+  align-items: center !important;
+  border-top-left-radius: 6px !important;
+  border-bottom-left-radius: 6px !important;
+  box-sizing: border-box !important;
+}
+
+.add-emp-phone-prefix + .add-emp-input {
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  height: 42px !important;
+}
+
+/* Domicile Checkbox */
+.add-emp-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 500;
+  margin-bottom: 0 !important;
+  line-height: 1;
+}
+
+.add-emp-checkbox {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #002B7F;
+  margin: 0 !important;
+}
+
+/* 5. Navigation Action Footer */
+.add-emp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  gap: 16px;
+}
+
+.add-emp-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.add-emp-btn-cancel {
+  border: 1px solid #cbd5e1 !important;
+  background-color: #ffffff !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  padding: 8px 18px !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  transform: none !important;
+}
+
+.add-emp-btn-cancel:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.add-emp-btn-prev {
+  border: 1px solid #cbd5e1 !important;
+  background-color: #ffffff !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  padding: 8px 18px !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  transform: none !important;
+}
+
+.add-emp-btn-prev:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.add-emp-btn-next {
+  background-color: #002B7F !important;
+  border: 1px solid #002B7F !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  padding: 8px 20px !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  transform: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.add-emp-btn-next:hover:not(:disabled) {
+  background-color: #002266 !important;
+  border-color: #002266 !important;
+  color: #ffffff !important;
+}
+
+.add-emp-btn-next:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  background-color: #e2e8f0 !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+}
+
+.add-emp-btn-next:disabled svg {
+  color: #94a3b8 !important;
+}
+
+.add-emp-btn-submit {
+  background-color: #002B7F !important;
+  border: 1px solid #002B7F !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  padding: 8px 22px !important;
+  border-radius: 6px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transform: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.add-emp-btn-submit:hover:not(:disabled) {
+  background-color: #002266 !important;
+  border-color: #002266 !important;
+  color: #ffffff !important;
+}
+
+.add-emp-btn-submit:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  background-color: #e2e8f0 !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+}
+
+.add-emp-btn-submit:disabled svg {
+  color: #94a3b8 !important;
+}

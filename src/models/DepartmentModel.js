@@ -81,3 +81,24 @@ export function validateDepartmentRemoval(dept, allDivisions = []) {
   }
   return '';
 }
+
+export function readDepartments() {
+  if (typeof window === 'undefined' || !window.localStorage) {
+    return DEFAULT_DEPARTMENTS;
+  }
+  const raw = window.localStorage.getItem(DEPARTMENT_STORAGE_KEY);
+  if (!raw) return DEFAULT_DEPARTMENTS;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : DEFAULT_DEPARTMENTS;
+  } catch {
+    return DEFAULT_DEPARTMENTS;
+  }
+}
+
+export function persistDepartments(departments) {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.setItem(DEPARTMENT_STORAGE_KEY, JSON.stringify(departments));
+  }
+}
+

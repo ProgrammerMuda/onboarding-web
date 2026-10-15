@@ -268,8 +268,19 @@ export function useOrgStructurePresenter() {
     return true;
   }, [divModal, structure, updateStructure, closeDivModal]);
 
+  const [masterPositions, setMasterPositions] = useState(() =>
+    readMasterPositions().filter((p) => p.id !== TOP_POSITION_ID && p.code !== '001')
+  );
+
+  const refreshMasterPositions = useCallback(() => {
+    setMasterPositions(
+      readMasterPositions().filter((p) => p.id !== TOP_POSITION_ID && p.code !== '001')
+    );
+  }, []);
+
   // Position Actions
   const openAddPosModal = useCallback((divisionId, superiorId) => {
+    refreshMasterPositions();
     setPosModal({
       isOpen: true,
       mode: 'add',
@@ -282,14 +293,11 @@ export function useOrgStructurePresenter() {
       description: '',
       error: ''
     });
-  }, [structure.divisions, structure.positions]);
-
-  const masterPositions = useMemo(() => {
-    return readMasterPositions().filter((p) => p.id !== TOP_POSITION_ID && p.code !== '001');
-  }, []);
+  }, [structure.divisions, structure.positions, refreshMasterPositions]);
 
   const openEditPosModal = useCallback((pos) => {
     if (!pos) return;
+    refreshMasterPositions();
     const posName = pos.name || '';
     const matchedMaster = masterPositions.find(
       (mp) =>
@@ -310,7 +318,7 @@ export function useOrgStructurePresenter() {
       description: pos.description || '',
       error: ''
     });
-  }, [masterPositions]);
+  }, [masterPositions, refreshMasterPositions]);
 
   const closePosModal = useCallback(() => {
     setPosModal((prev) => ({ ...prev, isOpen: false, error: '' }));

@@ -91,7 +91,7 @@ export const SIDEBAR_SECTIONS = [
       },
       {
         id: 'engineering-parameter',
-        label: 'Enginering Parameter',
+        label: 'Engineering Parameter',
         icon: 'Database',
         hasChildren: true,
         children: [
@@ -111,7 +111,7 @@ export const SIDEBAR_SECTIONS = [
       },
       {
         id: 'fin-parameter',
-        label: 'FIN Paramater',
+        label: 'FIN Parameter',
         icon: 'Database',
         hasChildren: true,
         children: [
@@ -131,9 +131,9 @@ export const SIDEBAR_SECTIONS = [
           { id: 'hr-jabatan', label: 'Positions' },
           { id: 'hr-shift-type', label: 'Shift Type' },
           { id: 'hr-permit-type', label: 'Permit Type' },
-          { id: 'hr-agama', label: 'Agama' },
-          { id: 'hr-kartu-identitas', label: 'Kartu Identitas' },
-          { id: 'hr-jenis-kelamin', label: 'Jenis Kelamin' },
+          { id: 'hr-agama', label: 'Religion' },
+          { id: 'hr-kartu-identitas', label: 'Identity Card' },
+          { id: 'hr-jenis-kelamin', label: 'Gender' },
           { id: 'hr-request-approval', label: 'Request Approval' }
         ]
       },
@@ -198,7 +198,7 @@ export const SIDEBAR_SECTIONS = [
     items: [
       {
         id: 'hr-data-karyawan',
-        label: 'Data Karyawan',
+        label: 'Employees',
         icon: 'UsersThree',
         hasChildren: false
       },

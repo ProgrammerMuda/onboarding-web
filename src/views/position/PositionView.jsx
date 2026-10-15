@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { MagnifyingGlass, Plus, PencilSimple, Trash, X, Info, Crown, DotsThreeVertical, CheckCircle } from '@phosphor-icons/react';
-import { TOP_POSITION_ID } from '../../models/PositionModel';
+import { TOP_POSITION_ID, formatPositionNameWithDivision } from '../../models/PositionModel';
 import './position.css';
 
 function PositionSuccessModal({ title, subtext, onClose }) {
@@ -85,60 +85,182 @@ function PositionForm({ p }) {
   const isEdit = Boolean(p.dialog?.position);
   const isTop = p.dialog?.position?.id === TOP_POSITION_ID;
 
-  const [draft, setDraft] = useState(() => {
-    if (p.dialog?.position) {
-      return { 
-        ...p.dialog.position, 
-        parentIds: p.dialog.position.parentIds || [] 
-      };
-    }
-    const rootPos = p.positions.find((item) => item.id === TOP_POSITION_ID);
-    return { 
-      name: '', 
-      parentIds: rootPos ? [rootPos.id] : [] 
-    };
+  const [departmentId, setDepartmentId] = useState(() => {
+    if (isTop) return 'dept-bm';
+    return p.dialog?.position?.departmentId || '';
   });
 
+  const [divisionId, setDivisionId] = useState(() => {
+    if (isTop) return 'div-bm';
+    return p.dialog?.position?.divisionId || '';
+  });
+
+  const [baseTitle, setBaseTitle] = useState(() => {
+    if (!p.dialog?.position) return '';
+    const posName = p.dialog.position.name || '';
+    const initialDivId = p.dialog.position.divisionId;
+    const divObj = (p.divisions || []).find((d) => d.id === initialDivId);
+    if (divObj && divObj.name && posName.toLowerCase().endsWith(divObj.name.toLowerCase())) {
+      const stripped = posName.slice(0, posName.length - divObj.name.length).trim();
+      return stripped || posName;
+    }
+    return posName;
+  });
+
+  const availableDivisions = (p.divisions || []).filter(
+    (div) => !departmentId || div.departmentId === departmentId
+  );
+
+  const selectedDiv = (p.divisions || []).find((d) => d.id === divisionId);
+
+  const formattedName = isTop
+    ? (baseTitle.trim() || 'Building Manager')
+    : (selectedDiv ? formatPositionNameWithDivision(baseTitle.trim(), selectedDiv.name) : baseTitle.trim());
+
   const title = isEdit ? 'Edit Position' : 'Add New Position';
-  const isSaveDisabled = !draft.name?.trim();
+  const isSaveDisabled = isTop
+    ? !baseTitle.trim()
+    : (!departmentId || !divisionId || !baseTitle.trim());
+
+  const handleDepartmentChange = (e) => {
+    const nextDeptId = e.target.value;
+    setDepartmentId(nextDeptId);
+    const stillValid = (p.divisions || []).some(
+      (d) => d.id === divisionId && d.departmentId === nextDeptId
+    );
+    if (!stillValid) {
+      setDivisionId('');
+    }
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (isSaveDisabled) return;
+    const rootPos = p.positions.find((item) => item.id === TOP_POSITION_ID);
+    const existingParentIds = p.dialog?.position?.parentIds;
+    const parentIds = isTop ? [] : (existingParentIds?.length ? existingParentIds : (rootPos ? [rootPos.id] : []));
+    p.save({
+      ...(p.dialog?.position || {}),
+      name: formattedName,
+      departmentId: isTop ? 'dept-bm' : departmentId,
+      divisionId: isTop ? 'div-bm' : divisionId,
+      parentIds
+    });
+  };
 
   return (
     <PositionDialog title={title} onClose={p.close}>
-      <form onSubmit={(event) => { event.preventDefault(); p.save(draft); }}>
+      <form onSubmit={handleSubmit}>
         <div className="position-dialog-body">
-          {isEdit && draft.code && (
+          {isEdit && p.dialog?.position?.code && (
             <div className="d-flex align-items-center gap-2 mb-1">
               <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 500 }}>Position Code:</span>
-              <span className="position-code-tag">{draft.code}</span>
+              <span className="position-code-tag">{p.dialog.position.code}</span>
             </div>
           )}
 
-          {/* Position Name Input */}
+          {isTop ? (
+            <div className="position-root-banner">
+              <Crown size={22} weight="fill" className="text-amber" />
+              <div>
+                <strong>Highest Authority (Organization Root)</strong>
+                <p>The Building Manager is the top position in the organization.</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Department Select */}
+              <div className="position-form-group">
+                <label htmlFor="position-department" className="position-form-label">
+                  Department <span className="position-required">*</span>
+                </label>
+                <select
+                  id="position-department"
+                  required
+                  className="position-form-input position-form-select"
+                  value={departmentId}
+                  onChange={handleDepartmentChange}
+                >
+                  <option value="" disabled>-- Select Department --</option>
+                  {(p.departments || []).map((dept) => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name} ({dept.code})
+                    </option>
+                  ))}
+                </select>
+                <span className="position-form-hint">
+                  Choose the organizational department for this position.
+                </span>
+              </div>
+
+              {/* Division Select */}
+              <div className="position-form-group">
+                <label htmlFor="position-division" className="position-form-label">
+                  Division <span className="position-required">*</span>
+                </label>
+                <select
+                  id="position-division"
+                  required
+                  disabled={!departmentId}
+                  className="position-form-input position-form-select"
+                  value={divisionId}
+                  onChange={(e) => setDivisionId(e.target.value)}
+                >
+                  <option value="" disabled>
+                    {departmentId ? '-- Select Division --' : '-- Please Select Department First --'}
+                  </option>
+                  {availableDivisions.map((div) => (
+                    <option key={div.id} value={div.id}>
+                      {div.name} ({div.code})
+                    </option>
+                  ))}
+                </select>
+                <span className="position-form-hint">
+                  Divisions are filtered based on the selected department.
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* Position Title Input */}
           <div className="position-form-group">
             <label htmlFor="position-name" className="position-form-label">
-              Position Name <span className="position-required">*</span>
+              {isTop ? 'Position Name' : 'Position Title'} <span className="position-required">*</span>
             </label>
             <input 
               autoFocus 
               id="position-name" 
               required 
               maxLength={80} 
-              value={draft.name} 
-              placeholder="e.g. Supervisor, Coordinator, Team Leader" 
-              onChange={(event) => setDraft({ ...draft, name: event.target.value })} 
+              value={baseTitle} 
+              placeholder={isTop ? 'Building Manager' : 'e.g. Staff, Supervisor, Coordinator'} 
+              onChange={(event) => setBaseTitle(event.target.value)} 
               className="position-form-input"
             />
             <span className="position-form-hint">
-              Enter a clear job title suitable for your organization structure.
+              {isTop
+                ? 'Job title for the top authority in the building organization.'
+                : 'Enter the base title (e.g. Staff, Supervisor, Team Leader).'}
             </span>
           </div>
 
-          {isTop && (
-            <div className="position-root-banner">
-              <Crown size={22} weight="fill" className="text-amber" />
-              <div>
-                <strong>Highest Authority (Organization Root)</strong>
-                <p>The Building Manager is the top position in the organization.</p>
+          {/* Resulting Position Name Preview */}
+          {!isTop && (
+            <div className="position-preview-box">
+              <div className="position-preview-header">
+                <span className="position-preview-label">Resulting Position Name</span>
+                <span className="position-preview-formula">
+                  {selectedDiv ? `[${baseTitle.trim() || 'Title'}] + [${selectedDiv.name}]` : 'Title + Division'}
+                </span>
+              </div>
+              <div className="position-preview-value">
+                {formattedName ? (
+                  <strong>{formattedName}</strong>
+                ) : (
+                  <span className="text-muted fst-italic" style={{ fontSize: '0.85rem' }}>
+                    Select department, division, and enter title to preview
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -240,12 +362,16 @@ export function PositionView({ presenter: p }) {
                   <tr>
                     <th className="col-pos-code">Code</th>
                     <th className="col-pos-name">Position Name</th>
+                    <th className="col-pos-dept">Department</th>
+                    <th className="col-pos-div">Division</th>
                     <th className="col-pos-actions text-center" style={{ width: '90px' }}>ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
                   {p.filtered.map((item) => {
                     const isTop = item.id === TOP_POSITION_ID;
+                    const dept = (p.departments || []).find((d) => d.id === item.departmentId);
+                    const div = (p.divisions || []).find((d) => d.id === item.divisionId);
 
                     return (
                       <tr key={item.id} className={isTop ? 'position-row-top' : ''}>
@@ -265,6 +391,20 @@ export function PositionView({ presenter: p }) {
                               </span>
                             )}
                           </div>
+                        </td>
+
+                        {/* Department */}
+                        <td>
+                          <span className="position-dept-tag">
+                            {dept ? dept.name : (isTop ? 'Building Management' : '-')}
+                          </span>
+                        </td>
+
+                        {/* Division */}
+                        <td>
+                          <span className="position-div-tag">
+                            {div ? div.name : (isTop ? 'General Operation' : '-')}
+                          </span>
                         </td>
 
                         {/* Actions */}

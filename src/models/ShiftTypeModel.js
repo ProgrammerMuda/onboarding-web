@@ -252,3 +252,23 @@ export function validateShiftType(draft, existingShifts = []) {
 
   return null;
 }
+
+export function readShiftTypes() {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) {
+      return INITIAL_SHIFT_TYPES;
+    }
+    const raw = window.localStorage.getItem(SHIFT_STORAGE_KEY);
+    if (!raw) return INITIAL_SHIFT_TYPES;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return parsed.map((s) => ({
+        ...s,
+        name: s.name ? s.name.replace(/\s*\([^)]*\)/g, '').trim() : s.name
+      }));
+    }
+    return INITIAL_SHIFT_TYPES;
+  } catch {
+    return INITIAL_SHIFT_TYPES;
+  }
+}

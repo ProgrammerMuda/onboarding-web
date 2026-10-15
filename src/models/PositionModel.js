@@ -2,16 +2,33 @@ export const POSITION_STORAGE_KEY = 'proapps.hr.positions.v11';
 export const TOP_POSITION_ID = 'bm';
 
 export const INITIAL_POSITIONS = [
-  { id: 'bm', code: '001', name: 'Building Manager', parentIds: [] },
-  { id: 'pos-abm', code: '002', name: 'Assistant Building Manager (ABM)', parentIds: ['bm'] },
-  { id: 'pos-chief', code: '003', name: 'Chief', parentIds: ['bm'] },
-  { id: 'pos-spv', code: '004', name: 'Supervisor', parentIds: ['bm'] },
-  { id: 'pos-coord', code: '005', name: 'Coordinator', parentIds: ['bm'] },
-  { id: 'pos-tl', code: '006', name: 'Team Leader', parentIds: ['bm'] },
-  { id: 'pos-danru', code: '007', name: 'Danru', parentIds: ['bm'] },
-  { id: 'pos-admin', code: '008', name: 'Admin', parentIds: ['bm'] },
-  { id: 'pos-staff', code: '009', name: 'Staff', parentIds: ['bm'] },
+  { id: 'bm', code: '001', name: 'Building Manager', departmentId: 'dept-bm', divisionId: 'div-bm', parentIds: [] },
+  { id: 'pos-abm', code: '002', name: 'Assistant Building Manager (ABM)', departmentId: 'dept-bm', divisionId: 'div-bm', parentIds: ['bm'] },
+  { id: 'pos-chief', code: '003', name: 'Chief', departmentId: 'dept-bm', divisionId: 'div-bm', parentIds: ['bm'] },
+  { id: 'pos-spv', code: '004', name: 'Supervisor', departmentId: 'dept-eng', divisionId: 'div-eng', parentIds: ['bm'] },
+  { id: 'pos-coord', code: '005', name: 'Coordinator', departmentId: 'dept-tr', divisionId: 'div-tr', parentIds: ['bm'] },
+  { id: 'pos-tl', code: '006', name: 'Team Leader', departmentId: 'dept-bs', divisionId: 'div-hk', parentIds: ['bm'] },
+  { id: 'pos-danru', code: '007', name: 'Danru', departmentId: 'dept-bs', divisionId: 'div-sec', parentIds: ['bm'] },
+  { id: 'pos-admin', code: '008', name: 'Admin', departmentId: 'dept-fin', divisionId: 'div-fin', parentIds: ['bm'] },
+  { id: 'pos-staff', code: '009', name: 'Staff', departmentId: 'dept-bs', divisionId: 'div-sec', parentIds: ['bm'] },
 ];
+
+/**
+ * Formats a position name combined with its division name: e.g. "Staff" + "Security" -> "Staff Security"
+ */
+export function formatPositionNameWithDivision(positionName, divisionName) {
+  if (!positionName || !positionName.trim()) return '';
+  const cleanPos = positionName.trim();
+  if (!divisionName || !divisionName.trim()) return cleanPos;
+  const cleanDiv = divisionName.trim();
+  if (cleanPos.toLowerCase().endsWith(cleanDiv.toLowerCase())) {
+    return cleanPos;
+  }
+  if (cleanPos.toLowerCase().includes(cleanDiv.toLowerCase())) {
+    return cleanPos;
+  }
+  return `${cleanPos} ${cleanDiv}`;
+}
 
 export function getNextPositionCode(existingPositions = []) {
   if (!existingPositions || existingPositions.length === 0) return '001';
@@ -171,7 +188,43 @@ export function readMasterPositions() {
     );
     const merged = [...list, ...missingDefaults];
 
-    return normalizePositionHierarchy(merged);
+    const defaultPosMap = new Map(INITIAL_POSITIONS.map((p) => [p.id, p]));
+    const normalized = normalizePositionHierarchy(merged);
+
+    return normalized.map((p) => {
+      const defaultEntry = defaultPosMap.get(p.id);
+      let deptId = p.departmentId || defaultEntry?.departmentId || '';
+      let divId = p.divisionId || defaultEntry?.divisionId || '';
+
+      if (!divId) {
+        const lowerName = (p.name || '').toLowerCase();
+        if (lowerName.includes('security') || lowerName.includes('danru')) {
+          deptId = deptId || 'dept-bs';
+          divId = 'div-sec';
+        } else if (lowerName.includes('mep') || lowerName.includes('engineering')) {
+          deptId = deptId || 'dept-eng';
+          divId = 'div-eng';
+        } else if (lowerName.includes('house keeping') || lowerName.includes('cleaning')) {
+          deptId = deptId || 'dept-bs';
+          divId = 'div-hk';
+        } else if (lowerName.includes('finance') || lowerName.includes('accounting')) {
+          deptId = deptId || 'dept-fin';
+          divId = 'div-fin';
+        } else if (lowerName.includes('tenant')) {
+          deptId = deptId || 'dept-tr';
+          divId = 'div-tr';
+        } else if (lowerName.includes('building manager') || lowerName.includes('general operation')) {
+          deptId = deptId || 'dept-bm';
+          divId = 'div-bm';
+        }
+      }
+
+      return {
+        ...p,
+        departmentId: deptId,
+        divisionId: divId
+      };
+    });
   } catch {
     return INITIAL_POSITIONS;
   }

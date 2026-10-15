@@ -1,0 +1,1105 @@
+import React, { useState, useRef, useMemo } from 'react';
+import {
+  UsersThree,
+  CaretRight,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  User,
+  Briefcase,
+  Phone,
+  WarningCircle,
+  FloppyDisk,
+  UploadSimple,
+  IdentificationCard
+} from '@phosphor-icons/react';
+import './add-employee.css';
+
+const PRESET_AVATARS = [
+  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80'
+];
+
+const APPROVER_OPTIONS = [
+  { id: 'appr-1', name: 'Direct Manager / Supervisor' },
+  { id: 'appr-2', name: 'Head of Department' },
+  { id: 'appr-3', name: 'General Operation Manager' },
+  { id: 'appr-4', name: 'HR & GA Director' }
+];
+
+export default function AddEmployeeView({ presenter, onBack }) {
+  const {
+    wizardStep,
+    setWizardStep,
+    wizardDraft,
+    updateWizardDraft,
+    departments,
+    positions,
+    getDivisionsForDept,
+    getPositionsForDivision,
+    saveWizardEmployee,
+    employees
+  } = presenter;
+
+  const [stepError, setStepError] = useState('');
+  const fileInputRef = useRef(null);
+
+  // Numeric only handler for NIP (max 20 digits)
+  const handleNipChange = (e) => {
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 20);
+    updateWizardDraft({ nik: digitsOnly });
+  };
+
+  // Numeric only handler for NIK / KTP (16 digits)
+  const handleKtpChange = (e) => {
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 16);
+    updateWizardDraft({ ktp: digitsOnly });
+  };
+
+  // Numeric only handler for NPWP (16 digits)
+  const handleNpwpChange = (e) => {
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 16);
+    updateWizardDraft({ npwp: digitsOnly });
+  };
+
+  // Sync Domicile Address when "Same as ID card address" is checked
+  const handleToggleSameAddress = (e) => {
+    const isChecked = e.target.checked;
+    if (isChecked) {
+      updateWizardDraft({
+        sameAsIdCard: true,
+        domicileAddress: wizardDraft.idCardAddress || ''
+      });
+    } else {
+      updateWizardDraft({ sameAsIdCard: false });
+    }
+  };
+
+  const handleIdCardAddressChange = (val) => {
+    if (wizardDraft.sameAsIdCard) {
+      updateWizardDraft({
+        idCardAddress: val,
+        domicileAddress: val
+      });
+    } else {
+      updateWizardDraft({ idCardAddress: val });
+    }
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (uploadEvent) => {
+        updateWizardDraft({
+          avatar: uploadEvent.target.result,
+          avatarFileName: file.name
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Step 1 Validation
+  const validateStep1 = () => {
+    if (!wizardDraft.name || !wizardDraft.name.trim()) {
+      return 'Employee Name is required.';
+    }
+    if (!wizardDraft.nik || !wizardDraft.nik.trim()) {
+      return 'NIP is required.';
+    }
+    if (!/^\d{1,20}$/.test(wizardDraft.nik.trim())) {
+      return 'NIP must be numeric and maximum 20 digits.';
+    }
+    const dupNik = employees.find(
+      (e) => e.id !== wizardDraft.id && e.nik.trim() === wizardDraft.nik.trim()
+    );
+    if (dupNik) {
+      return `An employee with NIP "${wizardDraft.nik.trim()}" already exists (${dupNik.name}).`;
+    }
+
+    if (!wizardDraft.ktp || !wizardDraft.ktp.trim()) {
+      return 'NIK (ID Card) is required.';
+    }
+    if (!/^\d{16}$/.test(wizardDraft.ktp.trim())) {
+      return 'NIK (ID Card) must be 16 numeric digits.';
+    }
+    if (wizardDraft.npwp && wizardDraft.npwp.trim()) {
+      if (!/^\d{16}$/.test(wizardDraft.npwp.trim())) {
+        return 'NPWP Number must be exactly 16 numeric digits.';
+      }
+    }
+    if (!wizardDraft.gender) {
+      return 'Please select Gender.';
+    }
+    if (!wizardDraft.idCardAddress || !wizardDraft.idCardAddress.trim()) {
+      return 'Address (ID Card) is required.';
+    }
+    if (!wizardDraft.domicileAddress || !wizardDraft.domicileAddress.trim()) {
+      return 'Domicile Address is required.';
+    }
+    if (!wizardDraft.birthPlace || !wizardDraft.birthPlace.trim()) {
+      return 'Place of Birth is required.';
+    }
+    if (!wizardDraft.dob || !wizardDraft.dob.trim()) {
+      return 'Date of Birth is required.';
+    }
+    if (!wizardDraft.phone || !wizardDraft.phone.trim()) {
+      return 'Phone Number is required.';
+    }
+    if (!wizardDraft.email || !wizardDraft.email.trim()) {
+      return 'Email is required.';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(wizardDraft.email.trim())) {
+      return 'Invalid email format.';
+    }
+    const dupEmail = employees.find(
+      (e) => e.id !== wizardDraft.id && e.email.trim().toLowerCase() === wizardDraft.email.trim().toLowerCase()
+    );
+    if (dupEmail) {
+      return `An employee with Email "${wizardDraft.email.trim()}" already exists (${dupEmail.name}).`;
+    }
+    if (!wizardDraft.religion) {
+      return 'Please select Religion.';
+    }
+    if (!wizardDraft.maritalStatus) {
+      return 'Please select Marital Status.';
+    }
+    if (!wizardDraft.citizenship || !wizardDraft.citizenship.trim()) {
+      return 'Citizenship is required.';
+    }
+    return null;
+  };
+
+  // Step 2 Validation
+  const validateStep2 = () => {
+    if (!wizardDraft.departmentId) {
+      return 'Please select a Department.';
+    }
+    if (!wizardDraft.position) {
+      return 'Please select a Position.';
+    }
+    if (!wizardDraft.employmentType) {
+      return 'Please select Employee Status.';
+    }
+    if (!wizardDraft.joinDate || !wizardDraft.joinDate.trim()) {
+      return 'Join Date is required.';
+    }
+    if (!wizardDraft.endDate || !wizardDraft.endDate.trim()) {
+      return 'Contract End Date is required.';
+    }
+    if (wizardDraft.joinDate && wizardDraft.endDate && wizardDraft.endDate < wizardDraft.joinDate) {
+      return 'Contract End Date cannot be before Join Date.';
+    }
+    return null;
+  };
+
+  // Step 3 Validation
+  const validateStep3 = () => {
+    if (!wizardDraft.emergencyName || !wizardDraft.emergencyName.trim()) {
+      return 'Contact Name is required.';
+    }
+    if (!wizardDraft.emergencyRelation) {
+      return 'Relationship is required.';
+    }
+    if (!wizardDraft.emergencyPhone || !wizardDraft.emergencyPhone.trim()) {
+      return 'Phone Number is required.';
+    }
+    return null;
+  };
+
+  // Determine if required fields are missing to disable the Next / Submit button
+  const isStep1Valid = useMemo(() => {
+    return !validateStep1();
+  }, [wizardDraft, employees]);
+
+  const isStep2Valid = useMemo(() => {
+    return !validateStep2();
+  }, [wizardDraft, employees]);
+
+  const isStep3Valid = useMemo(() => {
+    return !validateStep3();
+  }, [wizardDraft]);
+
+  const isCurrentStepDisabled = useMemo(() => {
+    if (wizardStep === 1) return !isStep1Valid;
+    if (wizardStep === 2) return !isStep2Valid;
+    if (wizardStep === 3) return !isStep3Valid;
+    return false;
+  }, [wizardStep, isStep1Valid, isStep2Valid, isStep3Valid]);
+
+  const handleNext = () => {
+    setStepError('');
+    if (wizardStep === 1) {
+      const err = validateStep1();
+      if (err) {
+        setStepError(err);
+        return;
+      }
+      setWizardStep(2);
+    } else if (wizardStep === 2) {
+      const err = validateStep2();
+      if (err) {
+        setStepError(err);
+        return;
+      }
+      setWizardStep(3);
+    }
+  };
+
+  const handlePrev = () => {
+    setStepError('');
+    if (wizardStep > 1) {
+      setWizardStep(wizardStep - 1);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setStepError('');
+    const err3 = validateStep3();
+    if (err3) {
+      setStepError(err3);
+      return;
+    }
+    const res = saveWizardEmployee(wizardDraft);
+    if (res && !res.success) {
+      setStepError(res.error || 'Failed to save employee.');
+    }
+  };
+
+  const availableDivisions = getDivisionsForDept(wizardDraft.departmentId);
+
+  const availablePositions = useMemo(() => {
+    if (!wizardDraft.divisionId) return [];
+    if (typeof getPositionsForDivision === 'function') {
+      return getPositionsForDivision(wizardDraft.divisionId);
+    }
+    return positions;
+  }, [wizardDraft.divisionId, getPositionsForDivision, positions]);
+
+  return (
+    <div className="add-emp-container">
+      {/* 1. Breadcrumbs */}
+      <nav className="add-emp-breadcrumb" aria-label="Breadcrumb">
+        <button type="button" className="add-emp-breadcrumb-link" onClick={onBack}>
+          <UsersThree size={16} weight="bold" />
+          <span>Employees</span>
+        </button>
+        <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
+        <span className="add-emp-breadcrumb-current">Add New Employee</span>
+      </nav>
+
+      {/* 2. Page Header */}
+      <div className="add-emp-header">
+        <button
+          type="button"
+          className="add-emp-back-btn"
+          onClick={onBack}
+          title="Return to Employee Directory"
+        >
+          <ArrowLeft size={18} weight="bold" />
+        </button>
+        <div>
+          <h1 className="add-emp-title">Add New Employee</h1>
+          <p className="add-emp-subtitle">
+            Complete the 3-step registration form to register a new employee.
+          </p>
+        </div>
+      </div>
+
+      {/* 3. Stepper Progress Timeline */}
+      <div className="add-emp-stepper-card">
+        <div className="add-emp-stepper">
+          {/* Step 1 Item */}
+          <div
+            className={`add-emp-step-item ${wizardStep === 1 ? 'active' : ''} ${
+              wizardStep > 1 ? 'completed' : ''
+            }`}
+            onClick={() => {
+              if (wizardStep > 1) {
+                setStepError('');
+                setWizardStep(1);
+              }
+            }}
+          >
+            <div className="add-emp-step-circle">
+              {wizardStep > 1 ? <Check size={18} weight="bold" /> : '1'}
+            </div>
+            <div className="add-emp-step-content">
+              <span className="add-emp-step-title">Step 1: Personal Data</span>
+              <span className="add-emp-step-desc">Identity & Personal Contact</span>
+            </div>
+          </div>
+
+          <div className={`add-emp-step-connector ${wizardStep > 1 ? 'completed' : ''}`} />
+
+          {/* Step 2 Item */}
+          <div
+            className={`add-emp-step-item ${wizardStep === 2 ? 'active' : ''} ${
+              wizardStep > 2 ? 'completed' : ''
+            }`}
+            onClick={() => {
+              if (wizardStep > 2) {
+                setStepError('');
+                setWizardStep(2);
+              }
+            }}
+          >
+            <div className="add-emp-step-circle">
+              {wizardStep > 2 ? <Check size={18} weight="bold" /> : '2'}
+            </div>
+            <div className="add-emp-step-content">
+              <span className="add-emp-step-title">Step 2: Employee Data</span>
+              <span className="add-emp-step-desc">Department, Position & Contract</span>
+            </div>
+          </div>
+
+          <div className={`add-emp-step-connector ${wizardStep > 2 ? 'completed' : ''}`} />
+
+          {/* Step 3 Item */}
+          <div className={`add-emp-step-item ${wizardStep === 3 ? 'active' : ''}`}>
+            <div className="add-emp-step-circle">3</div>
+            <div className="add-emp-step-content">
+              <span className="add-emp-step-title">Step 3: Emergency Contact</span>
+              <span className="add-emp-step-desc">Emergency Contact & Address</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Form Card */}
+      <div className="add-emp-form-card">
+        {/* Top Header Card matching user reference photo */}
+        <div className="add-emp-card-header">
+          {wizardStep === 1 && (
+            <>
+              <div className="add-emp-heading-badge">
+                <IdentificationCard size={20} weight="bold" color="#0088cc" />
+              </div>
+              <div>
+                <h3 className="add-emp-heading-title">Personal information</h3>
+                <p className="add-emp-heading-subtitle">
+                  Identity, contact details, and personal information.
+                </p>
+              </div>
+            </>
+          )}
+
+          {wizardStep === 2 && (
+            <>
+              <div className="add-emp-heading-badge">
+                <Briefcase size={20} weight="bold" color="#0088cc" />
+              </div>
+              <div>
+                <h3 className="add-emp-heading-title">Employee Data</h3>
+                <p className="add-emp-heading-subtitle">
+                  Department, position, tenure, and organizational placement.
+                </p>
+              </div>
+            </>
+          )}
+
+          {wizardStep === 3 && (
+            <>
+              <div className="add-emp-heading-badge">
+                <Phone size={20} weight="bold" color="#0088cc" />
+              </div>
+              <div>
+                <h3 className="add-emp-heading-title">Emergency Contact</h3>
+                <p className="add-emp-heading-subtitle">
+                  Emergency contact details, relationship, and address.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        {stepError && (
+          <div className="add-emp-error-banner" role="alert">
+            <WarningCircle size={20} weight="fill" />
+            <span>{stepError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          {/* ============================================================ */}
+          {/* STEP 1: PERSONAL DATA                                        */}
+          {/* ============================================================ */}
+          {wizardStep === 1 && (
+            <div className="add-emp-step-pane">
+              {/* DEDICATED PROFILE PICTURE SECTION */}
+              <div className="add-emp-avatar-card">
+                <div className="add-emp-avatar-card-header">
+                  <span className="add-emp-avatar-card-title">Profile Picture</span>
+                </div>
+
+                <div className="add-emp-avatar-card-body">
+                  <div className="add-emp-avatar-display-wrap">
+                    {wizardDraft.avatar ? (
+                      <img
+                        src={wizardDraft.avatar}
+                        alt="Profile preview"
+                        className="add-emp-avatar-large"
+                      />
+                    ) : (
+                      <div
+                        className="add-emp-avatar-empty"
+                        onClick={() => fileInputRef.current?.click()}
+                        title="Click to upload profile photo"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            fileInputRef.current?.click();
+                          }
+                        }}
+                      >
+                        <User size={38} weight="regular" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="add-emp-avatar-actions-wrap">
+                    <div className="d-flex align-items-center gap-3 flex-wrap">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        className="d-none"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                      />
+                      <button
+                        type="button"
+                        className="btn add-emp-btn-upload-photo"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <UploadSimple size={16} weight="bold" />
+                        <span>{wizardDraft.avatar ? 'Change Photo' : 'Upload Photo'}</span>
+                      </button>
+
+                      {wizardDraft.avatar && (
+                        <button
+                          type="button"
+                          className="btn add-emp-btn-reset-photo"
+                          onClick={() =>
+                            updateWizardDraft({
+                              avatar: '',
+                              avatarFileName: ''
+                            })
+                          }
+                          title="Remove uploaded photo"
+                        >
+                          Remove
+                        </button>
+                      )}
+
+                      <span className="add-emp-avatar-hint-inline">
+                        Upload an employee photo (PNG, JPG, max 2MB)
+                      </span>
+
+                      {wizardDraft.avatarFileName && (
+                        <span className="add-emp-file-name text-muted">
+                          • {wizardDraft.avatarFileName}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Personal Data Form Grid */}
+              <div className="row g-4">
+                {/* Row 1: Employee Name & NIP (16 Digits Numeric Only) */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Employee Name <span className="req">*</span>
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    className="form-control add-emp-input"
+                    placeholder="e.g. Budi Santoso"
+                    value={wizardDraft.name}
+                    onChange={(e) => updateWizardDraft({ name: e.target.value })}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      NIP <span className="req">*</span>
+                    </label>
+                    <span className="add-emp-digit-hint">
+                      {(wizardDraft.nik || '').length} / 20 digits
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={20}
+                    placeholder="Numeric NIP (max 20 digits)"
+                    className="form-control add-emp-input font-monospace"
+                    value={wizardDraft.nik}
+                    onChange={handleNipChange}
+                  />
+                </div>
+
+                {/* Row 2: NIK (16 Digits Numeric Only) & Gender */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      NIK <span className="req">*</span>
+                    </label>
+                    <span className="add-emp-digit-hint">
+                      {(wizardDraft.ktp || '').length} / 16 digits
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={16}
+                    placeholder="16-digit numeric ID Card number"
+                    className="form-control add-emp-input font-monospace"
+                    value={wizardDraft.ktp}
+                    onChange={handleKtpChange}
+                  />
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Gender <span className="req">*</span>
+                    </label>
+                  </div>
+                  <select
+                    className="form-select add-emp-input"
+                    value={wizardDraft.gender}
+                    onChange={(e) => updateWizardDraft({ gender: e.target.value })}
+                  >
+                    <option value="">-- Select Gender --</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+
+                {/* Row 3: NPWP Number (16 Digits) & Citizenship */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">NPWP Number</label>
+                    <span className="add-emp-digit-hint">
+                      {(wizardDraft.npwp || '').length} / 16 digits
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={16}
+                    placeholder="16-digit numeric NPWP (e.g. 0925432910130000)"
+                    className="form-control add-emp-input font-monospace"
+                    value={wizardDraft.npwp}
+                    onChange={handleNpwpChange}
+                  />
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Citizenship <span className="req">*</span>
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    className="form-control add-emp-input"
+                    placeholder="e.g. Indonesia"
+                    value={wizardDraft.citizenship || 'Indonesia'}
+                    onChange={(e) => updateWizardDraft({ citizenship: e.target.value })}
+                  />
+                </div>
+
+                {/* Row 4: Address (ID Card) & Domicile Address with Checkbox */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Address (ID Card) <span className="req">*</span>
+                    </label>
+                  </div>
+                  <textarea
+                    rows={3}
+                    maxLength={255}
+                    className="form-control add-emp-input add-emp-textarea"
+                    placeholder="Enter full ID card address..."
+                    value={wizardDraft.idCardAddress}
+                    onChange={(e) => handleIdCardAddressChange(e.target.value)}
+                  />
+                  <div className="add-emp-char-counter">
+                    {(wizardDraft.idCardAddress || '').length} / 255
+                  </div>
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Domicile Address <span className="req">*</span>
+                    </label>
+                    <label className="add-emp-checkbox-label">
+                      <input
+                        type="checkbox"
+                        className="form-check-input add-emp-checkbox"
+                        checked={wizardDraft.sameAsIdCard || false}
+                        onChange={handleToggleSameAddress}
+                      />
+                      <span>Same as ID card address</span>
+                    </label>
+                  </div>
+                  <textarea
+                    rows={3}
+                    maxLength={255}
+                    className="form-control add-emp-input add-emp-textarea"
+                    placeholder="Enter current domicile address..."
+                    value={wizardDraft.domicileAddress}
+                    disabled={wizardDraft.sameAsIdCard}
+                    onChange={(e) => updateWizardDraft({ domicileAddress: e.target.value })}
+                  />
+                  <div className="add-emp-char-counter">
+                    {(wizardDraft.domicileAddress || '').length} / 255
+                  </div>
+                </div>
+
+                {/* Row 5: Place of Birth & Date of Birth */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Place of Birth <span className="req">*</span>
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    className="form-control add-emp-input"
+                    placeholder="e.g. Jakarta"
+                    value={wizardDraft.birthPlace}
+                    onChange={(e) => updateWizardDraft({ birthPlace: e.target.value })}
+                  />
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Date of Birth <span className="req">*</span>
+                    </label>
+                  </div>
+                  <input
+                    type="date"
+                    className="form-control add-emp-input"
+                    value={wizardDraft.dob}
+                    onChange={(e) => updateWizardDraft({ dob: e.target.value })}
+                  />
+                </div>
+
+                {/* Row 6: Phone Number with +62 & Email */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Phone Number <span className="req">*</span>
+                    </label>
+                  </div>
+                  <div className="input-group">
+                    <span className="input-group-text add-emp-phone-prefix">+62</span>
+                    <input
+                      type="text"
+                      className="form-control add-emp-input"
+                      placeholder="81234567890"
+                      value={wizardDraft.phone}
+                      onChange={(e) => updateWizardDraft({ phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Email <span className="req">*</span>
+                    </label>
+                  </div>
+                  <input
+                    type="email"
+                    className="form-control add-emp-input"
+                    placeholder="e.g. budi.santoso@indoland.co.id"
+                    value={wizardDraft.email}
+                    onChange={(e) => updateWizardDraft({ email: e.target.value })}
+                  />
+                </div>
+
+                {/* Row 7: Religion & Marital Status */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Religion <span className="req">*</span>
+                    </label>
+                  </div>
+                  <select
+                    className="form-select add-emp-input"
+                    value={wizardDraft.religion}
+                    onChange={(e) => updateWizardDraft({ religion: e.target.value })}
+                  >
+                    <option value="">-- Select Religion --</option>
+                    <option value="Islam">Islam</option>
+                    <option value="Kristen">Kristen</option>
+                    <option value="Katolik">Katolik</option>
+                    <option value="Hindu">Hindu</option>
+                    <option value="Buddha">Buddha</option>
+                    <option value="Konghucu">Konghucu</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Marital Status <span className="req">*</span>
+                    </label>
+                  </div>
+                  <select
+                    className="form-select add-emp-input"
+                    value={wizardDraft.maritalStatus}
+                    onChange={(e) => updateWizardDraft({ maritalStatus: e.target.value })}
+                  >
+                    <option value="">-- Select Marital Status --</option>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Widowed">Widowed</option>
+                    <option value="Divorced">Divorced</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================ */}
+          {/* STEP 2: EMPLOYEE DATA                                        */}
+          {/* ============================================================ */}
+          {wizardStep === 2 && (
+            <div className="add-emp-step-pane">
+              <div className="row g-4">
+                {/* Row 1: Department & Division */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Department <span className="req">*</span>
+                    </label>
+                  </div>
+                  <select
+                    className="form-select add-emp-input"
+                    value={wizardDraft.departmentId}
+                    onChange={(e) => {
+                      const newDeptId = e.target.value;
+                      const newDivs = getDivisionsForDept(newDeptId);
+                      const nextDivId = newDivs[0]?.id || '';
+                      const nextPositions = typeof getPositionsForDivision === 'function'
+                        ? getPositionsForDivision(nextDivId)
+                        : [];
+                      updateWizardDraft({
+                        departmentId: newDeptId,
+                        divisionId: nextDivId,
+                        position: nextPositions[0]?.name || ''
+                      });
+                    }}
+                    autoFocus
+                  >
+                    <option value="">-- Select Department --</option>
+                    {departments.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} ({d.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Division <span className="req">*</span>
+                    </label>
+                  </div>
+                  <select
+                    className="form-select add-emp-input"
+                    value={wizardDraft.divisionId}
+                    onChange={(e) => {
+                      const nextDivId = e.target.value;
+                      const nextPositions = typeof getPositionsForDivision === 'function'
+                        ? getPositionsForDivision(nextDivId)
+                        : [];
+                      const isStillValid = nextPositions.some((p) => p.name === wizardDraft.position);
+                      updateWizardDraft({
+                        divisionId: nextDivId,
+                        position: isStillValid ? wizardDraft.position : (nextPositions[0]?.name || '')
+                      });
+                    }}
+                  >
+                    <option value="">-- Select Division --</option>
+                    {availableDivisions.map((div) => (
+                      <option key={div.id} value={div.id}>
+                        {div.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Row 2: Position & Employee Status */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Position <span className="req">*</span>
+                    </label>
+                  </div>
+                  <select
+                    className="form-select add-emp-input"
+                    value={wizardDraft.position}
+                    disabled={!wizardDraft.divisionId}
+                    onChange={(e) => updateWizardDraft({ position: e.target.value })}
+                  >
+                    <option value="">
+                      {!wizardDraft.divisionId
+                        ? '-- Please Select Division First --'
+                        : '-- Select Position --'}
+                    </option>
+                    {availablePositions.map((p) => (
+                      <option key={p.id || p.name} value={p.name}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Employee Status <span className="req">*</span>
+                    </label>
+                  </div>
+                  <select
+                    className="form-select add-emp-input"
+                    value={wizardDraft.employmentType}
+                    onChange={(e) => updateWizardDraft({ employmentType: e.target.value })}
+                  >
+                    <option value="">-- Select Status --</option>
+                    <option value="Permanent">Permanent</option>
+                    <option value="Contract">Contract</option>
+                    <option value="Probation">Probation</option>
+                    <option value="Internship">Internship</option>
+                  </select>
+                </div>
+
+                {/* Row 3: Join Date & Contract End Date */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Join Date <span className="req">*</span>
+                    </label>
+                  </div>
+                  <input
+                    type="date"
+                    className="form-control add-emp-input"
+                    value={wizardDraft.joinDate}
+                    onChange={(e) => updateWizardDraft({ joinDate: e.target.value })}
+                  />
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Contract End Date <span className="req">*</span>
+                    </label>
+                  </div>
+                  <input
+                    type="date"
+                    className="form-control add-emp-input"
+                    value={wizardDraft.endDate}
+                    onChange={(e) => updateWizardDraft({ endDate: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================ */}
+          {/* STEP 3: EMERGENCY CONTACT                                    */}
+          {/* ============================================================ */}
+          {wizardStep === 3 && (
+            <div className="add-emp-step-pane">
+              <div className="row g-4">
+                {/* Row 1: Contact Name & Relationship */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Contact Name <span className="req">*</span>
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    className="form-control add-emp-input"
+                    placeholder="e.g. Siti Rahmawati"
+                    value={wizardDraft.emergencyName}
+                    onChange={(e) => updateWizardDraft({ emergencyName: e.target.value })}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Relationship <span className="req">*</span>
+                    </label>
+                  </div>
+                  <select
+                    className="form-select add-emp-input"
+                    value={wizardDraft.emergencyRelation}
+                    onChange={(e) => updateWizardDraft({ emergencyRelation: e.target.value })}
+                  >
+                    <option value="">-- Select Relationship --</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Sibling">Sibling</option>
+                    <option value="Child">Child</option>
+                    <option value="Relative">Relative</option>
+                    <option value="Friend">Friend</option>
+                  </select>
+                </div>
+
+                {/* Row 2: NIK & Phone Number */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">NIK</label>
+                    <span className="add-emp-digit-hint">
+                      {(wizardDraft.emergencyNik || '').length} / 16 digits
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={16}
+                    placeholder="16-digit numeric ID Card number"
+                    className="form-control add-emp-input font-monospace"
+                    value={wizardDraft.emergencyNik}
+                    onChange={(e) =>
+                      updateWizardDraft({
+                        emergencyNik: e.target.value.replace(/\D/g, '').slice(0, 16)
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">
+                      Phone Number <span className="req">*</span>
+                    </label>
+                  </div>
+                  <div className="input-group">
+                    <span className="input-group-text add-emp-phone-prefix">+62</span>
+                    <input
+                      type="text"
+                      className="form-control add-emp-input"
+                      placeholder="81398765432"
+                      value={wizardDraft.emergencyPhone}
+                      onChange={(e) => updateWizardDraft({ emergencyPhone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Row 3: Address (ID Card) & Current Address */}
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">Address (ID Card)</label>
+                  </div>
+                  <textarea
+                    rows={3}
+                    maxLength={255}
+                    className="form-control add-emp-input add-emp-textarea"
+                    placeholder="Enter ID card address..."
+                    value={wizardDraft.emergencyIdAddress}
+                    onChange={(e) => updateWizardDraft({ emergencyIdAddress: e.target.value })}
+                  />
+                  <div className="add-emp-char-counter">
+                    {(wizardDraft.emergencyIdAddress || '').length} / 255
+                  </div>
+                </div>
+
+                <div className="col-md-6 add-emp-field-col">
+                  <div className="add-emp-label-wrap">
+                    <label className="add-emp-label">Current Address</label>
+                  </div>
+                  <textarea
+                    rows={3}
+                    maxLength={255}
+                    className="form-control add-emp-input add-emp-textarea"
+                    placeholder="Enter current residential address..."
+                    value={wizardDraft.emergencyCurrentAddress}
+                    onChange={(e) => updateWizardDraft({ emergencyCurrentAddress: e.target.value })}
+                  />
+                  <div className="add-emp-char-counter">
+                    {(wizardDraft.emergencyCurrentAddress || '').length} / 255
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 5. Navigation Action Footer */}
+          <div className="add-emp-footer">
+            <button
+              type="button"
+              className="btn add-emp-btn-cancel"
+              onClick={onBack}
+            >
+              Cancel
+            </button>
+
+            <div className="add-emp-footer-actions">
+              {wizardStep > 1 && (
+                <button
+                  type="button"
+                  className="btn add-emp-btn-prev"
+                  onClick={handlePrev}
+                >
+                  <ArrowLeft size={16} weight="bold" />
+                  <span>Previous</span>
+                </button>
+              )}
+
+              {wizardStep < 3 ? (
+                <button
+                  type="button"
+                  className="btn add-emp-btn-next"
+                  onClick={handleNext}
+                  disabled={isCurrentStepDisabled}
+                  title={isCurrentStepDisabled ? 'Please fill all required fields correctly to continue' : ''}
+                >
+                  <span>Next Step</span>
+                  <ArrowRight size={16} weight="bold" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="btn add-emp-btn-submit"
+                  disabled={isCurrentStepDisabled}
+                  title={isCurrentStepDisabled ? 'Please fill all required fields correctly to save' : ''}
+                >
+                  <FloppyDisk size={18} weight="bold" />
+                  <span>Save Employee</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

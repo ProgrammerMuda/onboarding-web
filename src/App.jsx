@@ -16,6 +16,10 @@ import { useDepartmentPresenter } from './presenters/useDepartmentPresenter';
 import { DivisionView } from './views/division/DivisionView';
 import { useDivisionPresenter } from './presenters/useDivisionPresenter';
 import OrganizationalStructureView from './views/organization/OrganizationalStructureView';
+import WorkScheduleView from './views/schedule/WorkScheduleView';
+import { useWorkSchedulePresenter } from './presenters/useWorkSchedulePresenter';
+import EmployeeView from './views/employee/EmployeeView';
+import { useEmployeePresenter } from './presenters/useEmployeePresenter';
 
 // MVP Presenters
 import { useSidebarPresenter } from './presenters/useSidebarPresenter';
@@ -27,7 +31,7 @@ import { usePermitTypePresenter } from './presenters/usePermitTypePresenter';
 import { useShiftTypePresenter } from './presenters/useShiftTypePresenter';
 
 export default function App() {
-  const sidebarPresenter = useSidebarPresenter('hr-org-structure');
+  const sidebarPresenter = useSidebarPresenter('hr-data-karyawan');
   const onboardingPresenter = useOnboardingPresenter();
   const dashboardPresenter = useDashboardPresenter();
   const shiftPresenter = useShiftTypePresenter();
@@ -37,6 +41,8 @@ export default function App() {
   const positionPresenter = usePositionPresenter();
   const departmentPresenter = useDepartmentPresenter();
   const divisionPresenter = useDivisionPresenter();
+  const workSchedulePresenter = useWorkSchedulePresenter();
+  const employeePresenter = useEmployeePresenter();
   
   const activeMenu = sidebarPresenter.sections
     .flatMap((section) => section.items.flatMap((item) => [item, ...(item.children || [])]))
@@ -86,6 +92,10 @@ export default function App() {
               <OrganizationalStructureView />
             ) : sidebarPresenter.activeItem === 'hr-division' ? (
               <DivisionView presenter={divisionPresenter} />
+            ) : sidebarPresenter.activeItem === 'hr-work-schedules' ? (
+              <WorkScheduleView presenter={workSchedulePresenter} />
+            ) : sidebarPresenter.activeItem === 'hr-data-karyawan' ? (
+              <EmployeeView presenter={employeePresenter} />
             ) : (
               <div className="bg-white p-5 border text-center my-4 shadow-sm" style={{ borderRadius: '12px' }}>
                 <h4 className="fw-bold text-dark mb-2 text-capitalize">

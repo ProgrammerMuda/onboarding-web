@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Buildings,
   Plus,
@@ -180,9 +180,9 @@ function OrgDivisionNode({
             type="button"
             className="org-chart-btn-subordinate"
             onClick={() => openAddPosModal(div.id)}
-            title={`Add position to ${div.name}`}
+            title={`Assign position to ${div.name}`}
           >
-            + Add position
+            + Assign position
           </button>
           <div
             className={`org-chart-action-dropdown-wrap ${isMenuOpen ? 'menu-open' : ''}`}
@@ -249,7 +249,7 @@ function OrgDivisionNode({
                   className="org-chart-btn-subordinate"
                   onClick={() => openAddPosModal(div.id)}
                 >
-                  + Add position
+                  + Assign position
                 </button>
               </div>
             </div>
@@ -493,6 +493,18 @@ export default function OrganizationalStructureView() {
   } = useOrgStructurePresenter();
 
   const targetDiv = structure.divisions.find((d) => d.id === posModal.divisionId);
+
+  const divisionMasterPositions = useMemo(() => {
+    if (!targetDiv) return masterPositions;
+    const divId = targetDiv.id;
+    const divNameLower = (targetDiv.name || '').trim().toLowerCase();
+
+    return masterPositions.filter((p) => {
+      if (p.divisionId && p.divisionId === divId) return true;
+      if (p.name && divNameLower && p.name.toLowerCase().includes(divNameLower)) return true;
+      return false;
+    });
+  }, [masterPositions, targetDiv]);
 
   // Determine if modal submit buttons should be disabled
   const isDeptDisabled = !deptModal.name.trim();
@@ -981,7 +993,7 @@ export default function OrganizationalStructureView() {
                           onClick={() => openAddPosModal(div.id)}
                         >
                           <Plus size={14} weight="bold" />
-                          <span>Add position</span>
+                          <span>Assign position</span>
                         </button>
                       </div>
                     </div>
@@ -1282,7 +1294,7 @@ export default function OrganizationalStructureView() {
           <div className="org-modal-box" onClick={(e) => e.stopPropagation()}>
             <div className="org-modal-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', position: 'relative' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                <h3 style={{ margin: 0 }}>{posModal.mode === 'add' ? 'Add Position' : 'Edit Position'}</h3>
+                <h3 style={{ margin: 0 }}>{posModal.mode === 'add' ? 'Assign Position' : 'Edit Position Hierarchy'}</h3>
                 <button type="button" className="org-modal-close" onClick={closePosModal}>
                   <X size={18} weight="bold" />
                 </button>
@@ -1290,10 +1302,10 @@ export default function OrganizationalStructureView() {
               <p style={{ margin: '6px 0 0 0', fontSize: '13px', color: '#64748b' }}>
                 {targetDiv ? (
                   <>
-                    Position assigned to division: <strong style={{ color: '#002B7F' }}>{targetDiv.name}</strong>
+                    Assign master position to division: <strong style={{ color: '#002B7F' }}>{targetDiv.name}</strong>
                   </>
                 ) : (
-                  'Position reporting directly to Building Management'
+                  'Assign position reporting directly to Building Management'
                 )}
               </p>
             </div>
@@ -1318,19 +1330,23 @@ export default function OrganizationalStructureView() {
                   }}
                   autoFocus
                 >
-                  <option value="" disabled>Select Position from Master</option>
-                  {masterPositions.map((p) => (
+                  <option value="" disabled>
+                    {divisionMasterPositions.length > 0
+                      ? `Select Position for ${targetDiv?.name || 'Division'}`
+                      : `No positions found for ${targetDiv?.name || 'Division'}`}
+                  </option>
+                  {divisionMasterPositions.map((p) => (
                     <option key={p.id} value={p.name}>
                       {p.name}
                     </option>
                   ))}
-                  {posModal.name && !masterPositions.some((mp) => mp.name === posModal.name) && (
+                  {posModal.name && !divisionMasterPositions.some((mp) => mp.name === posModal.name) && (
                     <option value={posModal.name}>{posModal.name}</option>
                   )}
                 </select>
-                {masterPositions.length === 0 && (
+                {divisionMasterPositions.length === 0 && (
                   <span className="org-form-hint" style={{ color: '#d97706' }}>
-                    No positions available from master Jabatan. Please create positions in the Position menu first.
+                    No master positions found for division &quot;{targetDiv?.name || 'this division'}&quot;. Please create positions for this division in the Position menu first.
                   </span>
                 )}
               </div>
@@ -1375,7 +1391,7 @@ export default function OrganizationalStructureView() {
                 disabled={isPosDisabled}
                 onClick={savePosition}
               >
-                {posModal.mode === 'add' ? 'Add Position' : 'Save Changes'}
+                {posModal.mode === 'add' ? 'Assign Position' : 'Save Changes'}
               </button>
             </div>
           </div>
