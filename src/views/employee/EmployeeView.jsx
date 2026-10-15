@@ -74,27 +74,37 @@ export default function EmployeeView({ presenter }) {
     importEmployees
   } = presenter;
 
-  // If viewMode is 'add' or 'edit', render the 4-Step Add/Edit Employee page
-  if (viewMode === 'add' || viewMode === 'edit') {
-    return (
-      <AddEmployeeView
-        presenter={presenter}
-        isEdit={viewMode === 'edit'}
-        onBack={goBackToList}
-      />
-    );
-  }
+  // Department name lookup helper
+  const getDeptName = React.useCallback((deptId) => {
+    const d = (departments || []).find((item) => item.id === deptId);
+    if (d) return d.name;
+    if (deptId === 'dept-eng') return 'Engineering';
+    if (deptId === 'dept-bs' || deptId === 'dept-sec' || deptId === 'dept-hk') return 'Building Service';
+    if (deptId === 'dept-bm') return 'Building Management';
+    if (deptId === 'dept-tr') return 'Tenant Relation';
+    if (deptId === 'dept-fin') return 'Finance & Accounting';
+    return 'Building Management';
+  }, [departments]);
 
-  // If viewMode is 'detail', render the full Employee Profile Detail page matching the user's design
-  if (viewMode === 'detail' && selectedEmployee) {
-    return (
-      <EmployeeDetailView
-        presenter={presenter}
-        employee={selectedEmployee}
-        onBack={closeEmployeeDetail}
-      />
-    );
-  }
+  // Division name lookup helper
+  const getDivName = React.useCallback((divId, deptId = '') => {
+    const div = (divisions || []).find((item) => item.id === divId);
+    if (div) return div.name;
+    if (divId === 'div-eng') return 'Engineering';
+    if (divId === 'div-sec') return 'Security';
+    if (divId === 'div-hk') return 'House Keeping';
+    if (divId === 'div-bm') return 'General Operation';
+    if (divId === 'div-tr') return 'Tenant Relation';
+    if (divId === 'div-fin') return 'Finance';
+    // Fallback based on department so dummy data always displays division
+    if (deptId === 'dept-eng') return 'Engineering';
+    if (deptId === 'dept-bs' || deptId === 'dept-sec') return 'Security';
+    if (deptId === 'dept-hk') return 'House Keeping';
+    if (deptId === 'dept-bm') return 'General Operation';
+    if (deptId === 'dept-tr') return 'Tenant Relation';
+    if (deptId === 'dept-fin') return 'Finance';
+    return 'General Operation';
+  }, [divisions]);
 
   // Local form state for Add/Edit modal
   const [formData, setFormData] = useState({ ...modal.data });
@@ -131,7 +141,7 @@ export default function EmployeeView({ presenter }) {
       const div = (getDivName(e.divisionId, e.departmentId) || '').toLowerCase();
       return name.includes(q) || nik.includes(q) || email.includes(q) || pos.includes(q) || dept.includes(q) || div.includes(q);
     });
-  }, [resignedEmployees, resignedSearchQuery, departments, divisions]);
+  }, [resignedEmployees, resignedSearchQuery, getDeptName, getDivName]);
 
   const handleExportResignedCsv = () => {
     if (resignedEmployees.length === 0) return;
@@ -280,38 +290,6 @@ export default function EmployeeView({ presenter }) {
     return positions;
   }, [formData.divisionId, getPositionsForDivision, positions]);
 
-  // Department name lookup helper
-  const getDeptName = (deptId) => {
-    const d = departments.find((item) => item.id === deptId);
-    if (d) return d.name;
-    if (deptId === 'dept-eng') return 'Engineering';
-    if (deptId === 'dept-bs' || deptId === 'dept-sec' || deptId === 'dept-hk') return 'Building Service';
-    if (deptId === 'dept-bm') return 'Building Management';
-    if (deptId === 'dept-tr') return 'Tenant Relation';
-    if (deptId === 'dept-fin') return 'Finance & Accounting';
-    return 'Building Management';
-  };
-
-  // Division name lookup helper
-  const getDivName = (divId, deptId = '') => {
-    const div = divisions.find((item) => item.id === divId);
-    if (div) return div.name;
-    if (divId === 'div-eng') return 'Engineering';
-    if (divId === 'div-sec') return 'Security';
-    if (divId === 'div-hk') return 'House Keeping';
-    if (divId === 'div-bm') return 'General Operation';
-    if (divId === 'div-tr') return 'Tenant Relation';
-    if (divId === 'div-fin') return 'Finance';
-    // Fallback based on department so dummy data always displays division
-    if (deptId === 'dept-eng') return 'Engineering';
-    if (deptId === 'dept-bs' || deptId === 'dept-sec') return 'Security';
-    if (deptId === 'dept-hk') return 'House Keeping';
-    if (deptId === 'dept-bm') return 'General Operation';
-    if (deptId === 'dept-tr') return 'Tenant Relation';
-    if (deptId === 'dept-fin') return 'Finance';
-    return 'General Operation';
-  };
-
   // CSV Export handler
   const handleExportCsv = () => {
     const headers = ['ID', 'NIP', 'Nama', 'Email', 'Telepon', 'Departemen', 'Divisi', 'Jabatan', 'Join Date', 'End Date', 'Status', 'Resign Date'];
@@ -446,6 +424,28 @@ export default function EmployeeView({ presenter }) {
     setImportFile(null);
     setImportPreview([]);
   };
+
+  // If viewMode is 'add' or 'edit', render the 4-Step Add/Edit Employee page
+  if (viewMode === 'add' || viewMode === 'edit') {
+    return (
+      <AddEmployeeView
+        presenter={presenter}
+        isEdit={viewMode === 'edit'}
+        onBack={goBackToList}
+      />
+    );
+  }
+
+  // If viewMode is 'detail' and selectedEmployee is available, render the full Employee Profile Detail page
+  if (viewMode === 'detail' && selectedEmployee) {
+    return (
+      <EmployeeDetailView
+        presenter={presenter}
+        employee={selectedEmployee}
+        onBack={closeEmployeeDetail}
+      />
+    );
+  }
 
   return (
     <div className="emp-container">
