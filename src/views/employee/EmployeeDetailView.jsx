@@ -19,13 +19,12 @@ import {
   Bank,
   FileText,
   DownloadSimple,
-  MagnifyingGlass,
-  Bell,
   User,
   Buildings,
   CheckCircle,
   FolderSimple
 } from '@phosphor-icons/react';
+import './add-employee.css';
 import './employee-detail.css';
 
 export default function EmployeeDetailView({ presenter, employee, onBack }) {
@@ -105,43 +104,32 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
 
   return (
     <div className="emp-detail-page">
-      {/* 1. Top Bar / Breadcrumbs & Action Controls */}
-      <div className="emp-detail-topbar">
-        <nav className="emp-detail-breadcrumb" aria-label="Breadcrumb">
-          <span className="add-emp-breadcrumb-item">HR Parameter</span>
-          <CaretRight size={14} weight="bold" className="emp-detail-sep" />
-          <button type="button" className="add-emp-breadcrumb-link" onClick={onBack}>
-            <span>List Employee</span>
-          </button>
-          <CaretRight size={14} weight="bold" className="emp-detail-sep" />
-          <span className="emp-detail-current-crumb">Employee Profile</span>
-        </nav>
+      {/* 1. Breadcrumbs */}
+      <nav className="add-emp-breadcrumb" aria-label="Breadcrumb">
+        <span className="add-emp-breadcrumb-item">HR Parameter</span>
+        <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
+        <button type="button" className="add-emp-breadcrumb-link" onClick={onBack}>
+          <span>List Employee</span>
+        </button>
+        <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
+        <span className="add-emp-breadcrumb-current">Employee Profile</span>
+      </nav>
 
-        <div className="emp-detail-top-actions">
-          <button
-            type="button"
-            className="emp-detail-icon-btn"
-            title="Search"
-            aria-label="Search"
-          >
-            <MagnifyingGlass size={16} weight="bold" />
-          </button>
-          <button
-            type="button"
-            className="emp-detail-icon-btn"
-            title="Notifications"
-            aria-label="Notifications"
-          >
-            <Bell size={16} weight="bold" />
-          </button>
-          <img
-            src={emp.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
-            alt="Profile Avatar"
-            className="emp-detail-top-avatar"
-            onError={(e) => {
-              e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
-            }}
-          />
+      {/* 2. Page Header */}
+      <div className="add-emp-header">
+        <button
+          type="button"
+          className="add-emp-back-btn"
+          onClick={onBack}
+          title="Return to Employee Directory"
+        >
+          <ArrowLeft size={18} weight="bold" />
+        </button>
+        <div>
+          <h1 className="add-emp-title">Employee Profile</h1>
+          <p className="add-emp-subtitle">
+            View detailed employee profile, personal records, job status, and documents.
+          </p>
         </div>
       </div>
 
@@ -790,8 +778,8 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               </div>
 
               <div className="emp-detail-doc-grid">
-                {selectedEmployee?.documents && selectedEmployee.documents.length > 0 ? (
-                  selectedEmployee.documents.map((doc) => {
+                {emp?.documents && emp.documents.length > 0 ? (
+                  emp.documents.map((doc) => {
                     const isPdf = doc.isPdf || doc.name?.toLowerCase().endsWith('.pdf');
                     return (
                       <div key={doc.id || doc.name} className="emp-detail-doc-card">
