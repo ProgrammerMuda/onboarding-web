@@ -280,6 +280,16 @@ export default function AddEmployeeView({ presenter, onBack }) {
     return null;
   };
 
+  // Validate current step to determine if Next / Save button should be disabled
+  const currentStepError = useMemo(() => {
+    if (wizardStep === 1) return validateStep1();
+    if (wizardStep === 2) return validateStep2();
+    if (wizardStep === 3) return validateStep3();
+    return null;
+  }, [wizardStep, wizardDraft, employees]);
+
+  const isCurrentStepDisabled = Boolean(currentStepError);
+
   const handleNext = () => {
     setStepError('');
     if (wizardStep === 1) {
@@ -1205,7 +1215,8 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   type="button"
                   className="btn add-emp-btn-next"
                   onClick={handleNext}
-                  title="Proceed to next step"
+                  disabled={isCurrentStepDisabled}
+                  title={isCurrentStepDisabled ? currentStepError : 'Proceed to next step'}
                 >
                   <span>Next Step</span>
                   <ArrowRight size={16} weight="bold" />
@@ -1214,7 +1225,8 @@ export default function AddEmployeeView({ presenter, onBack }) {
                 <button
                   type="submit"
                   className="btn add-emp-btn-submit"
-                  title="Save new employee profile"
+                  disabled={isCurrentStepDisabled}
+                  title={isCurrentStepDisabled ? currentStepError : 'Save new employee profile'}
                 >
                   <FloppyDisk size={18} weight="bold" />
                   <span>Save Employee</span>
