@@ -318,6 +318,124 @@
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
+/* Avatar zoom overlay and preview trigger */
+.add-emp-avatar-preview-trigger {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.add-emp-avatar-preview-trigger .add-emp-avatar-large {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #ffffff;
+  display: block;
+  box-shadow: none;
+}
+
+.add-emp-avatar-zoom-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-color: rgba(0, 43, 127, 0.55);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.add-emp-avatar-preview-trigger:hover .add-emp-avatar-zoom-overlay,
+.add-emp-avatar-preview-trigger:focus-visible .add-emp-avatar-zoom-overlay {
+  opacity: 1;
+}
+
+/* Photo Preview Modal */
+.add-emp-photo-modal-backdrop {
+  z-index: 10050;
+  background-color: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+.add-emp-photo-modal-card {
+  max-width: 520px;
+  width: 92vw;
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: empModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.add-emp-photo-modal-body {
+  padding: 24px;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 280px;
+  max-height: 60vh;
+  overflow: hidden;
+}
+
+.add-emp-photo-modal-img {
+  max-width: 100%;
+  max-height: 52vh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  background-color: #ffffff;
+}
+
+.add-emp-photo-modal-footer {
+  padding: 14px 20px;
+  background-color: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.add-emp-photo-modal-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.add-emp-photo-modal-filename {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.add-emp-photo-modal-size,
+.add-emp-photo-modal-size-badge {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 1px;
+  letter-spacing: 0.01em;
+}
+
 .add-emp-avatar-empty {
   width: 80px;
   height: 80px;
@@ -344,9 +462,82 @@
 
 .add-emp-avatar-actions-wrap {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   flex: 1;
   min-width: 260px;
+}
+
+.add-emp-avatar-file-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.add-emp-avatar-file-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.add-emp-avatar-file-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #edf3fc;
+  color: #002B7F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.add-emp-avatar-file-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.add-emp-avatar-file-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.add-emp-avatar-file-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #10b981;
+  font-weight: 500;
+}
+
+.add-emp-avatar-file-meta svg {
+  color: #10b981 !important;
+  flex-shrink: 0;
+}
+
+.add-emp-avatar-file-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .add-emp-btn-upload-photo {
@@ -541,6 +732,26 @@ select.add-emp-input {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.add-emp-footer-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 6px;
+  max-width: 550px;
+  line-height: 1.4;
+}
+
+.add-emp-footer-error svg {
+  color: #dc2626 !important;
+  flex-shrink: 0;
 }
 
 .add-emp-btn-cancel {

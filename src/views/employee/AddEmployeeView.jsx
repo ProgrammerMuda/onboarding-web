@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   UsersThree,
   CaretRight,
@@ -11,7 +11,11 @@ import {
   WarningCircle,
   FloppyDisk,
   UploadSimple,
-  IdentificationCard
+  IdentificationCard,
+  FileImage,
+  CheckCircle,
+  Eye,
+  X
 } from '@phosphor-icons/react';
 import './add-employee.css';
 
@@ -46,7 +50,20 @@ export default function AddEmployeeView({ presenter, onBack }) {
   } = presenter;
 
   const [stepError, setStepError] = useState('');
+  const [isPhotoPreviewOpen, setIsPhotoPreviewOpen] = useState(false);
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    function handleKeyDown(e) {
+      if (e.key === 'Escape' && isPhotoPreviewOpen) {
+        setIsPhotoPreviewOpen(false);
+      }
+    }
+    if (isPhotoPreviewOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isPhotoPreviewOpen]);
 
   // Numeric only handler for NIP (max 20 digits)
   const handleNipChange = (e) => {
@@ -93,16 +110,37 @@ export default function AddEmployeeView({ presenter, onBack }) {
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('File size exceeds 2MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onload = (uploadEvent) => {
         updateWizardDraft({
           avatar: uploadEvent.target.result,
-          avatarFileName: file.name
+          avatarFileName: file.name,
+          avatarFileSize: file.size
         });
       };
       reader.readAsDataURL(file);
     }
   };
+
+  const displayFileSize = useMemo(() => {
+    if (wizardDraft.avatarFileSize) {
+      const bytes = wizardDraft.avatarFileSize;
+      if (bytes < 1024) return `${bytes} B`;
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+    if (wizardDraft.avatar && typeof wizardDraft.avatar === 'string' && wizardDraft.avatar.startsWith('data:')) {
+      const base64Str = wizardDraft.avatar.split(',')[1] || '';
+      const bytes = Math.round(base64Str.length * 0.75);
+      if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+    return '380 KB';
+  }, [wizardDraft.avatar, wizardDraft.avatarFileSize]);
 
   // Step 1 Validation
   const validateStep1 = () => {
@@ -126,11 +164,11 @@ export default function AddEmployeeView({ presenter, onBack }) {
       return 'NIK (ID Card) is required.';
     }
     if (!/^\d{16}$/.test(wizardDraft.ktp.trim())) {
-      return 'NIK (ID Card) must be 16 numeric digits.';
+      return `NIK (ID Card) must be 16 numeric digits (currently ${(wizardDraft.ktp || '').length} digits).`;
     }
     if (wizardDraft.npwp && wizardDraft.npwp.trim()) {
-      if (!/^\d{16}$/.test(wizardDraft.npwp.trim())) {
-        return 'NPWP Number must be exactly 16 numeric digits.';
+      if (!/^\d{15,16}$/.test(wizardDraft.npwp.trim())) {
+        return 'NPWP Number must be 15 or 16 numeric digits.';
       }
     }
     if (!wizardDraft.gender) {
@@ -139,8 +177,13 @@ export default function AddEmployeeView({ presenter, onBack }) {
     if (!wizardDraft.idCardAddress || !wizardDraft.idCardAddress.trim()) {
       return 'Address (ID Card) is required.';
     }
-    if (!wizardDraft.domicileAddress || !wizardDraft.domicileAddress.trim()) {
-      return 'Domicile Address is required.';
+    const effectiveDomicile = wizardDraft.sameAsIdCard
+      ? (wizardDraft.idCardAddress || wizardDraft.domicileAddress || '')
+      : (wizardDraft.domicileAddress || '');
+    if (!effectiveDomicile || !effectiveDomicile.trim()) {
+      return wizardDraft.sameAsIdCard
+        ? 'Please enter Address (ID Card) to populate domicile address.'
+        : 'Domicile Address is required (or check "Same as ID card address").';
     }
     if (!wizardDraft.birthPlace || !wizardDraft.birthPlace.trim()) {
       return 'Place of Birth is required.';
@@ -156,7 +199,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(wizardDraft.email.trim())) {
-      return 'Invalid email format.';
+      return 'Invalid email format (e.g. employee@company.com).';
     }
     const dupEmail = employees.find(
       (e) => e.id !== wizardDraft.id && e.email.trim().toLowerCase() === wizardDraft.email.trim().toLowerCase()
@@ -170,7 +213,10 @@ export default function AddEmployeeView({ presenter, onBack }) {
     if (!wizardDraft.maritalStatus) {
       return 'Please select Marital Status.';
     }
-    if (!wizardDraft.citizenship || !wizardDraft.citizenship.trim()) {
+    const citizenshipVal = wizardDraft.citizenship !== undefined && wizardDraft.citizenship !== ''
+      ? wizardDraft.citizenship.trim()
+      : 'Indonesia';
+    if (!citizenshipVal) {
       return 'Citizenship is required.';
     }
     return null;
@@ -213,42 +259,29 @@ export default function AddEmployeeView({ presenter, onBack }) {
     return null;
   };
 
-  // Determine if required fields are missing to disable the Next / Submit button
-  const isStep1Valid = useMemo(() => {
-    return !validateStep1();
-  }, [wizardDraft, employees]);
-
-  const isStep2Valid = useMemo(() => {
-    return !validateStep2();
-  }, [wizardDraft, employees]);
-
-  const isStep3Valid = useMemo(() => {
-    return !validateStep3();
-  }, [wizardDraft]);
-
-  const isCurrentStepDisabled = useMemo(() => {
-    if (wizardStep === 1) return !isStep1Valid;
-    if (wizardStep === 2) return !isStep2Valid;
-    if (wizardStep === 3) return !isStep3Valid;
-    return false;
-  }, [wizardStep, isStep1Valid, isStep2Valid, isStep3Valid]);
-
   const handleNext = () => {
     setStepError('');
     if (wizardStep === 1) {
+      if (wizardDraft.sameAsIdCard && wizardDraft.idCardAddress && wizardDraft.domicileAddress !== wizardDraft.idCardAddress) {
+        updateWizardDraft({ domicileAddress: wizardDraft.idCardAddress });
+      }
       const err = validateStep1();
       if (err) {
         setStepError(err);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
       setWizardStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (wizardStep === 2) {
       const err = validateStep2();
       if (err) {
         setStepError(err);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
       setWizardStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -256,20 +289,38 @@ export default function AddEmployeeView({ presenter, onBack }) {
     setStepError('');
     if (wizardStep > 1) {
       setWizardStep(wizardStep - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setStepError('');
+    const err1 = validateStep1();
+    if (err1) {
+      setStepError(err1);
+      setWizardStep(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    const err2 = validateStep2();
+    if (err2) {
+      setStepError(err2);
+      setWizardStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
     const err3 = validateStep3();
     if (err3) {
       setStepError(err3);
+      setWizardStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     const res = saveWizardEmployee(wizardDraft);
     if (res && !res.success) {
       setStepError(res.error || 'Failed to save employee.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -442,11 +493,27 @@ export default function AddEmployeeView({ presenter, onBack }) {
                 <div className="add-emp-avatar-card-body">
                   <div className="add-emp-avatar-display-wrap">
                     {wizardDraft.avatar ? (
-                      <img
-                        src={wizardDraft.avatar}
-                        alt="Profile preview"
-                        className="add-emp-avatar-large"
-                      />
+                      <div
+                        className="add-emp-avatar-preview-trigger"
+                        onClick={() => setIsPhotoPreviewOpen(true)}
+                        title="Click to view full photo"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            setIsPhotoPreviewOpen(true);
+                          }
+                        }}
+                      >
+                        <img
+                          src={wizardDraft.avatar}
+                          alt="Profile preview"
+                          className="add-emp-avatar-large"
+                        />
+                        <div className="add-emp-avatar-zoom-overlay">
+                          <Eye size={22} weight="bold" />
+                        </div>
+                      </div>
                     ) : (
                       <div
                         className="add-emp-avatar-empty"
@@ -466,49 +533,70 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   </div>
 
                   <div className="add-emp-avatar-actions-wrap">
-                    <div className="d-flex align-items-center gap-3 flex-wrap">
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="d-none"
-                        accept="image/*"
-                        onChange={handleFileUpload}
-                      />
-                      <button
-                        type="button"
-                        className="btn add-emp-btn-upload-photo"
-                        onClick={() => fileInputRef.current?.click()}
-                      >
-                        <UploadSimple size={16} weight="bold" />
-                        <span>{wizardDraft.avatar ? 'Change Photo' : 'Upload Photo'}</span>
-                      </button>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="d-none"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                    />
 
-                      {wizardDraft.avatar && (
+                    {wizardDraft.avatar ? (
+                      <div className="add-emp-avatar-file-card">
+                        <div className="add-emp-avatar-file-left">
+                          <div className="add-emp-avatar-file-icon-box">
+                            <FileImage size={18} weight="duotone" />
+                          </div>
+                          <div className="add-emp-avatar-file-details">
+                            <span
+                              className="add-emp-avatar-file-name"
+                              title={wizardDraft.avatarFileName || 'profile-photo.png'}
+                            >
+                              {wizardDraft.avatarFileName || 'profile-photo.png'}
+                            </span>
+                            <span className="add-emp-avatar-file-meta">
+                              <CheckCircle size={13} weight="fill" />
+                              <span>Photo attached</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="add-emp-avatar-file-right">
+                          <button
+                            type="button"
+                            className="btn add-emp-btn-upload-photo"
+                            onClick={() => fileInputRef.current?.click()}
+                          >
+                            <UploadSimple size={16} weight="bold" />
+                            <span>Change Photo</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn add-emp-btn-reset-photo"
+                            onClick={() =>
+                              updateWizardDraft({
+                                avatar: '',
+                                avatarFileName: ''
+                              })
+                            }
+                            title="Remove uploaded photo"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="d-flex align-items-center">
                         <button
                           type="button"
-                          className="btn add-emp-btn-reset-photo"
-                          onClick={() =>
-                            updateWizardDraft({
-                              avatar: '',
-                              avatarFileName: ''
-                            })
-                          }
-                          title="Remove uploaded photo"
+                          className="btn add-emp-btn-upload-photo"
+                          onClick={() => fileInputRef.current?.click()}
                         >
-                          Remove
+                          <UploadSimple size={16} weight="bold" />
+                          <span>Upload Photo</span>
                         </button>
-                      )}
-
-                      <span className="add-emp-avatar-hint-inline">
-                        Upload an employee photo (PNG, JPG, max 2MB)
-                      </span>
-
-                      {wizardDraft.avatarFileName && (
-                        <span className="add-emp-file-name text-muted">
-                          • {wizardDraft.avatarFileName}
-                        </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -590,19 +678,19 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   </select>
                 </div>
 
-                {/* Row 3: NPWP Number (16 Digits) & Citizenship */}
+                {/* Row 3: NPWP Number (15-16 Digits) & Citizenship */}
                 <div className="col-md-6 add-emp-field-col">
                   <div className="add-emp-label-wrap">
                     <label className="add-emp-label">NPWP Number</label>
                     <span className="add-emp-digit-hint">
-                      {(wizardDraft.npwp || '').length} / 16 digits
+                      {(wizardDraft.npwp || '').length} / 15-16 digits
                     </span>
                   </div>
                   <input
                     type="text"
                     inputMode="numeric"
                     maxLength={16}
-                    placeholder="16-digit numeric NPWP (e.g. 0925432910130000)"
+                    placeholder="15 or 16-digit numeric NPWP (e.g. 0925432910130000)"
                     className="form-control add-emp-input font-monospace"
                     value={wizardDraft.npwp}
                     onChange={handleNpwpChange}
@@ -619,7 +707,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     type="text"
                     className="form-control add-emp-input"
                     placeholder="e.g. Indonesia"
-                    value={wizardDraft.citizenship || 'Indonesia'}
+                    value={wizardDraft.citizenship !== undefined && wizardDraft.citizenship !== '' ? wizardDraft.citizenship : 'Indonesia'}
                     onChange={(e) => updateWizardDraft({ citizenship: e.target.value })}
                   />
                 </div>
@@ -1062,6 +1150,13 @@ export default function AddEmployeeView({ presenter, onBack }) {
               Cancel
             </button>
 
+            {stepError && (
+              <div className="add-emp-footer-error" role="alert">
+                <WarningCircle size={16} weight="fill" />
+                <span>{stepError}</span>
+              </div>
+            )}
+
             <div className="add-emp-footer-actions">
               {wizardStep > 1 && (
                 <button
@@ -1079,8 +1174,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   type="button"
                   className="btn add-emp-btn-next"
                   onClick={handleNext}
-                  disabled={isCurrentStepDisabled}
-                  title={isCurrentStepDisabled ? 'Please fill all required fields correctly to continue' : ''}
+                  title="Proceed to next step"
                 >
                   <span>Next Step</span>
                   <ArrowRight size={16} weight="bold" />
@@ -1089,8 +1183,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                 <button
                   type="submit"
                   className="btn add-emp-btn-submit"
-                  disabled={isCurrentStepDisabled}
-                  title={isCurrentStepDisabled ? 'Please fill all required fields correctly to save' : ''}
+                  title="Save new employee profile"
                 >
                   <FloppyDisk size={18} weight="bold" />
                   <span>Save Employee</span>
@@ -1100,6 +1193,68 @@ export default function AddEmployeeView({ presenter, onBack }) {
           </div>
         </form>
       </div>
+
+      {/* PHOTO PREVIEW MODAL */}
+      {isPhotoPreviewOpen && wizardDraft.avatar && (
+        <div
+          className="emp-modal-backdrop add-emp-photo-modal-backdrop"
+          onClick={() => setIsPhotoPreviewOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="emp-modal-card add-emp-photo-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="emp-modal-header">
+              <div className="d-flex align-items-center gap-2">
+                <FileImage size={20} weight="duotone" style={{ color: '#002B7F' }} />
+                <h3 className="m-0" style={{ fontSize: '15px' }}>Profile Photo Preview</h3>
+              </div>
+              <button
+                type="button"
+                className="emp-modal-close"
+                onClick={() => setIsPhotoPreviewOpen(false)}
+                aria-label="Close photo preview"
+              >
+                <X size={20} weight="bold" />
+              </button>
+            </div>
+
+            <div className="add-emp-photo-modal-body">
+              <img
+                src={wizardDraft.avatar}
+                alt={wizardDraft.avatarFileName || 'Profile preview'}
+                className="add-emp-photo-modal-img"
+              />
+            </div>
+
+            <div className="add-emp-photo-modal-footer">
+              <div className="add-emp-photo-modal-meta">
+                <span className="add-emp-photo-modal-filename" title={wizardDraft.avatarFileName}>
+                  {wizardDraft.avatarFileName || 'profile-photo.png'}
+                </span>
+                <span className="add-emp-photo-modal-size">
+                  {displayFileSize}
+                </span>
+              </div>
+              <div className="d-flex align-items-center">
+                <button
+                  type="button"
+                  className="btn add-emp-btn-upload-photo"
+                  onClick={() => {
+                    setIsPhotoPreviewOpen(false);
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  <UploadSimple size={15} weight="bold" />
+                  <span>Change Photo</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
