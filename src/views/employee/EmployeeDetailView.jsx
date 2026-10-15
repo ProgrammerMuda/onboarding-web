@@ -317,17 +317,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </span>
                 </div>
               </div>
-
-              {/* Edit Full Profile Action Button */}
-              <button
-                type="button"
-                className="emp-detail-profile-edit-btn"
-                onClick={handleEdit}
-                title="Edit Employee Information"
-              >
-                <PencilSimple size={15} weight="bold" />
-                <span>Edit Full Profile</span>
-              </button>
             </div>
           </div>
         </div>
