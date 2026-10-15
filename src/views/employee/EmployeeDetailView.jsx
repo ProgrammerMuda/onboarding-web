@@ -3,8 +3,6 @@ import {
   ArrowLeft,
   CaretRight,
   PencilSimple,
-  Copy,
-  Check,
   Envelope,
   Phone,
   Globe,
@@ -36,7 +34,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
   } = presenter;
 
   const [activeTab, setActiveTab] = useState('personal'); // 'personal' | 'employee' | 'payroll' | 'emergency'
-  const [copiedNip, setCopiedNip] = useState(false);
 
   // Fallback defaults if viewing an employee with partial data
   const emp = useMemo(() => {
@@ -87,15 +84,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
     }
     return age > 0 ? String(age) : '32';
   }, [emp.dob]);
-
-  const handleCopyNip = () => {
-    if (!emp.nik) return;
-    navigator.clipboard.writeText(emp.nik);
-    setCopiedNip(true);
-    setTimeout(() => {
-      setCopiedNip(false);
-    }, 2000);
-  };
 
   const handleEdit = () => {
     if (typeof openEditModal === 'function') {
@@ -209,15 +197,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
           <div className="emp-detail-profile-body">
             <div className="emp-detail-name-row">
               <h2 className="emp-detail-name">{emp.name}</h2>
-              <button
-                type="button"
-                className="emp-detail-nip-badge"
-                title="Click to copy NIP"
-                onClick={handleCopyNip}
-              >
-                <span>{emp.nik || '84739234'}</span>
-                {copiedNip ? <Check size={12} weight="bold" color="#16a34a" /> : <Copy size={12} />}
-              </button>
             </div>
 
             <div className="emp-detail-role-pill">
@@ -749,14 +728,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
           )}
         </div>
       </div>
-
-      {/* Copy Toast Feedback */}
-      {copiedNip && (
-        <div className="emp-detail-copied-toast">
-          <Check size={16} weight="bold" color="#22c55e" />
-          <span>NIP copied to clipboard!</span>
-        </div>
-      )}
     </div>
   );
 }
