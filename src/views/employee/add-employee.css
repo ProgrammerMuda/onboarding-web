@@ -25,8 +25,8 @@
   border: none;
   padding: 0;
   font-size: 13px;
-  font-weight: 500;
-  color: #64748b;
+  font-weight: 600;
+  color: #334155;
   cursor: pointer;
   transition: color 0.15s ease;
   transform: none !important;
@@ -38,7 +38,7 @@
 }
 
 .add-emp-breadcrumb-sep {
-  color: #94a3b8;
+  color: #64748b;
   flex-shrink: 0;
 }
 
