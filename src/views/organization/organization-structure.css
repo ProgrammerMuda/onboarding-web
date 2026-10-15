@@ -20,7 +20,8 @@
 }
 
 .org-breadcrumb-item {
-  color: #64748b;
+  color: #475569;
+  font-weight: 500;
 }
 
 .org-breadcrumb-sep {
