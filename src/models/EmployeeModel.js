@@ -70,14 +70,14 @@ export const DIVISION_POSITIONS_MAP = {
     { id: 'pos-danru-sec', name: 'Komandan Regu (Danru) Security' },
     { id: 'pos-staff-sec', name: 'Staff Security' },
     { id: 'pos-chief-sec', name: 'Chief Security' },
-    { id: 'pos-spv-sec', name: 'Supervisor Security' },
-    { id: 'pos-danru', name: 'Danru' }
+    { id: 'pos-spv-sec', name: 'Supervisor Security' }
   ],
   'div-eng': [
     { id: 'pos-chief-eng', name: 'Chief Engineering' },
     { id: 'pos-spv-eng', name: 'Supervisor (SPV) MEP' },
     { id: 'pos-staff-eng', name: 'Staff MEP' },
-    { id: 'pos-tech-eng', name: 'Technician MEP' }
+    { id: 'pos-tech-eng', name: 'Technician MEP' },
+    { id: 'pos-coord-eng', name: 'Coordinator MEP' }
   ],
   'div-hk': [
     { id: 'pos-spv-hk', name: 'Supervisor House Keeping' },
@@ -200,7 +200,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0813-8877-6655',
     departmentId: 'dept-tr',
     divisionId: 'div-tr',
-    position: 'Chief',
+    position: 'Chief Tenant Relation',
     joinDate: '2024-06-01',
     endDate: '2026-05-31',
     resignDate: '',
@@ -215,7 +215,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0817-9988-1122',
     departmentId: 'dept-eng',
     divisionId: 'div-eng',
-    position: 'Supervisor',
+    position: 'Supervisor (SPV) MEP',
     joinDate: '2024-03-01',
     endDate: '2025-02-28',
     resignDate: '',
@@ -230,7 +230,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0815-2233-4455',
     departmentId: 'dept-eng',
     divisionId: 'div-eng',
-    position: 'Staff',
+    position: 'Staff MEP',
     joinDate: '2025-01-15',
     endDate: '2026-01-14',
     resignDate: '',
@@ -260,7 +260,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0811-1234-5678',
     departmentId: 'dept-fin',
     divisionId: 'div-fin',
-    position: 'Staff',
+    position: 'Staff Finance',
     joinDate: '2023-08-01',
     endDate: '2024-07-31',
     resignDate: '2024-07-31',
@@ -275,7 +275,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0857-1122-3344',
     departmentId: 'dept-bs',
     divisionId: 'div-sec',
-    position: 'Danru',
+    position: 'Komandan Regu (Danru) Security',
     joinDate: '2024-04-18',
     endDate: '2025-04-17',
     resignDate: '',
@@ -290,7 +290,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0812-9900-1122',
     departmentId: 'dept-bs',
     divisionId: 'div-sec',
-    position: 'Staff',
+    position: 'Staff Security',
     joinDate: '2025-02-01',
     endDate: '2026-01-31',
     resignDate: '',
@@ -305,7 +305,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0813-4455-6677',
     departmentId: 'dept-bs',
     divisionId: 'div-hk',
-    position: 'Team Leader',
+    position: 'Team Leader House Keeping',
     joinDate: '2024-09-01',
     endDate: '2025-08-31',
     resignDate: '',
@@ -320,7 +320,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0856-7788-9900',
     departmentId: 'dept-bs',
     divisionId: 'div-hk',
-    position: 'Staff',
+    position: 'Staff House Keeping',
     joinDate: '2024-01-15',
     endDate: '2024-12-31',
     resignDate: '2024-12-31',
@@ -335,7 +335,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0812-7766-5544',
     departmentId: 'dept-eng',
     divisionId: 'div-eng',
-    position: 'Coordinator',
+    position: 'Coordinator MEP',
     joinDate: '2024-07-01',
     endDate: '2025-06-30',
     resignDate: '',
@@ -350,7 +350,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0818-3344-5566',
     departmentId: 'dept-bm',
     divisionId: 'div-bm',
-    position: 'Admin',
+    position: 'Admin General Operation',
     joinDate: '2025-03-01',
     endDate: '2026-02-28',
     resignDate: '',
@@ -427,13 +427,11 @@ export function readEmployees() {
           if (
             updated.departmentId !== seedMatch.departmentId ||
             updated.divisionId !== seedMatch.divisionId ||
-            (updated.id === 'emp-005' && updated.position !== seedMatch.position)
+            updated.position !== seedMatch.position
           ) {
             updated.departmentId = seedMatch.departmentId;
             updated.divisionId = seedMatch.divisionId;
-            if (updated.id === 'emp-005') {
-              updated.position = seedMatch.position;
-            }
+            updated.position = seedMatch.position;
             changed = true;
           }
         } else {
