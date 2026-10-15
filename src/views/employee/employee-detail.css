@@ -380,7 +380,7 @@
   background: #002B7F;
   color: #ffffff;
   border-color: #002B7F;
-  box-shadow: 0 4px 12px rgba(0, 43, 127, 0.2);
+  box-shadow: none !important;
 }
 
 /* 5. Right Column: Detail Content Cards */
