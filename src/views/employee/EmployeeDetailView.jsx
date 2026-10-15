@@ -16,6 +16,7 @@ import {
   House,
   Receipt,
   CreditCard,
+  Bank,
   FileText,
   DownloadSimple,
   MagnifyingGlass,
@@ -669,7 +670,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
                     <div className="emp-detail-card-badge emp-badge-green">
-                      <CreditCard size={20} weight="bold" />
+                      <Bank size={20} weight="bold" />
                     </div>
                     <h3 className="emp-detail-card-title">Bank Account</h3>
                   </div>

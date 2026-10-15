@@ -20,7 +20,8 @@ import {
   MagnifyingGlass,
   Globe,
   CreditCard,
-  ShieldCheck
+  ShieldCheck,
+  Bank
 } from '@phosphor-icons/react';
 import './add-employee.css';
 
@@ -676,7 +677,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
               {wizardStep > 3 ? <Check size={18} weight="bold" /> : '3'}
             </div>
             <div className="add-emp-step-content">
-              <span className="add-emp-step-title">Step 3: Bank Account</span>
+              <span className="add-emp-step-title">Step 3: Payroll &amp; Insurance</span>
               <span className="add-emp-step-desc">Bank Account &amp; Social Security</span>
             </div>
           </div>
@@ -732,9 +733,9 @@ export default function AddEmployeeView({ presenter, onBack }) {
                 <CreditCard size={20} weight="bold" color="#0088cc" />
               </div>
               <div>
-                <h3 className="add-emp-heading-title">Bank Account</h3>
+                <h3 className="add-emp-heading-title">Payroll &amp; Insurance</h3>
                 <p className="add-emp-heading-subtitle">
-                  Bank account details and BPJS insurance coverage.
+                  Bank account details for payroll transfer and BPJS insurance coverage.
                 </p>
               </div>
             </>
@@ -1377,7 +1378,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
               <div className="add-emp-subcard mb-4">
                 <div className="add-emp-subcard-header">
                   <div className="add-emp-subcard-badge emp-badge-green">
-                    <CreditCard size={20} weight="bold" />
+                    <Bank size={20} weight="bold" />
                   </div>
                   <h4 className="add-emp-subcard-title">Bank Account</h4>
                 </div>
