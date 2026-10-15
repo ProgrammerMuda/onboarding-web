@@ -528,14 +528,13 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
           {/* TAB 2: EMPLOYEE DATA */}
           {activeTab === 'employee' && (
             <div>
-              {/* Card 1: Organizational Role */}
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
                     <div className="emp-detail-card-badge emp-badge-secondary">
                       <Buildings size={20} weight="bold" />
                     </div>
-                    <h3 className="emp-detail-card-title">Organizational Placement</h3>
+                    <h3 className="emp-detail-card-title">Employee Data</h3>
                   </div>
                 </div>
 
@@ -557,10 +556,22 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <span className="emp-detail-kv-value">{divName}</span>
                   </div>
                   <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Job Position</span>
+                    <span className="emp-detail-kv-label">Position</span>
                     <span className="emp-detail-kv-value" style={{ color: '#002B7F', fontWeight: 700 }}>
                       {displayPosition}
                     </span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Employee Status</span>
+                    <span className="emp-detail-kv-value">{emp.employmentType || 'PKWT/KONTRAK'}</span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Join Date</span>
+                    <span className="emp-detail-kv-value">{emp.joinDate || '2024-01-01'}</span>
+                  </div>
+                  <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">End Date</span>
+                    <span className="emp-detail-kv-value text-danger">{emp.endDate || '2025-12-31'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Work Location</span>
@@ -570,47 +581,12 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <span className="emp-detail-kv-label">Shift Schedule</span>
                     <span className="emp-detail-kv-value">{emp.shiftSchedule || 'Normal (08:00 - 17:00)'}</span>
                   </div>
-                </div>
-              </div>
-
-              {/* Card 2: Employment Tenure & Contract */}
-              <div className="emp-detail-card">
-                <div className="emp-detail-card-head">
-                  <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-secondary">
-                      <Briefcase size={20} weight="bold" />
-                    </div>
-                    <h3 className="emp-detail-card-title">Employment Contract &amp; Tenure</h3>
-                  </div>
-                </div>
-
-                <div className="emp-detail-table-wrap">
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Employment Status</span>
-                    <span className="emp-detail-kv-value">{emp.employmentType || 'PKWT/KONTRAK'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Join Date (Start Date)</span>
-                    <span className="emp-detail-kv-value">{emp.joinDate || '2024-01-01'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Contract End Date</span>
-                    <span className="emp-detail-kv-value text-danger">{emp.endDate || '2025-12-31'}</span>
-                  </div>
                   {emp.resignDate && (
                     <div className="emp-detail-kv-row">
                       <span className="emp-detail-kv-label">Resignation Date</span>
                       <span className="emp-detail-kv-value text-danger">{emp.resignDate}</span>
                     </div>
                   )}
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Current Status</span>
-                    <span className="emp-detail-kv-value">
-                      <span className={emp.status === 'Active' ? 'emp-status-pill-active' : 'emp-status-pill-resigned'}>
-                        {emp.status}
-                      </span>
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
