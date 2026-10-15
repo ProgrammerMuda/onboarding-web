@@ -87,7 +87,7 @@ export default function WorkScheduleView({ presenter }) {
     <div className="ws-container">
       {/* 1. Breadcrumb */}
       <div className="ws-breadcrumb">
-        <span className="ws-breadcrumb-item">People &amp; organization</span>
+        <span className="ws-breadcrumb-item">HR Parameter</span>
         <span className="ws-breadcrumb-sep">&gt;</span>
         <span className="ws-breadcrumb-item">Attendance</span>
         <span className="ws-breadcrumb-sep">&gt;</span>

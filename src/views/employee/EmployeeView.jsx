@@ -380,7 +380,7 @@ export default function EmployeeView({ presenter }) {
     <div className="emp-container">
       {/* 1. Breadcrumb matching screenshot */}
       <div className="emp-breadcrumb">
-        <span className="emp-breadcrumb-item">People &amp; organization</span>
+        <span className="emp-breadcrumb-item">HR Parameter</span>
         <span className="emp-breadcrumb-sep">&gt;</span>
         <span className="emp-breadcrumb-current">Employees</span>
       </div>

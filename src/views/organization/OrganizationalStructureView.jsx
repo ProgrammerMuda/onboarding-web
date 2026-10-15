@@ -527,7 +527,7 @@ export default function OrganizationalStructureView() {
     >
       {/* 1. Breadcrumb */}
       <div className="org-breadcrumb">
-        <span className="org-breadcrumb-item">People &amp; organization</span>
+        <span className="org-breadcrumb-item">HR Parameter</span>
         <span className="org-breadcrumb-sep">&gt;</span>
         <span className="org-breadcrumb-current">Organization structure</span>
       </div>
