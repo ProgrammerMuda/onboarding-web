@@ -368,6 +368,12 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <span className="emp-detail-kv-value font-monospace">{emp.ktp || emp.nik || '3171015508920001'}</span>
                   </div>
                   <div className="emp-detail-kv-row">
+                    <span className="emp-detail-kv-label">Tax Number (NPWP)</span>
+                    <span className="emp-detail-kv-value font-monospace">
+                      {emp.npwp || '09.254.678.9-012.000'}
+                    </span>
+                  </div>
+                  <div className="emp-detail-kv-row">
                     <span className="emp-detail-kv-label">Religion</span>
                     <span className="emp-detail-kv-value">{emp.religion || 'Islam'}</span>
                   </div>
@@ -380,27 +386,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                     <span className="emp-detail-kv-value">
                       {emp.birthPlace ? `${emp.birthPlace}, ` : 'Jakarta, '}
                       {emp.dob || '15 May 1994'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card 2: Tax Information */}
-              <div className="emp-detail-card">
-                <div className="emp-detail-card-head">
-                  <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-secondary">
-                      <Receipt size={20} weight="bold" />
-                    </div>
-                    <h3 className="emp-detail-card-title">Tax Information</h3>
-                  </div>
-                </div>
-
-                <div className="emp-detail-table-wrap">
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Tax Number (NPWP)</span>
-                    <span className="emp-detail-kv-value font-monospace">
-                      {emp.npwp || '09.254.678.9-012.000'}
                     </span>
                   </div>
                 </div>
