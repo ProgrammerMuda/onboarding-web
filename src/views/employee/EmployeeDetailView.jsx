@@ -383,10 +383,10 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-blue">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
                       <IdentificationCard size={20} weight="bold" />
                     </div>
-                    <h3 className="emp-detail-card-title">Professional Information</h3>
+                    <h3 className="emp-detail-card-title">Personal Information</h3>
                   </div>
                 </div>
 
@@ -433,7 +433,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-teal">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
                       <Receipt size={20} weight="bold" />
                     </div>
                     <h3 className="emp-detail-card-title">Tax Information</h3>
@@ -462,7 +462,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-orange">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
                       <FolderSimple size={20} weight="bold" />
                     </div>
                     <h3 className="emp-detail-card-title">Document Attachments</h3>
@@ -579,7 +579,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-blue">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
                       <Buildings size={20} weight="bold" />
                     </div>
                     <h3 className="emp-detail-card-title">Organizational Placement</h3>
@@ -618,7 +618,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-purple">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
                       <Briefcase size={20} weight="bold" />
                     </div>
                     <h3 className="emp-detail-card-title">Employment Contract &amp; Tenure</h3>
@@ -717,7 +717,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-teal">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
                       <Phone size={20} weight="bold" />
                     </div>
                     <h3 className="emp-detail-card-title">Primary Emergency Contact</h3>
@@ -750,7 +750,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
-                    <div className="emp-detail-card-badge emp-badge-orange">
+                    <div className="emp-detail-card-badge emp-badge-secondary">
                       <House size={20} weight="bold" />
                     </div>
                     <h3 className="emp-detail-card-title">Home &amp; Domicile Address</h3>
