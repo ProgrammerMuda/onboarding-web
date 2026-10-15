@@ -277,15 +277,66 @@ export default function AddEmployeeView({ presenter, onBack }) {
     return null;
   };
 
-  // Validate current step to determine if Next / Save button should be disabled
-  const currentStepError = useMemo(() => {
-    if (wizardStep === 1) return validateStep1();
-    if (wizardStep === 2) return validateStep2();
-    if (wizardStep === 3) return validateStep3();
-    return null;
-  }, [wizardStep, wizardDraft, employees]);
+  // Check if all mandatory fields in each step are filled (not empty)
+  const isStep1Filled = useMemo(() => {
+    const hasName = Boolean(wizardDraft.name && wizardDraft.name.trim());
+    const hasNip = Boolean(wizardDraft.nik && wizardDraft.nik.trim());
+    const hasKtp = Boolean(wizardDraft.ktp && wizardDraft.ktp.trim());
+    const hasGender = Boolean(wizardDraft.gender);
+    const hasCitizenship = Boolean(wizardDraft.citizenship && wizardDraft.citizenship.trim());
+    const hasIdCardAddress = Boolean(wizardDraft.idCardAddress && wizardDraft.idCardAddress.trim());
+    const hasDomicile = wizardDraft.sameAsIdCard
+      ? hasIdCardAddress
+      : Boolean(wizardDraft.domicileAddress && wizardDraft.domicileAddress.trim());
+    const hasBirthPlace = Boolean(wizardDraft.birthPlace && wizardDraft.birthPlace.trim());
+    const hasDob = Boolean(wizardDraft.dob && wizardDraft.dob.trim());
+    const hasPhone = Boolean(wizardDraft.phone && wizardDraft.phone.trim());
+    const hasEmail = Boolean(wizardDraft.email && wizardDraft.email.trim());
+    const hasReligion = Boolean(wizardDraft.religion);
+    const hasMaritalStatus = Boolean(wizardDraft.maritalStatus);
 
-  const isCurrentStepDisabled = Boolean(currentStepError);
+    return (
+      hasName &&
+      hasNip &&
+      hasKtp &&
+      hasGender &&
+      hasCitizenship &&
+      hasIdCardAddress &&
+      hasDomicile &&
+      hasBirthPlace &&
+      hasDob &&
+      hasPhone &&
+      hasEmail &&
+      hasReligion &&
+      hasMaritalStatus
+    );
+  }, [wizardDraft]);
+
+  const isStep2Filled = useMemo(() => {
+    const hasDept = Boolean(wizardDraft.departmentId);
+    const hasPos = Boolean(wizardDraft.position);
+    const hasStatus = Boolean(wizardDraft.employmentType);
+    const hasJoinDate = Boolean(wizardDraft.joinDate && wizardDraft.joinDate.trim());
+    const hasEndDate = Boolean(wizardDraft.endDate && wizardDraft.endDate.trim());
+
+    return hasDept && hasPos && hasStatus && hasJoinDate && hasEndDate;
+  }, [wizardDraft]);
+
+  const isStep3Filled = useMemo(() => {
+    const hasName = Boolean(wizardDraft.emergencyName && wizardDraft.emergencyName.trim());
+    const hasRel = Boolean(wizardDraft.emergencyRelation);
+    const hasPhone = Boolean(wizardDraft.emergencyPhone && wizardDraft.emergencyPhone.trim());
+
+    return hasName && hasRel && hasPhone;
+  }, [wizardDraft]);
+
+  // Disable button ONLY when mandatory fields are still empty
+  const isCurrentStepDisabled = useMemo(() => {
+    if (wizardStep === 1) return !isStep1Filled;
+    if (wizardStep === 2) return !isStep2Filled;
+    if (wizardStep === 3) return !isStep3Filled;
+    return false;
+  }, [wizardStep, isStep1Filled, isStep2Filled, isStep3Filled]);
 
   const handleNext = () => {
     setStepError('');
@@ -1213,7 +1264,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   className="btn add-emp-btn-next"
                   onClick={handleNext}
                   disabled={isCurrentStepDisabled}
-                  title={isCurrentStepDisabled ? currentStepError : 'Proceed to next step'}
+                  title={isCurrentStepDisabled ? 'Please fill all required fields to continue' : 'Proceed to next step'}
                 >
                   <span>Next Step</span>
                   <ArrowRight size={16} weight="bold" />
@@ -1223,7 +1274,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                   type="submit"
                   className="btn add-emp-btn-submit"
                   disabled={isCurrentStepDisabled}
-                  title={isCurrentStepDisabled ? currentStepError : 'Save new employee profile'}
+                  title={isCurrentStepDisabled ? 'Please fill all required fields to save' : 'Save new employee profile'}
                 >
                   <FloppyDisk size={18} weight="bold" />
                   <span>Save Employee</span>
