@@ -128,9 +128,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
             >
               <ArrowLeft size={18} weight="bold" />
             </button>
-            <div className="emp-hero-banner-icon-box">
-              <User size={28} weight="bold" />
-            </div>
             <div>
               <div className="emp-hero-banner-tag">PEOPLE MANAGEMENT</div>
               <h1 className="emp-hero-banner-title">Employee Profile</h1>
@@ -146,7 +143,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
             onClick={handleEdit}
             title="Edit Employee Information"
           >
-            <PencilSimple size={16} weight="bold" />
+            <PencilSimple size={19} weight="bold" />
             <span>Edit Employee</span>
           </button>
         </div>
