@@ -1115,9 +1115,9 @@ input[type="date"].add-emp-input {
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background-color: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  background-color: #eaf8ff;
+  color: #009ce8;
+  border: 1px solid #c2ebff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1183,9 +1183,9 @@ input[type="date"].add-emp-input {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background-color: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  background-color: #eaf8ff;
+  color: #009ce8;
+  border: 1px solid #c2ebff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1194,8 +1194,8 @@ input[type="date"].add-emp-input {
 }
 
 .add-emp-unified-dropzone:hover .dropzone-icon-box {
-  background-color: #e2e8f0;
-  color: #334155;
+  background-color: #d8f1ff;
+  color: #0087cc;
   transform: translateY(-2px);
 }
 
