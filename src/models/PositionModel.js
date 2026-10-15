@@ -11,7 +11,7 @@ export const INITIAL_POSITIONS = [
   { id: 'pos-danru', code: '007', name: 'Danru', departmentId: 'dept-bs', divisionId: 'div-sec', parentIds: ['bm'] },
   { id: 'pos-admin', code: '008', name: 'Admin', departmentId: 'dept-fin', divisionId: 'div-fin', parentIds: ['bm'] },
   { id: 'pos-staff', code: '009', name: 'Staff', departmentId: 'dept-bs', divisionId: 'div-sec', parentIds: ['bm'] },
-  { id: 'pos-spv-ar', code: '010', name: 'Supervisor Finance', departmentId: 'dept-fin', divisionId: 'div-fin', parentIds: ['bm'] },
+  { id: 'pos-spv-ar', code: '010', name: 'Supervisor Account Receivable', departmentId: 'dept-fin', divisionId: 'div-fin', parentIds: ['bm'] },
 ];
 
 /**
@@ -187,7 +187,7 @@ export function readMasterPositions() {
       if (!p) return p;
       const lower = (p.name || '').toLowerCase();
       if (lower.includes('account receive') || lower.includes('receiveble') || lower.includes('receivable')) {
-        return { ...p, name: 'Supervisor Finance' };
+        return { ...p, name: 'Supervisor Account Receivable' };
       }
       return p;
     });

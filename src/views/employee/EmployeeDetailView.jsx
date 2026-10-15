@@ -85,17 +85,16 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
     return age > 0 ? String(age) : '32';
   }, [emp.dob]);
 
-  // Format position cleanly (e.g. normalize to Supervisor)
+  // Format position cleanly (e.g. normalize to Supervisor Account Receivable)
   const displayPosition = useMemo(() => {
     if (!emp.position) return 'Employee';
     const lower = emp.position.toLowerCase();
     if (
       lower.includes('account receive') ||
       lower.includes('receiveble') ||
-      lower.includes('receivable') ||
-      lower === 'supervisor'
+      lower.includes('receivable')
     ) {
-      return 'Supervisor';
+      return 'Supervisor Account Receivable';
     }
     return emp.position;
   }, [emp.position]);

@@ -105,7 +105,7 @@ export const DIVISION_POSITIONS_MAP = {
     { id: 'pos-admin-tr', name: 'Admin Tenant Relation' }
   ],
   'div-fin': [
-    { id: 'pos-spv-fin', name: 'Supervisor' },
+    { id: 'pos-spv-fin', name: 'Supervisor Account Receivable' },
     { id: 'pos-staff-fin', name: 'Staff Finance' },
     { id: 'pos-admin-fin', name: 'Admin Finance' }
   ]
@@ -245,7 +245,7 @@ export const INITIAL_EMPLOYEES = [
     phone: '0819-4455-6677',
     departmentId: 'dept-fin',
     divisionId: 'div-fin',
-    position: 'Supervisor',
+    position: 'Supervisor Account Receivable',
     joinDate: '2024-08-01',
     endDate: '2025-07-31',
     resignDate: '',
@@ -462,7 +462,7 @@ export function readEmployees() {
           (updated.position || '').toLowerCase().includes('receiveble') ||
           (updated.position || '').toLowerCase().includes('receivable')
         ) {
-          updated.position = 'Supervisor';
+          updated.position = 'Supervisor Account Receivable';
           changed = true;
         }
 
