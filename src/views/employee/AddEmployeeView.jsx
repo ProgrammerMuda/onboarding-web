@@ -373,19 +373,26 @@ export default function AddEmployeeView({ presenter, onBack }) {
     if (!wizardDraft.bankAccount || !wizardDraft.bankAccount.trim()) {
       return 'Account Number is required.';
     }
+    const cleanAccount = wizardDraft.bankAccount.replace(/\D/g, '');
+    if (!cleanAccount) {
+      return 'Account Number must contain digits only.';
+    }
+    if (cleanAccount.length > 15) {
+      return 'Account Number cannot exceed 15 digits.';
+    }
     if (!wizardDraft.beneficiaryName || !wizardDraft.beneficiaryName.trim()) {
       return 'Account Holder Name is required.';
     }
     if (wizardDraft.bpjsTk && wizardDraft.bpjsTk.trim()) {
       const cleanBpjs = wizardDraft.bpjsTk.replace(/\D/g, '');
-      if (cleanBpjs.length > 20) {
-        return 'BPJS Ketenagakerjaan number cannot exceed 20 digits.';
+      if (cleanBpjs.length > 16) {
+        return 'BPJS Ketenagakerjaan number cannot exceed 16 digits.';
       }
     }
     if (wizardDraft.bpjsKesehatan && wizardDraft.bpjsKesehatan.trim()) {
       const cleanBpjs = wizardDraft.bpjsKesehatan.replace(/\D/g, '');
-      if (cleanBpjs.length > 20) {
-        return 'BPJS Kesehatan number cannot exceed 20 digits.';
+      if (cleanBpjs.length > 16) {
+        return 'BPJS Kesehatan number cannot exceed 16 digits.';
       }
     }
     return null;
@@ -1404,13 +1411,22 @@ export default function AddEmployeeView({ presenter, onBack }) {
                       <label className="add-emp-label">
                         Account Number <span className="req">*</span>
                       </label>
+                      <span className="add-emp-digit-hint">
+                        {(wizardDraft.bankAccount || '').length} / 15 digits
+                      </span>
                     </div>
                     <input
                       type="text"
+                      inputMode="numeric"
+                      maxLength={15}
                       className="form-control add-emp-input font-monospace"
-                      placeholder="e.g. 8271-9920-112"
+                      placeholder="e.g. 102938475619283"
                       value={wizardDraft.bankAccount}
-                      onChange={(e) => updateWizardDraft({ bankAccount: e.target.value })}
+                      onChange={(e) =>
+                        updateWizardDraft({
+                          bankAccount: e.target.value.replace(/\D/g, '').slice(0, 15)
+                        })
+                      }
                     />
                   </div>
 
@@ -1447,7 +1463,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     <div className="add-emp-label-wrap">
                       <label className="add-emp-label">BPJS Ketenagakerjaan</label>
                       <span className="add-emp-digit-hint">
-                        {(wizardDraft.bpjsTk || '').length} / 11-16 digits
+                        {(wizardDraft.bpjsTk || '').length} / 16 digits
                       </span>
                     </div>
                     <input
@@ -1455,7 +1471,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                       inputMode="numeric"
                       maxLength={16}
                       className="form-control add-emp-input font-monospace"
-                      placeholder="e.g. 000189283921"
+                      placeholder="e.g. 0001892839210001"
                       value={wizardDraft.bpjsTk}
                       onChange={(e) =>
                         updateWizardDraft({
@@ -1470,7 +1486,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     <div className="add-emp-label-wrap">
                       <label className="add-emp-label">BPJS Kesehatan</label>
                       <span className="add-emp-digit-hint">
-                        {(wizardDraft.bpjsKesehatan || '').length} / 11-16 digits
+                        {(wizardDraft.bpjsKesehatan || '').length} / 16 digits
                       </span>
                     </div>
                     <input
@@ -1478,7 +1494,7 @@ export default function AddEmployeeView({ presenter, onBack }) {
                       inputMode="numeric"
                       maxLength={16}
                       className="form-control add-emp-input font-monospace"
-                      placeholder="e.g. 000293849182"
+                      placeholder="e.g. 0002938491820002"
                       value={wizardDraft.bpjsKesehatan}
                       onChange={(e) =>
                         updateWizardDraft({
