@@ -15,7 +15,10 @@ import {
   FileImage,
   CheckCircle,
   Eye,
-  X
+  X,
+  CaretDown,
+  MagnifyingGlass,
+  Globe
 } from '@phosphor-icons/react';
 import './add-employee.css';
 
@@ -35,6 +38,55 @@ const APPROVER_OPTIONS = [
   { id: 'appr-4', name: 'HR & GA Director' }
 ];
 
+export const COUNTRY_OPTIONS = [
+  { code: 'ID', name: 'Indonesia', flag: '🇮🇩' },
+  { code: 'MY', name: 'Malaysia', flag: '🇲🇾' },
+  { code: 'SG', name: 'Singapore', flag: '🇸🇬' },
+  { code: 'PH', name: 'Philippines', flag: '🇵🇭' },
+  { code: 'TH', name: 'Thailand', flag: '🇹🇭' },
+  { code: 'VN', name: 'Vietnam', flag: '🇻🇳' },
+  { code: 'BN', name: 'Brunei Darussalam', flag: '🇧🇳' },
+  { code: 'MM', name: 'Myanmar', flag: '🇲🇲' },
+  { code: 'KH', name: 'Cambodia', flag: '🇰🇭' },
+  { code: 'LA', name: 'Laos', flag: '🇱🇦' },
+  { code: 'TL', name: 'Timor-Leste', flag: '🇹🇱' },
+  { code: 'JP', name: 'Japan', flag: '🇯🇵' },
+  { code: 'KR', name: 'South Korea', flag: '🇰🇷' },
+  { code: 'CN', name: 'China', flag: '🇨🇳' },
+  { code: 'TW', name: 'Taiwan', flag: '🇹🇼' },
+  { code: 'HK', name: 'Hong Kong', flag: '🇭🇰' },
+  { code: 'IN', name: 'India', flag: '🇮🇳' },
+  { code: 'PK', name: 'Pakistan', flag: '🇵🇰' },
+  { code: 'BD', name: 'Bangladesh', flag: '🇧🇩' },
+  { code: 'LK', name: 'Sri Lanka', flag: '🇱🇰' },
+  { code: 'AU', name: 'Australia', flag: '🇦🇺' },
+  { code: 'NZ', name: 'New Zealand', flag: '🇳🇿' },
+  { code: 'US', name: 'United States', flag: '🇺🇸' },
+  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
+  { code: 'CA', name: 'Canada', flag: '🇨🇦' },
+  { code: 'DE', name: 'Germany', flag: '🇩🇪' },
+  { code: 'FR', name: 'France', flag: '🇫🇷' },
+  { code: 'NL', name: 'Netherlands', flag: '🇳🇱' },
+  { code: 'IT', name: 'Italy', flag: '🇮🇹' },
+  { code: 'ES', name: 'Spain', flag: '🇪🇸' },
+  { code: 'CH', name: 'Switzerland', flag: '🇨🇭' },
+  { code: 'BE', name: 'Belgium', flag: '🇧🇪' },
+  { code: 'SE', name: 'Sweden', flag: '🇸🇪' },
+  { code: 'NO', name: 'Norway', flag: '🇳🇴' },
+  { code: 'DK', name: 'Denmark', flag: '🇩🇰' },
+  { code: 'FI', name: 'Finland', flag: '🇫🇮' },
+  { code: 'RU', name: 'Russia', flag: '🇷🇺' },
+  { code: 'TR', name: 'Turkey', flag: '🇹🇷' },
+  { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦' },
+  { code: 'AE', name: 'United Arab Emirates', flag: '🇦🇪' },
+  { code: 'QA', name: 'Qatar', flag: '🇶🇦' },
+  { code: 'EG', name: 'Egypt', flag: '🇪🇬' },
+  { code: 'ZA', name: 'South Africa', flag: '🇿🇦' },
+  { code: 'BR', name: 'Brazil', flag: '🇧🇷' },
+  { code: 'AR', name: 'Argentina', flag: '🇦🇷' },
+  { code: 'MX', name: 'Mexico', flag: '🇲🇽' }
+];
+
 export default function AddEmployeeView({ presenter, onBack }) {
   const {
     wizardStep,
@@ -51,7 +103,38 @@ export default function AddEmployeeView({ presenter, onBack }) {
 
   const [stepError, setStepError] = useState('');
   const [isPhotoPreviewOpen, setIsPhotoPreviewOpen] = useState(false);
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
   const fileInputRef = useRef(null);
+  const countryDropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target)) {
+        setIsCountryDropdownOpen(false);
+      }
+    }
+    if (isCountryDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isCountryDropdownOpen]);
+
+  const selectedCountry = useMemo(() => {
+    const val = (wizardDraft.citizenship || '').trim();
+    if (!val) return null;
+    return COUNTRY_OPTIONS.find(
+      (c) => c.name.toLowerCase() === val.toLowerCase() || c.code.toLowerCase() === val.toLowerCase()
+    );
+  }, [wizardDraft.citizenship]);
+
+  const filteredCountries = useMemo(() => {
+    const q = countrySearchQuery.trim().toLowerCase();
+    if (!q) return COUNTRY_OPTIONS;
+    return COUNTRY_OPTIONS.filter(
+      (c) => c.name.toLowerCase().includes(q) || c.code.toLowerCase().includes(q)
+    );
+  }, [countrySearchQuery]);
 
   useEffect(() => {
     function handleKeyDown(e) {
@@ -782,13 +865,79 @@ export default function AddEmployeeView({ presenter, onBack }) {
                       Citizenship <span className="req">*</span>
                     </label>
                   </div>
-                  <input
-                    type="text"
-                    className="form-control add-emp-input"
-                    placeholder="e.g. Indonesia"
-                    value={wizardDraft.citizenship ?? ''}
-                    onChange={(e) => updateWizardDraft({ citizenship: e.target.value })}
-                  />
+                  <div className="add-emp-country-dropdown-wrap" ref={countryDropdownRef}>
+                    <button
+                      type="button"
+                      className={`form-control add-emp-input add-emp-country-trigger ${isCountryDropdownOpen ? 'active' : ''}`}
+                      onClick={() => {
+                        setIsCountryDropdownOpen((prev) => !prev);
+                        setCountrySearchQuery('');
+                      }}
+                      aria-haspopup="listbox"
+                      aria-expanded={isCountryDropdownOpen}
+                    >
+                      <div className="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
+                        {selectedCountry ? (
+                          <>
+                            <span className="add-emp-country-flag">{selectedCountry.flag}</span>
+                            <span className="add-emp-country-name">{selectedCountry.name}</span>
+                          </>
+                        ) : wizardDraft.citizenship ? (
+                          <>
+                            <span className="add-emp-country-flag">🌐</span>
+                            <span className="add-emp-country-name">{wizardDraft.citizenship}</span>
+                          </>
+                        ) : (
+                          <span className="text-muted" style={{ fontWeight: 400 }}>-- Select Citizenship --</span>
+                        )}
+                      </div>
+                      <CaretDown size={14} weight="bold" className={`add-emp-country-caret ${isCountryDropdownOpen ? 'open' : ''}`} />
+                    </button>
+
+                    {isCountryDropdownOpen && (
+                      <div className="add-emp-country-menu" role="listbox">
+                        <div className="add-emp-country-search-wrap">
+                          <MagnifyingGlass size={14} weight="bold" className="add-emp-country-search-icon" />
+                          <input
+                            type="text"
+                            className="form-control add-emp-country-search-input"
+                            placeholder="Search country..."
+                            value={countrySearchQuery}
+                            onChange={(e) => setCountrySearchQuery(e.target.value)}
+                            autoFocus
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+
+                        <div className="add-emp-country-list">
+                          {filteredCountries.length > 0 ? (
+                            filteredCountries.map((item) => {
+                              const isSelected = selectedCountry?.code === item.code;
+                              return (
+                                <button
+                                  type="button"
+                                  key={item.code}
+                                  className={`add-emp-country-item ${isSelected ? 'selected' : ''}`}
+                                  onClick={() => {
+                                    updateWizardDraft({ citizenship: item.name });
+                                    setIsCountryDropdownOpen(false);
+                                  }}
+                                  role="option"
+                                  aria-selected={isSelected}
+                                >
+                                  <span className="add-emp-country-flag">{item.flag}</span>
+                                  <span className="add-emp-country-item-name">{item.name}</span>
+                                  {isSelected && <Check size={14} weight="bold" className="ms-auto text-primary" />}
+                                </button>
+                              );
+                            })
+                          ) : (
+                            <div className="add-emp-country-empty">No country found</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Row 4: Address (ID Card) & Domicile Address with Checkbox */}
