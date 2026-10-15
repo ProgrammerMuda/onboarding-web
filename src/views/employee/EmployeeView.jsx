@@ -108,6 +108,27 @@ export default function EmployeeView({ presenter }) {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
 
+  // Active filters count
+  const activeFilterCount = React.useMemo(() => {
+    let count = 0;
+    if (statusFilter !== 'all') count++;
+    if (departmentFilter !== 'all') count++;
+    if (divisionFilter !== 'all') count++;
+    return count;
+  }, [statusFilter, departmentFilter, divisionFilter]);
+
+  // Handle Escape key to close filter drawer
+  React.useEffect(() => {
+    if (!showFilters) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowFilters(false);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showFilters]);
+
   // Reset to page 1 on filter or search query change
   React.useEffect(() => {
     setCurrentPage(1);
@@ -562,96 +583,72 @@ export default function EmployeeView({ presenter }) {
           </div>
           <button
             type="button"
-            className={`emp-btn-secondary ${showFilters ? 'active' : ''}`}
-            onClick={() => setShowFilters((prev) => !prev)}
-            title="Toggle filters"
+            className={`emp-btn-secondary ${showFilters || activeFilterCount > 0 ? 'active' : ''}`}
+            onClick={() => setShowFilters(true)}
+            title="Open filters modal"
           >
             <SlidersHorizontal size={15} weight="bold" />
             <span>Filters</span>
+            {activeFilterCount > 0 && (
+              <span className="emp-filter-badge-count">{activeFilterCount}</span>
+            )}
           </button>
         </div>
 
-        {/* Filters Panel (Shown when Filters button is clicked or if non-default filters active) */}
-        {showFilters && (
-          <div className="emp-filters-panel">
-            <div className="emp-filters-group">
-              <label className="emp-filter-label">Status</label>
-              <div className="emp-status-tabs-inline">
+        {/* Active Filter Chips Bar (Shown when any filter is active) */}
+        {activeFilterCount > 0 && (
+          <div className="emp-active-filter-bar">
+            <span className="emp-active-filter-title">Active Filters:</span>
+            {statusFilter !== 'all' && (
+              <span className="emp-active-tag">
+                Status: {statusFilter}
                 <button
                   type="button"
-                  className={`emp-filter-chip ${statusFilter === 'all' ? 'active' : ''}`}
                   onClick={() => setStatusFilter('all')}
+                  aria-label="Remove status filter"
                 >
-                  All ({stats.total})
+                  <X size={12} weight="bold" />
                 </button>
+              </span>
+            )}
+            {departmentFilter !== 'all' && (
+              <span className="emp-active-tag">
+                Dept: {departments.find((d) => d.id === departmentFilter)?.name || departmentFilter}
                 <button
                   type="button"
-                  className={`emp-filter-chip ${statusFilter === 'Active' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('Active')}
+                  onClick={() => {
+                    setDepartmentFilter('all');
+                    setDivisionFilter('all');
+                  }}
+                  aria-label="Remove department filter"
                 >
-                  Active ({stats.active})
+                  <X size={12} weight="bold" />
                 </button>
+              </span>
+            )}
+            {divisionFilter !== 'all' && (
+              <span className="emp-active-tag">
+                Div: {getDivisionsForDept(departmentFilter).find((div) => div.id === divisionFilter)?.name || divisionFilter}
                 <button
                   type="button"
-                  className={`emp-filter-chip ${statusFilter === 'Resigned' ? 'active' : ''}`}
-                  onClick={() => setStatusFilter('Resigned')}
+                  onClick={() => setDivisionFilter('all')}
+                  aria-label="Remove division filter"
                 >
-                  Resigned / Inactive ({stats.resigned})
+                  <X size={12} weight="bold" />
                 </button>
-              </div>
-            </div>
-
-            <div className="emp-filters-group">
-              <label className="emp-filter-label">Department</label>
-              <select
-                className="emp-filter-select-input"
-                value={departmentFilter}
-                onChange={(e) => {
-                  setDepartmentFilter(e.target.value);
-                  setDivisionFilter('all');
-                }}
-              >
-                <option value="all">All Departments</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} ({d.code})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {departmentFilter !== 'all' && getDivisionsForDept(departmentFilter).length > 0 && (
-              <div className="emp-filters-group">
-                <label className="emp-filter-label">Division</label>
-                <select
-                  className="emp-filter-select-input"
-                  value={divisionFilter}
-                  onChange={(e) => setDivisionFilter(e.target.value)}
-                >
-                  <option value="all">All Divisions</option>
-                  {getDivisionsForDept(departmentFilter).map((div) => (
-                    <option key={div.id} value={div.id}>
-                      {div.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              </span>
             )}
-
-            {(statusFilter !== 'all' || departmentFilter !== 'all' || divisionFilter !== 'all' || searchQuery) && (
-              <button
-                type="button"
-                className="emp-btn-reset-filters"
-                onClick={() => {
-                  setStatusFilter('all');
-                  setDepartmentFilter('all');
-                  setDivisionFilter('all');
-                  setSearchQuery('');
-                }}
-              >
-                Reset Filters
-              </button>
-            )}
+            <button
+              type="button"
+              className="emp-active-clear-all"
+              onClick={() => {
+                setStatusFilter('all');
+                setDepartmentFilter('all');
+                setDivisionFilter('all');
+              }}
+            >
+              Clear All
+            </button>
           </div>
         )}
 
@@ -832,6 +829,209 @@ export default function EmployeeView({ presenter }) {
       </div>
     </div>
   </div>
+
+      {/* 5. Filter Side Drawer Modal (Muncul dari Kanan) */}
+      {showFilters && (
+        <div className="emp-filter-drawer-backdrop" onClick={() => setShowFilters(false)}>
+          <div
+            className="emp-filter-drawer"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filter Employees"
+          >
+            {/* Drawer Header */}
+            <div className="emp-filter-drawer-header">
+              <div className="emp-filter-drawer-title-group">
+                <div className="emp-filter-drawer-icon">
+                  <SlidersHorizontal size={18} weight="bold" />
+                </div>
+                <div>
+                  <h3 className="emp-filter-drawer-title">Filter Employees</h3>
+                  <p className="emp-filter-drawer-subtitle">
+                    Refine records by status, department, and division
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="emp-filter-drawer-close"
+                onClick={() => setShowFilters(false)}
+                aria-label="Close filters"
+              >
+                <X size={18} weight="bold" />
+              </button>
+            </div>
+
+            {/* Drawer Body */}
+            <div className="emp-filter-drawer-body">
+              {/* Status Filter */}
+              <div className="emp-filter-field-section">
+                <label className="emp-filter-drawer-label">Employment Status</label>
+                <div className="emp-filter-chips-vertical">
+                  <button
+                    type="button"
+                    className={`emp-filter-chip-option ${statusFilter === 'all' ? 'selected' : ''}`}
+                    onClick={() => setStatusFilter('all')}
+                  >
+                    <span>All Status</span>
+                    <span className="emp-filter-chip-counter">{stats.total}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`emp-filter-chip-option ${statusFilter === 'Active' ? 'selected' : ''}`}
+                    onClick={() => setStatusFilter('Active')}
+                  >
+                    <span className="d-flex align-items-center gap-2">
+                      <span className="emp-status-dot-active" />
+                      Active
+                    </span>
+                    <span className="emp-filter-chip-counter">{stats.active}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`emp-filter-chip-option ${statusFilter === 'Resigned' ? 'selected' : ''}`}
+                    onClick={() => setStatusFilter('Resigned')}
+                  >
+                    <span className="d-flex align-items-center gap-2">
+                      <span className="emp-status-dot-resigned" />
+                      Resigned / Inactive
+                    </span>
+                    <span className="emp-filter-chip-counter">{stats.resigned}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Department Filter */}
+              <div className="emp-filter-field-section">
+                <label className="emp-filter-drawer-label" htmlFor="drawer-filter-dept">
+                  Department
+                </label>
+                <select
+                  id="drawer-filter-dept"
+                  className="form-select emp-filter-drawer-select"
+                  value={departmentFilter}
+                  onChange={(e) => {
+                    setDepartmentFilter(e.target.value);
+                    setDivisionFilter('all');
+                  }}
+                >
+                  <option value="all">All Departments</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name} ({d.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Division Filter */}
+              <div className="emp-filter-field-section">
+                <label className="emp-filter-drawer-label" htmlFor="drawer-filter-div">
+                  Division
+                </label>
+                <select
+                  id="drawer-filter-div"
+                  className="form-select emp-filter-drawer-select"
+                  value={divisionFilter}
+                  disabled={departmentFilter === 'all'}
+                  onChange={(e) => setDivisionFilter(e.target.value)}
+                >
+                  <option value="all">
+                    {departmentFilter === 'all'
+                      ? 'All Divisions (Select Department First)'
+                      : 'All Divisions'}
+                  </option>
+                  {departmentFilter !== 'all' &&
+                    getDivisionsForDept(departmentFilter).map((div) => (
+                      <option key={div.id} value={div.id}>
+                        {div.name}
+                      </option>
+                    ))}
+                </select>
+                {departmentFilter === 'all' && (
+                  <span className="emp-filter-field-help">
+                    Select a department first to narrow down divisions.
+                  </span>
+                )}
+              </div>
+
+              {/* Active Filters Summary */}
+              {activeFilterCount > 0 && (
+                <div className="emp-filter-active-summary">
+                  <div className="emp-filter-active-header">
+                    <span>Active Filters ({activeFilterCount})</span>
+                  </div>
+                  <div className="emp-filter-active-tags">
+                    {statusFilter !== 'all' && (
+                      <span className="emp-filter-active-tag">
+                        Status: {statusFilter}
+                        <button
+                          type="button"
+                          onClick={() => setStatusFilter('all')}
+                          aria-label="Remove status filter"
+                        >
+                          <X size={12} weight="bold" />
+                        </button>
+                      </span>
+                    )}
+                    {departmentFilter !== 'all' && (
+                      <span className="emp-filter-active-tag">
+                        Dept: {departments.find((d) => d.id === departmentFilter)?.name || departmentFilter}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDepartmentFilter('all');
+                            setDivisionFilter('all');
+                          }}
+                          aria-label="Remove department filter"
+                        >
+                          <X size={12} weight="bold" />
+                        </button>
+                      </span>
+                    )}
+                    {divisionFilter !== 'all' && (
+                      <span className="emp-filter-active-tag">
+                        Div: {getDivisionsForDept(departmentFilter).find((div) => div.id === divisionFilter)?.name || divisionFilter}
+                        <button
+                          type="button"
+                          onClick={() => setDivisionFilter('all')}
+                          aria-label="Remove division filter"
+                        >
+                          <X size={12} weight="bold" />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Drawer Footer */}
+            <div className="emp-filter-drawer-footer">
+              <button
+                type="button"
+                className="emp-btn-drawer-reset"
+                disabled={activeFilterCount === 0}
+                onClick={() => {
+                  setStatusFilter('all');
+                  setDepartmentFilter('all');
+                  setDivisionFilter('all');
+                }}
+              >
+                Reset All
+              </button>
+              <button
+                type="button"
+                className="emp-btn-drawer-apply"
+                onClick={() => setShowFilters(false)}
+              >
+                Apply Filters ({filteredEmployees.length})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 6. Add / Edit Employee Modal */}
       {modal.isOpen && (
