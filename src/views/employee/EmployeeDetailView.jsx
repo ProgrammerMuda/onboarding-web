@@ -653,7 +653,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 </div>
               </div>
 
-              {/* Card 2: Address with Current and Address ID Card sections */}
+              {/* Card 2: Address (Side-by-side: Current & Address ID Card) */}
               <div className="emp-detail-card">
                 <div className="emp-detail-card-head">
                   <div className="emp-detail-card-head-left">
@@ -664,45 +664,21 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   </div>
                 </div>
 
-                {/* Section 1: Current */}
-                <div className="emp-detail-sub-header">
-                  <span className="emp-detail-sub-title">Current</span>
-                </div>
-                <div className="emp-detail-table-wrap">
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Address</span>
-                    <span className="emp-detail-kv-value">
-                      {emp.domicileAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng'}
-                    </span>
+                <div className="emp-detail-address-grid">
+                  {/* Kiri: Current Address */}
+                  <div className="emp-detail-address-panel">
+                    <div className="emp-detail-address-label">Current</div>
+                    <div className="emp-detail-address-text">
+                      {emp.domicileAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan'}
+                    </div>
                   </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">City</span>
-                    <span className="emp-detail-kv-value">{emp.city || 'Jakarta Selatan'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Postal Code</span>
-                    <span className="emp-detail-kv-value">{emp.postalCode || '12950'}</span>
-                  </div>
-                </div>
 
-                {/* Section 2: Address ID Card */}
-                <div className="emp-detail-sub-header" style={{ marginTop: '20px' }}>
-                  <span className="emp-detail-sub-title">Address ID Card</span>
-                </div>
-                <div className="emp-detail-table-wrap">
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Address</span>
-                    <span className="emp-detail-kv-value">
-                      {emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng'}
-                    </span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">City</span>
-                    <span className="emp-detail-kv-value">{emp.city || 'Jakarta Selatan'}</span>
-                  </div>
-                  <div className="emp-detail-kv-row">
-                    <span className="emp-detail-kv-label">Postal Code</span>
-                    <span className="emp-detail-kv-value">{emp.postalCode || '12950'}</span>
+                  {/* Kanan: Address ID Card */}
+                  <div className="emp-detail-address-panel">
+                    <div className="emp-detail-address-label">Address ID Card</div>
+                    <div className="emp-detail-address-text">
+                      {emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan'}
+                    </div>
                   </div>
                 </div>
               </div>
