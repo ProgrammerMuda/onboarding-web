@@ -83,6 +83,18 @@ export default function AddEmployeeView({ presenter, onBack }) {
     updateWizardDraft({ npwp: digitsOnly });
   };
 
+  // Numeric only handler for Phone Number (max 15 digits, flexible length)
+  const handlePhoneChange = (e) => {
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 15);
+    updateWizardDraft({ phone: digitsOnly });
+  };
+
+  // Numeric only handler for Emergency Phone Number (max 15 digits, flexible length)
+  const handleEmergencyPhoneChange = (e) => {
+    const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 15);
+    updateWizardDraft({ emergencyPhone: digitsOnly });
+  };
+
   // Sync Domicile Address when "Same as ID card address" is checked
   const handleToggleSameAddress = (e) => {
     const isChecked = e.target.checked;
@@ -194,6 +206,10 @@ export default function AddEmployeeView({ presenter, onBack }) {
     if (!wizardDraft.phone || !wizardDraft.phone.trim()) {
       return 'Phone Number is required.';
     }
+    const cleanPhone = wizardDraft.phone.replace(/\D/g, '');
+    if (cleanPhone.length > 15) {
+      return 'Phone Number cannot exceed 15 digits.';
+    }
     if (!wizardDraft.email || !wizardDraft.email.trim()) {
       return 'Email is required.';
     }
@@ -255,6 +271,10 @@ export default function AddEmployeeView({ presenter, onBack }) {
     }
     if (!wizardDraft.emergencyPhone || !wizardDraft.emergencyPhone.trim()) {
       return 'Phone Number is required.';
+    }
+    const cleanEmergencyPhone = wizardDraft.emergencyPhone.replace(/\D/g, '');
+    if (cleanEmergencyPhone.length > 15) {
+      return 'Emergency Phone Number cannot exceed 15 digits.';
     }
     return null;
   };
@@ -797,15 +817,20 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     <label className="add-emp-label">
                       Phone Number <span className="req">*</span>
                     </label>
+                    <span className="add-emp-digit-hint">
+                      {(wizardDraft.phone || '').length} / max 15 digits
+                    </span>
                   </div>
                   <div className="input-group">
                     <span className="input-group-text add-emp-phone-prefix">+62</span>
                     <input
                       type="text"
-                      className="form-control add-emp-input"
+                      inputMode="numeric"
+                      maxLength={15}
+                      className="form-control add-emp-input font-monospace"
                       placeholder="81234567890"
                       value={wizardDraft.phone}
-                      onChange={(e) => updateWizardDraft({ phone: e.target.value })}
+                      onChange={handlePhoneChange}
                     />
                   </div>
                 </div>
@@ -1089,15 +1114,20 @@ export default function AddEmployeeView({ presenter, onBack }) {
                     <label className="add-emp-label">
                       Phone Number <span className="req">*</span>
                     </label>
+                    <span className="add-emp-digit-hint">
+                      {(wizardDraft.emergencyPhone || '').length} / max 15 digits
+                    </span>
                   </div>
                   <div className="input-group">
                     <span className="input-group-text add-emp-phone-prefix">+62</span>
                     <input
                       type="text"
-                      className="form-control add-emp-input"
+                      inputMode="numeric"
+                      maxLength={15}
+                      className="form-control add-emp-input font-monospace"
                       placeholder="81398765432"
                       value={wizardDraft.emergencyPhone}
-                      onChange={(e) => updateWizardDraft({ emergencyPhone: e.target.value })}
+                      onChange={handleEmergencyPhoneChange}
                     />
                   </div>
                 </div>

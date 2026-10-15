@@ -893,10 +893,15 @@ export default function EmployeeView({ presenter }) {
                   <label className="emp-form-label">Phone Number</label>
                   <input
                     type="text"
-                    className="form-control"
-                    placeholder="+62 812-3456-7890"
+                    inputMode="numeric"
+                    maxLength={15}
+                    className="form-control font-monospace"
+                    placeholder="81234567890"
                     value={formData.phone}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e) => {
+                      const digitsOnly = e.target.value.replace(/\D/g, '').slice(0, 15);
+                      setFormData((prev) => ({ ...prev, phone: digitsOnly }));
+                    }}
                   />
                 </div>
               </div>

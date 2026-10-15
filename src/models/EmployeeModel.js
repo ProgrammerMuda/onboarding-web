@@ -499,6 +499,13 @@ export function validateEmployeeDraft(draft, existingEmployees = []) {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(draft.email.trim())) return 'Invalid email format.';
 
+  if (draft.phone && draft.phone.trim()) {
+    const cleanPhone = draft.phone.replace(/\D/g, '');
+    if (cleanPhone.length > 15) {
+      return 'Phone number cannot exceed 15 digits.';
+    }
+  }
+
   if (!draft.departmentId) return 'Please select an assigned Department.';
   if (!draft.position) return 'Please select a Position.';
 
