@@ -234,7 +234,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                   emp.status === 'Resigned' ? 'emp-detail-cover-badge-dot--resigned' : ''
                 }`}
               />
-              <span>{emp.status || 'Active'}</span>
+              <span>{emp.status === 'Resigned' ? 'Resigned' : 'Active Employee'}</span>
             </div>
           </div>
 
