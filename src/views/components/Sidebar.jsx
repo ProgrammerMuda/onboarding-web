@@ -4,7 +4,7 @@ import {
   Bell, Receipt, UserCheck, Database, Coins, Buildings,
   BuildingApartment, Image as ImageIcon, Door, HouseLine, Hammer,
   CalendarCheck, RocketLaunch, CaretDown, CaretUp,
-  X, UsersThree, ClockUser
+  X, UsersThree, ClockUser, SignOut
 } from '@phosphor-icons/react';
 import logoImg from '../../assets/proapps-mark-white.svg';
 import fullLogoImg from '../../assets/logo.png';
@@ -148,6 +148,31 @@ export function Sidebar({ presenter }) {
           </div>
         ))}
       </nav>
+
+      {/* Sidebar Footer: User Card */}
+      <div className="app-sidebar__footer">
+        <div className="app-sidebar__user-card" title={compact ? 'Finance - Jurnal Accounting' : undefined}>
+          <div className="app-sidebar__user-avatar" aria-hidden="true">
+            <span>F</span>
+          </div>
+          {!compact && (
+            <div className="app-sidebar__user-info">
+              <span className="app-sidebar__user-name">Finance</span>
+              <span className="app-sidebar__user-role">Jurnal Accounting</span>
+            </div>
+          )}
+          {!compact && (
+            <button
+              type="button"
+              className="app-sidebar__user-logout"
+              title="Sign Out"
+              aria-label="Sign Out"
+            >
+              <SignOut size={18} weight="bold" />
+            </button>
+          )}
+        </div>
+      </div>
     </aside>
   );
 }
