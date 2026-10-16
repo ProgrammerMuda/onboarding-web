@@ -28,6 +28,8 @@ import {
   DownloadSimple
 } from '@phosphor-icons/react';
 import './add-employee.css';
+import './employee.css';
+import './employee-detail.css';
 
 const BANK_OPTIONS = [
   'Bank Central Asia (BCA)',
@@ -691,25 +693,30 @@ export default function AddEmployeeView({ presenter, onBack, isEdit }) {
         </span>
       </nav>
 
-      {/* 2. Page Header */}
-      <div className="add-emp-header">
-        <button
-          type="button"
-          className="add-emp-back-btn"
-          onClick={onBack}
-          title="Return to Employee Directory"
-        >
-          <ArrowLeft size={18} weight="bold" />
-        </button>
-        <div>
-          <h1 className="add-emp-title">
-            {isEditMode ? 'Edit Employee' : 'Add New Employee'}
-          </h1>
-          <p className="add-emp-subtitle">
-            {isEditMode
-              ? 'Update employee details, organization assignment, and document records.'
-              : 'Complete the 4-step registration form to register a new employee.'}
-          </p>
+      {/* 2. Top Hero Banner matching Employee Profile View */}
+      <div className="emp-hero-banner">
+        <div className="emp-hero-banner-content">
+          <div className="emp-hero-banner-left">
+            <button
+              type="button"
+              className="emp-hero-back-btn"
+              onClick={onBack}
+              title="Return to Employee Directory"
+            >
+              <ArrowLeft size={18} weight="bold" />
+            </button>
+            <div>
+              <div className="emp-hero-banner-tag">PEOPLE MANAGEMENT</div>
+              <h1 className="emp-hero-banner-title">
+                {isEditMode ? 'Edit Employee' : 'Add New Employee'}
+              </h1>
+              <p className="emp-hero-banner-desc">
+                {isEditMode
+                  ? 'Update employee details, organization assignment, and document records.'
+                  : 'Complete the 4-step registration form to register a new employee.'}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
