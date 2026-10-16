@@ -291,27 +291,6 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 </div>
               </div>
 
-              {/* 3. Status */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <ShieldCheck size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Status</span>
-                  <span className="emp-detail-info-val">
-                    {emp.status === 'Active' ? (
-                      <span className="emp-status-pill-active">
-                        <CheckCircle size={12} weight="fill" />
-                        <span>Active</span>
-                      </span>
-                    ) : (
-                      <span className="emp-status-pill-resigned">
-                        <span>Resigned</span>
-                      </span>
-                    )}
-                  </span>
-                </div>
-              </div>
 
               {/* 5. Gender */}
               <div className="emp-detail-info-item">
