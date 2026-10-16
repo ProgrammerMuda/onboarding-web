@@ -167,24 +167,69 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               xmlns="http://www.w3.org/2000/svg"
             >
               <defs>
-                <linearGradient id="curveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#f1f5f9" />
-                  <stop offset="50%" stopColor="#e2e8f0" />
-                  <stop offset="100%" stopColor="#cbd5e1" />
+                <linearGradient id="coverBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#052c6e" />
+                  <stop offset="45%" stopColor="#004eb6" />
+                  <stop offset="85%" stopColor="#007ecc" />
+                  <stop offset="100%" stopColor="#09b2ff" />
                 </linearGradient>
+                <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
+                  <stop offset="60%" stopColor="#38bdf8" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#09b2ff" stopOpacity="0.1" />
+                </linearGradient>
+                <linearGradient id="waveGrad2" x1="100%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
+                  <stop offset="50%" stopColor="#7dd3fc" stopOpacity="0.18" />
+                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
+                </linearGradient>
+                <radialGradient id="glowCircle" cx="85%" cy="20%" r="55%">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+                </radialGradient>
               </defs>
-              <rect width="400" height="160" fill="url(#curveGrad)" />
+
+              {/* Base Gradient Canvas */}
+              <rect width="400" height="160" fill="url(#coverBgGrad)" />
+
+              {/* Ambient Glow */}
+              <circle cx="340" cy="30" r="120" fill="url(#glowCircle)" />
+
+              {/* Subtle Tech / Architectural Grid Accent */}
+              <g opacity="0.12" stroke="#ffffff" strokeWidth="0.75" strokeDasharray="3 3">
+                <line x1="0" y1="40" x2="400" y2="40" />
+                <line x1="0" y1="80" x2="400" y2="80" />
+                <line x1="0" y1="120" x2="400" y2="120" />
+                <line x1="100" y1="0" x2="100" y2="160" />
+                <line x1="200" y1="0" x2="200" y2="160" />
+                <line x1="300" y1="0" x2="300" y2="160" />
+              </g>
+
+              {/* Dynamic Curved Flow Lines & Waves */}
               <path
-                d="M-20 40 C 120 10, 260 140, 420 80 L 420 160 L -20 160 Z"
-                fill="#ffffff"
-                fillOpacity="0.45"
+                d="M-20 60 C 110 15, 230 130, 420 45 L 420 160 L -20 160 Z"
+                fill="url(#waveGrad1)"
               />
               <path
-                d="M-20 80 C 100 30, 220 160, 420 120 L 420 160 L -20 160 Z"
+                d="M-20 95 C 100 40, 240 150, 420 90 L 420 160 L -20 160 Z"
+                fill="url(#waveGrad2)"
+              />
+              <path
+                d="M-20 120 C 130 85, 260 160, 420 125 L 420 160 L -20 160 Z"
                 fill="#ffffff"
-                fillOpacity="0.6"
+                fillOpacity="0.22"
               />
             </svg>
+
+            {/* Top-Right Decorative Status Pill */}
+            <div className="emp-detail-cover-badge">
+              <span
+                className={`emp-detail-cover-badge-dot ${
+                  emp.status === 'Resigned' ? 'emp-detail-cover-badge-dot--resigned' : ''
+                }`}
+              />
+              <span>{emp.status || 'Active'}</span>
+            </div>
           </div>
 
           {/* Avatar with overlap & floating edit button */}
