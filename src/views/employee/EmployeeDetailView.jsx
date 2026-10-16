@@ -157,60 +157,120 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
         {/* LEFT COLUMN: Profile Summary Card                            */}
         {/* ============================================================ */}
         <div className="emp-detail-profile-card">
-          {/* Executive Header Section */}
-          <div className="emp-detail-card-header">
-            {/* Top Bar: Status Badge */}
-            <div className="emp-detail-header-top">
+          {/* Decorative Modern Architecture Curve Banner */}
+          <div className="emp-detail-cover">
+            <svg
+              className="emp-detail-cover-svg"
+              viewBox="0 0 400 160"
+              preserveAspectRatio="none"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <defs>
+                <linearGradient id="coverBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#052c6e" />
+                  <stop offset="45%" stopColor="#004eb6" />
+                  <stop offset="85%" stopColor="#007ecc" />
+                  <stop offset="100%" stopColor="#09b2ff" />
+                </linearGradient>
+                <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
+                  <stop offset="60%" stopColor="#38bdf8" stopOpacity="0.35" />
+                  <stop offset="100%" stopColor="#09b2ff" stopOpacity="0.1" />
+                </linearGradient>
+                <linearGradient id="waveGrad2" x1="100%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
+                  <stop offset="50%" stopColor="#7dd3fc" stopOpacity="0.18" />
+                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
+                </linearGradient>
+                <radialGradient id="glowCircle" cx="85%" cy="20%" r="55%">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+
+              {/* Base Gradient Canvas */}
+              <rect width="400" height="160" fill="url(#coverBgGrad)" />
+
+              {/* Ambient Glow */}
+              <circle cx="340" cy="30" r="120" fill="url(#glowCircle)" />
+
+              {/* Subtle Tech / Architectural Grid Accent */}
+              <g opacity="0.12" stroke="#ffffff" strokeWidth="0.75" strokeDasharray="3 3">
+                <line x1="0" y1="40" x2="400" y2="40" />
+                <line x1="0" y1="80" x2="400" y2="80" />
+                <line x1="0" y1="120" x2="400" y2="120" />
+                <line x1="100" y1="0" x2="100" y2="160" />
+                <line x1="200" y1="0" x2="200" y2="160" />
+                <line x1="300" y1="0" x2="300" y2="160" />
+              </g>
+
+              {/* Dynamic Curved Flow Lines & Waves */}
+              <path
+                d="M-20 60 C 110 15, 230 130, 420 45 L 420 160 L -20 160 Z"
+                fill="url(#waveGrad1)"
+              />
+              <path
+                d="M-20 95 C 100 40, 240 150, 420 90 L 420 160 L -20 160 Z"
+                fill="url(#waveGrad2)"
+              />
+              <path
+                d="M-20 120 C 130 85, 260 160, 420 125 L 420 160 L -20 160 Z"
+                fill="#ffffff"
+                fillOpacity="0.22"
+              />
+            </svg>
+
+            {/* Top-Right Decorative Status Pill */}
+            <div
+              className={`emp-detail-cover-badge ${
+                emp.status === 'Resigned'
+                  ? 'emp-detail-cover-badge--resigned'
+                  : 'emp-detail-cover-badge--active'
+              }`}
+            >
               <span
-                className={`emp-detail-status-badge ${
-                  emp.status === 'Resigned'
-                    ? 'emp-detail-status-badge--resigned'
-                    : 'emp-detail-status-badge--active'
+                className={`emp-detail-cover-badge-dot ${
+                  emp.status === 'Resigned' ? 'emp-detail-cover-badge-dot--resigned' : ''
                 }`}
-              >
-                <span className="emp-detail-status-dot" />
-                <span>{emp.status === 'Resigned' ? 'Resigned' : 'Active Employee'}</span>
-              </span>
+              />
+              <span>{emp.status === 'Resigned' ? 'Resigned' : 'Active Employee'}</span>
+            </div>
+          </div>
+
+          {/* Avatar with overlap & floating edit button */}
+          <div className="emp-detail-avatar-container">
+            <div className="emp-detail-avatar-box">
+              {emp.avatar ? (
+                <img
+                  src={emp.avatar}
+                  alt={emp.name}
+                  className="emp-detail-avatar-img"
+                  onError={(e) => {
+                    e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+                  }}
+                />
+              ) : (
+                <div className="emp-detail-avatar-placeholder">
+                  <User size={48} weight="duotone" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Profile Identity Details */}
+          <div className="emp-detail-profile-body">
+            <div className="emp-detail-name-row">
+              <h2 className="emp-detail-name">{emp.name}</h2>
             </div>
 
-            {/* Avatar */}
-            <div className="emp-detail-avatar-wrap">
-              <div className="emp-detail-avatar-box">
-                {emp.avatar ? (
-                  <img
-                    src={emp.avatar}
-                    alt={emp.name}
-                    className="emp-detail-avatar-img"
-                    onError={(e) => {
-                      e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
-                    }}
-                  />
-                ) : (
-                  <div className="emp-detail-avatar-placeholder">
-                    <User size={48} weight="duotone" />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Name, Role & Department */}
-            <h2 className="emp-detail-name">{emp.name}</h2>
             <div className="emp-detail-role-wrap">
-              <span className="emp-detail-role-pill">
+              <span className="emp-detail-role-pill secondary">
                 <Briefcase size={14} weight="bold" />
                 <span>{displayPosition}</span>
               </span>
             </div>
-            <div className="emp-detail-dept-info">
-              <Buildings size={14} weight="bold" />
-              <span>{deptName}</span>
-            </div>
-          </div>
 
-          <div className="emp-detail-card-divider" />
-
-          {/* Profile Identity Details */}
-          <div className="emp-detail-profile-body">
             {/* Basic Information Section */}
             <div className="emp-detail-subheading">Basic Information</div>
 
