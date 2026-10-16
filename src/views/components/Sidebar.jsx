@@ -98,7 +98,7 @@ export function Sidebar({ presenter }) {
                 const isExpanded = !!expandedItems[item.id];
                 const hasActiveChild = item.hasChildren && item.children.some((sub) => sub.id === activeItem);
                 const isDirectActive = !item.hasChildren && activeItem === item.id;
-                const isParentActive = item.hasChildren && (hasActiveChild || isExpanded);
+                const isParentActive = hasActiveChild;
 
                 let itemClass = 'app-sidebar__item';
                 if (isDirectActive) {
