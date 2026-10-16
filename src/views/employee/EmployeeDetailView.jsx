@@ -222,7 +222,13 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
             </svg>
 
             {/* Top-Right Decorative Status Pill */}
-            <div className="emp-detail-cover-badge">
+            <div
+              className={`emp-detail-cover-badge ${
+                emp.status === 'Resigned'
+                  ? 'emp-detail-cover-badge--resigned'
+                  : 'emp-detail-cover-badge--active'
+              }`}
+            >
               <span
                 className={`emp-detail-cover-badge-dot ${
                   emp.status === 'Resigned' ? 'emp-detail-cover-badge-dot--resigned' : ''
