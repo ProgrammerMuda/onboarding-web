@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   FileText, GearSix, ChartPieSlice, MegaphoneSimple, Ticket, Siren,
   Bell, Receipt, UserCheck, Database, Coins, Buildings,
@@ -44,6 +44,26 @@ export function Sidebar({ presenter }) {
     openParentFromCollapsed, toggleSidebarMobile, toggleSidebarCollapsed
   } = presenter;
   const compact = isCollapsed && !isSidebarOpen;
+  const [hasScrolledTop, setHasScrolledTop] = useState(false);
+  const [hasScrolledBottom, setHasScrolledBottom] = useState(false);
+  const navRef = useRef(null);
+
+  const checkScroll = useCallback(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const isScrolled = scrollTop > 4;
+    const notBottom = scrollHeight - scrollTop - clientHeight > 4;
+    setHasScrolledTop(isScrolled);
+    setHasScrolledBottom(isScrolled && notBottom);
+  }, []);
+
+  useEffect(() => {
+    checkScroll();
+    const handleResize = () => checkScroll();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [checkScroll, expandedItems, isCollapsed]);
 
   useEffect(() => {
     if (!isSidebarOpen) return undefined;
@@ -67,7 +87,7 @@ export function Sidebar({ presenter }) {
       className={`app-sidebar ${compact ? 'app-sidebar--collapsed' : ''} ${isSidebarOpen ? 'app-sidebar--mobile-open' : ''}`}
       aria-label="Navigasi utama"
     >
-      <div className="app-sidebar__header">
+      <div className={`app-sidebar__header ${hasScrolledTop ? 'app-sidebar__header--scrolled' : ''}`}>
         {compact ? (
           <button
             type="button"
@@ -104,7 +124,12 @@ export function Sidebar({ presenter }) {
         </button>
       </div>
 
-      <nav className="app-sidebar__nav" aria-label="Menu aplikasi">
+      <nav
+        className="app-sidebar__nav"
+        ref={navRef}
+        onScroll={checkScroll}
+        aria-label="Menu aplikasi"
+      >
         {sections.map((section) => (
           <div key={section.id} className="app-sidebar__section">
             {section.title && (
@@ -174,7 +199,7 @@ export function Sidebar({ presenter }) {
       </nav>
 
       {/* Sidebar Footer: User Card */}
-      <div className="app-sidebar__footer">
+      <div className={`app-sidebar__footer ${hasScrolledBottom ? 'app-sidebar__footer--scrolled' : ''}`}>
         <div className="app-sidebar__user-card" title={compact ? `${(presenter?.user?.name || 'Budi Hartono')} - ${(presenter?.user?.role || 'Building Manager')}` : undefined}>
           <div className="app-sidebar__user-avatar" aria-hidden="true">
             <img src={avatarImg} alt={presenter?.user?.name || 'Budi Hartono'} className="app-sidebar__user-avatar-img" />
