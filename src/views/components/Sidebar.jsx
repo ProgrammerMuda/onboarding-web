@@ -90,7 +90,7 @@ export function Sidebar({ presenter }) {
               title="Kecilkan sidebar"
               aria-label="Kecilkan sidebar"
             >
-              <SidebarSimple size={20} weight="regular" />
+              <SidebarSimple size={23} weight="fill" />
             </button>
           </>
         )}
