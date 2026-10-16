@@ -4,7 +4,7 @@ import {
   Bell, Receipt, UserCheck, Database, Coins, Buildings,
   BuildingApartment, Image as ImageIcon, Door, HouseLine, Hammer,
   CalendarCheck, RocketLaunch, CaretDown, CaretUp,
-  X, UsersThree, ClockUser, SignOut
+  X, UsersThree, ClockUser, SignOut, SidebarSimple
 } from '@phosphor-icons/react';
 import logoImg from '../../assets/proapps-mark-white.svg';
 import fullLogoImg from '../../assets/logo.png';
@@ -41,7 +41,7 @@ export function Sidebar({ presenter }) {
   const {
     sections, activeItem, expandedItems, isCollapsed,
     isSidebarOpen, handleParentClick, handleSubItemClick,
-    openParentFromCollapsed, toggleSidebarMobile
+    openParentFromCollapsed, toggleSidebarMobile, toggleSidebarCollapsed
   } = presenter;
   const compact = isCollapsed && !isSidebarOpen;
 
@@ -68,12 +68,35 @@ export function Sidebar({ presenter }) {
       aria-label="Navigasi utama"
     >
       <div className="app-sidebar__header">
-        <div className="app-sidebar__logo" title="PROAPPS">
-          <img src={compact ? logoImg : fullLogoImg} alt="PROAPPS" />
-        </div>
+        {compact ? (
+          <button
+            type="button"
+            className="app-sidebar__logo app-sidebar__logo--clickable"
+            onClick={toggleSidebarCollapsed}
+            title="Klik logo untuk memperbesar sidebar"
+            aria-label="Perbesar sidebar"
+          >
+            <img src={logoImg} alt="PROAPPS" />
+          </button>
+        ) : (
+          <>
+            <div className="app-sidebar__logo" title="PROAPPS">
+              <img src={fullLogoImg} alt="PROAPPS" />
+            </div>
+            <button
+              type="button"
+              className="app-sidebar__toggle app-sidebar__collapse-btn d-none d-lg-inline-flex"
+              onClick={toggleSidebarCollapsed}
+              title="Kecilkan sidebar"
+              aria-label="Kecilkan sidebar"
+            >
+              <SidebarSimple size={20} weight="regular" />
+            </button>
+          </>
+        )}
         <button
           type="button"
-          className="app-sidebar__toggle app-sidebar__mobile-close"
+          className="app-sidebar__toggle app-sidebar__mobile-close d-lg-none"
           onClick={toggleSidebarMobile}
           aria-label="Tutup menu navigasi"
         >

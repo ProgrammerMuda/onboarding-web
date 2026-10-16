@@ -47,4 +47,31 @@ describe('Sidebar active states', () => {
     // hr-departemen subitem should be active
     expect(html).toContain('app-sidebar__subitem--active');
   });
+
+  it('renders minimize button beside logo when expanded, and clickable logo button when collapsed', () => {
+    // 1. Expanded state
+    const expandedPresenter = {
+      sections: SIDEBAR_SECTIONS,
+      activeItem: 'dashboard',
+      expandedItems: {},
+      isCollapsed: false,
+      isSidebarOpen: false,
+      handleParentClick: () => {},
+      handleSubItemClick: () => {},
+      openParentFromCollapsed: () => {},
+      toggleSidebarMobile: () => {},
+      toggleSidebarCollapsed: () => {}
+    };
+    const expandedHtml = renderToString(<Sidebar presenter={expandedPresenter} />);
+    expect(expandedHtml).toContain('app-sidebar__collapse-btn');
+
+    // 2. Collapsed state
+    const collapsedPresenter = {
+      ...expandedPresenter,
+      isCollapsed: true
+    };
+    const collapsedHtml = renderToString(<Sidebar presenter={collapsedPresenter} />);
+    expect(collapsedHtml).toContain('app-sidebar__logo--clickable');
+    expect(collapsedHtml).not.toContain('app-sidebar__collapse-btn');
+  });
 });

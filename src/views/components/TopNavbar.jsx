@@ -16,20 +16,6 @@ export function TopNavbar({ onToggleMobileSidebar, onToggleSidebarCollapsed, isS
     >
       {/* Left Area: Mobile Sidebar Toggle + Search Input */}
       <div className="d-flex align-items-center gap-3">
-        <button
-          type="button"
-          className="navbar-sidebar-toggle d-none d-lg-inline-flex"
-          onClick={onToggleSidebarCollapsed}
-          aria-label={isSidebarCollapsed ? 'Besarkan sidebar' : 'Kecilkan sidebar'}
-          aria-expanded={!isSidebarCollapsed}
-          title={isSidebarCollapsed ? 'Besarkan sidebar' : 'Kecilkan sidebar'}
-        >
-          <SidebarSimple
-            size={22}
-            weight={isSidebarCollapsed ? 'regular' : 'duotone'}
-            aria-hidden="true"
-          />
-        </button>
         {onToggleMobileSidebar && (
           <button
             type="button"
