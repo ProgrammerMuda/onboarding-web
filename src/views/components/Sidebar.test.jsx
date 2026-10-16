@@ -74,4 +74,29 @@ describe('Sidebar active states', () => {
     expect(collapsedHtml).toContain('app-sidebar__logo--clickable');
     expect(collapsedHtml).not.toContain('app-sidebar__collapse-btn');
   });
+
+  it('renders user name and role in the sidebar footer user card', () => {
+    const presenter = {
+      sections: SIDEBAR_SECTIONS,
+      activeItem: 'dashboard',
+      expandedItems: {},
+      isCollapsed: false,
+      isSidebarOpen: false,
+      user: {
+        name: 'Budi Hartono',
+        role: 'Building Manager'
+      },
+      handleParentClick: () => {},
+      handleSubItemClick: () => {},
+      openParentFromCollapsed: () => {},
+      toggleSidebarMobile: () => {},
+      toggleSidebarCollapsed: () => {}
+    };
+
+    const html = renderToString(<Sidebar presenter={presenter} />);
+    expect(html).toContain('Budi Hartono');
+    expect(html).toContain('Building Manager');
+    expect(html).not.toContain('Finance');
+    expect(html).not.toContain('Jurnal Accounting');
+  });
 });

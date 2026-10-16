@@ -175,14 +175,14 @@ export function Sidebar({ presenter }) {
 
       {/* Sidebar Footer: User Card */}
       <div className="app-sidebar__footer">
-        <div className="app-sidebar__user-card" title={compact ? 'Finance - Jurnal Accounting' : undefined}>
+        <div className="app-sidebar__user-card" title={compact ? `${(presenter?.user?.name || 'Budi Hartono')} - ${(presenter?.user?.role || 'Building Manager')}` : undefined}>
           <div className="app-sidebar__user-avatar" aria-hidden="true">
-            <img src={avatarImg} alt="Finance" className="app-sidebar__user-avatar-img" />
+            <img src={avatarImg} alt={presenter?.user?.name || 'Budi Hartono'} className="app-sidebar__user-avatar-img" />
           </div>
           {!compact && (
             <div className="app-sidebar__user-info">
-              <span className="app-sidebar__user-name">Finance</span>
-              <span className="app-sidebar__user-role">Jurnal Accounting</span>
+              <span className="app-sidebar__user-name">{presenter?.user?.name || 'Budi Hartono'}</span>
+              <span className="app-sidebar__user-role">{presenter?.user?.role || 'Building Manager'}</span>
             </div>
           )}
           {!compact && (

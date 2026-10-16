@@ -109,6 +109,10 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
     expandedItems: state.expandedItems,
     isSidebarOpen: state.isSidebarOpen,
     isCollapsed,
+    user: {
+      name: 'Budi Hartono',
+      role: 'Building Manager'
+    },
     handleParentClick,
     handleSubItemClick,
     openParentFromCollapsed,
