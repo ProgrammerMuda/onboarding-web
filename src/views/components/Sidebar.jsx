@@ -8,6 +8,7 @@ import {
 } from '@phosphor-icons/react';
 import logoImg from '../../assets/proapps-mark-white.svg';
 import fullLogoImg from '../../assets/logo.png';
+import avatarImg from '../../assets/avatar.png';
 import './sidebar.css';
 
 const iconMap = {
@@ -153,7 +154,7 @@ export function Sidebar({ presenter }) {
       <div className="app-sidebar__footer">
         <div className="app-sidebar__user-card" title={compact ? 'Finance - Jurnal Accounting' : undefined}>
           <div className="app-sidebar__user-avatar" aria-hidden="true">
-            <span>F</span>
+            <img src={avatarImg} alt="Finance" className="app-sidebar__user-avatar-img" />
           </div>
           {!compact && (
             <div className="app-sidebar__user-info">
