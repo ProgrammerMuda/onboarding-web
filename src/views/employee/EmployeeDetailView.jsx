@@ -157,169 +157,60 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
         {/* LEFT COLUMN: Profile Summary Card                            */}
         {/* ============================================================ */}
         <div className="emp-detail-profile-card">
-          {/* Decorative Property Management Building Skyline Banner */}
-          <div className="emp-detail-cover">
-            <svg
-              className="emp-detail-cover-svg"
-              viewBox="0 0 400 160"
-              preserveAspectRatio="none"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                {/* Deep Corporate Sky Gradient */}
-                <linearGradient id="bldgSkyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#031d4d" />
-                  <stop offset="55%" stopColor="#003580" />
-                  <stop offset="100%" stopColor="#005db2" />
-                </linearGradient>
-
-                {/* Distant building layer */}
-                <linearGradient id="bldgFarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.30" />
-                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0.10" />
-                </linearGradient>
-
-                {/* Midground building layer */}
-                <linearGradient id="bldgMidGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.48" />
-                  <stop offset="100%" stopColor="#003580" stopOpacity="0.30" />
-                </linearGradient>
-
-                {/* Foreground modern architectural towers */}
-                <linearGradient id="bldgNearGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#0284c7" stopOpacity="0.75" />
-                  <stop offset="100%" stopColor="#031d4d" stopOpacity="0.95" />
-                </linearGradient>
-
-                {/* Atmospheric skyline glow */}
-                <radialGradient id="skyGlow" cx="70%" cy="25%" r="65%">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.38" />
-                  <stop offset="100%" stopColor="#031d4d" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-
-              {/* Sky Canvas & Atmosphere */}
-              <rect width="400" height="160" fill="url(#bldgSkyGrad)" />
-              <circle cx="270" cy="45" r="130" fill="url(#skyGlow)" />
-
-              {/* LAYER 1: Distant Background Skyscraper Silhouettes */}
-              <g fill="url(#bldgFarGrad)">
-                <rect x="25" y="52" width="28" height="108" />
-                <rect x="70" y="38" width="24" height="122" />
-                <polygon points="82,18 80,38 84,38" />
-                <rect x="110" y="58" width="32" height="102" />
-                <rect x="160" y="28" width="38" height="132" />
-                <polygon points="179,10 177,28 181,28" />
-                <rect x="220" y="46" width="36" height="114" />
-                <rect x="275" y="36" width="32" height="124" />
-                <polygon points="291,18 289,36 293,36" />
-                <rect x="325" y="50" width="34" height="110" />
-                <rect x="370" y="62" width="35" height="98" />
-              </g>
-
-              {/* LAYER 2: Midground Commercial High-Rises */}
-              <g fill="url(#bldgMidGrad)">
-                <polygon points="5,82 45,66 45,160 5,160" />
-                <rect x="58" y="65" width="38" height="95" />
-                <rect x="65" y="52" width="24" height="13" />
-                <polygon points="130,48 160,36 160,160 130,160" />
-                <polygon points="190,56 228,40 228,160 190,160" />
-                <rect x="240" y="60" width="34" height="100" />
-                <rect x="300" y="46" width="38" height="114" />
-                <polygon points="319,28 317,46 321,46" />
-                <rect x="355" y="68" width="45" height="92" />
-              </g>
-
-              {/* Subtle Facade Window Slits on Midground Towers */}
-              <g stroke="#ffffff" strokeOpacity="0.22" strokeWidth="1" strokeDasharray="1.5 3">
-                <line x1="70" y1="72" x2="70" y2="155" />
-                <line x1="82" y1="72" x2="82" y2="155" />
-                <line x1="145" y1="58" x2="145" y2="155" />
-                <line x1="205" y1="66" x2="205" y2="155" />
-                <line x1="216" y1="66" x2="216" y2="155" />
-                <line x1="252" y1="70" x2="252" y2="155" />
-                <line x1="262" y1="70" x2="262" y2="155" />
-                <line x1="312" y1="56" x2="312" y2="155" />
-                <line x1="326" y1="56" x2="326" y2="155" />
-              </g>
-
-              {/* LAYER 3: Foreground Modern Architectural Towers & Glass Pavilions */}
-              <g fill="url(#bldgNearGrad)">
-                <rect x="-10" y="94" width="45" height="66" />
-                <polygon points="35,108 76,90 76,160 35,160" />
-                <rect x="92" y="82" width="44" height="78" />
-                <rect x="102" y="72" width="24" height="10" />
-                <polygon points="168,70 205,58 205,160 168,160" />
-                <rect x="222" y="78" width="46" height="82" />
-                <polygon points="272,86 312,72 312,160 272,160" />
-                <rect x="338" y="84" width="75" height="76" />
-              </g>
-
-              {/* Architectural Glass Floor / Edge Highlights */}
-              <g stroke="#ffffff" strokeOpacity="0.30" strokeWidth="1">
-                <line x1="35" y1="108" x2="76" y2="90" />
-                <line x1="92" y1="82" x2="136" y2="82" />
-                <line x1="168" y1="70" x2="205" y2="58" />
-                <line x1="222" y1="78" x2="268" y2="78" />
-                <line x1="272" y1="86" x2="312" y2="72" />
-                <line x1="338" y1="84" x2="400" y2="84" />
-              </g>
-
-              {/* Base Ground Blend */}
-              <rect x="0" y="142" width="400" height="18" fill="url(#bldgSkyGrad)" opacity="0.65" />
-            </svg>
-
-            {/* Top-Right Decorative Status Pill */}
-            <div
-              className={`emp-detail-cover-badge ${
-                emp.status === 'Resigned'
-                  ? 'emp-detail-cover-badge--resigned'
-                  : 'emp-detail-cover-badge--active'
-              }`}
-            >
+          {/* Executive Header Section */}
+          <div className="emp-detail-card-header">
+            {/* Top Bar: Status Badge */}
+            <div className="emp-detail-header-top">
               <span
-                className={`emp-detail-cover-badge-dot ${
-                  emp.status === 'Resigned' ? 'emp-detail-cover-badge-dot--resigned' : ''
+                className={`emp-detail-status-badge ${
+                  emp.status === 'Resigned'
+                    ? 'emp-detail-status-badge--resigned'
+                    : 'emp-detail-status-badge--active'
                 }`}
-              />
-              <span>{emp.status === 'Resigned' ? 'Resigned' : 'Active Employee'}</span>
-            </div>
-          </div>
-
-          {/* Avatar with overlap & floating edit button */}
-          <div className="emp-detail-avatar-container">
-            <div className="emp-detail-avatar-box">
-              {emp.avatar ? (
-                <img
-                  src={emp.avatar}
-                  alt={emp.name}
-                  className="emp-detail-avatar-img"
-                  onError={(e) => {
-                    e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
-                  }}
-                />
-              ) : (
-                <div className="emp-detail-avatar-placeholder">
-                  <User size={48} weight="duotone" />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Profile Identity Details */}
-          <div className="emp-detail-profile-body">
-            <div className="emp-detail-name-row">
-              <h2 className="emp-detail-name">{emp.name}</h2>
+              >
+                <span className="emp-detail-status-dot" />
+                <span>{emp.status === 'Resigned' ? 'Resigned' : 'Active Employee'}</span>
+              </span>
             </div>
 
+            {/* Avatar */}
+            <div className="emp-detail-avatar-wrap">
+              <div className="emp-detail-avatar-box">
+                {emp.avatar ? (
+                  <img
+                    src={emp.avatar}
+                    alt={emp.name}
+                    className="emp-detail-avatar-img"
+                    onError={(e) => {
+                      e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
+                    }}
+                  />
+                ) : (
+                  <div className="emp-detail-avatar-placeholder">
+                    <User size={48} weight="duotone" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Name, Role & Department */}
+            <h2 className="emp-detail-name">{emp.name}</h2>
             <div className="emp-detail-role-wrap">
-              <span className="emp-detail-role-pill secondary">
+              <span className="emp-detail-role-pill">
                 <Briefcase size={14} weight="bold" />
                 <span>{displayPosition}</span>
               </span>
             </div>
+            <div className="emp-detail-dept-info">
+              <Buildings size={14} weight="bold" />
+              <span>{deptName}</span>
+            </div>
+          </div>
 
+          <div className="emp-detail-card-divider" />
+
+          {/* Profile Identity Details */}
+          <div className="emp-detail-profile-body">
             {/* Basic Information Section */}
             <div className="emp-detail-subheading">Basic Information</div>
 
