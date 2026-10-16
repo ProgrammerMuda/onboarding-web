@@ -21,6 +21,8 @@
 }
 
 .app-sidebar__header {
+  position: relative;
+  z-index: 10;
   height: 68px;
   min-height: 68px;
   flex-shrink: 0;
@@ -30,7 +32,9 @@
   justify-content: space-between;
   gap: 8px;
   padding: 11px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+  background: #052c6e;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 18px rgba(0, 10, 35, 0.32);
 }
 
 .app-sidebar--collapsed .app-sidebar__header {
@@ -171,6 +175,8 @@
 }
 
 .app-sidebar__nav {
+  position: relative;
+  z-index: 1;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -282,9 +288,13 @@
 /* SIDEBAR FOOTER (USER CARD)                                  */
 /* ============================================================ */
 .app-sidebar__footer {
+  position: relative;
+  z-index: 10;
   flex-shrink: 0;
   padding: 12px 14px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background: #0764ad;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 -6px 18px rgba(0, 10, 35, 0.30);
 }
 
 .app-sidebar__user-card {
