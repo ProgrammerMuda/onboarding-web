@@ -240,7 +240,7 @@
 
 .app-sidebar__user-card {
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 10px 14px;
   display: flex;
   align-items: center;
@@ -253,7 +253,7 @@
 .app-sidebar__user-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 6px;
   background: linear-gradient(135deg, #16366f 0%, #295196 100%);
   display: flex;
   align-items: center;
@@ -339,7 +339,7 @@
 .app-sidebar--collapsed .app-sidebar__user-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
 .app-sidebar--collapsed .app-sidebar__nav {
