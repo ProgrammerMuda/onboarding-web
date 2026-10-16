@@ -137,7 +137,6 @@ export function Sidebar({ presenter }) {
                             aria-current={activeItem === sub.id ? 'page' : undefined}
                           >
                             <span>{sub.label}</span>
-                            {activeItem === sub.id && <span className="app-sidebar__active-dot" aria-hidden="true" />}
                           </button>
                         ))}
                       </div>
