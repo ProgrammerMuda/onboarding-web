@@ -157,7 +157,7 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
         {/* LEFT COLUMN: Profile Summary Card                            */}
         {/* ============================================================ */}
         <div className="emp-detail-profile-card">
-          {/* Decorative Modern Architecture Curve Banner */}
+          {/* Decorative Property Management Building Skyline Banner */}
           <div className="emp-detail-cover">
             <svg
               className="emp-detail-cover-svg"
@@ -167,58 +167,107 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
               xmlns="http://www.w3.org/2000/svg"
             >
               <defs>
-                <linearGradient id="coverBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#052c6e" />
-                  <stop offset="45%" stopColor="#004eb6" />
-                  <stop offset="85%" stopColor="#007ecc" />
-                  <stop offset="100%" stopColor="#09b2ff" />
+                {/* Deep Corporate Sky Gradient */}
+                <linearGradient id="bldgSkyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#031d4d" />
+                  <stop offset="55%" stopColor="#003580" />
+                  <stop offset="100%" stopColor="#005db2" />
                 </linearGradient>
-                <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
-                  <stop offset="60%" stopColor="#38bdf8" stopOpacity="0.35" />
-                  <stop offset="100%" stopColor="#09b2ff" stopOpacity="0.1" />
+
+                {/* Distant building layer */}
+                <linearGradient id="bldgFarGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.30" />
+                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0.10" />
                 </linearGradient>
-                <linearGradient id="waveGrad2" x1="100%" y1="100%" x2="0%" y2="0%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
-                  <stop offset="50%" stopColor="#7dd3fc" stopOpacity="0.18" />
-                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
+
+                {/* Midground building layer */}
+                <linearGradient id="bldgMidGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.48" />
+                  <stop offset="100%" stopColor="#003580" stopOpacity="0.30" />
                 </linearGradient>
-                <radialGradient id="glowCircle" cx="85%" cy="20%" r="55%">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+
+                {/* Foreground modern architectural towers */}
+                <linearGradient id="bldgNearGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#0284c7" stopOpacity="0.75" />
+                  <stop offset="100%" stopColor="#031d4d" stopOpacity="0.95" />
+                </linearGradient>
+
+                {/* Atmospheric skyline glow */}
+                <radialGradient id="skyGlow" cx="70%" cy="25%" r="65%">
+                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.38" />
+                  <stop offset="100%" stopColor="#031d4d" stopOpacity="0" />
                 </radialGradient>
               </defs>
 
-              {/* Base Gradient Canvas */}
-              <rect width="400" height="160" fill="url(#coverBgGrad)" />
+              {/* Sky Canvas & Atmosphere */}
+              <rect width="400" height="160" fill="url(#bldgSkyGrad)" />
+              <circle cx="270" cy="45" r="130" fill="url(#skyGlow)" />
 
-              {/* Ambient Glow */}
-              <circle cx="340" cy="30" r="120" fill="url(#glowCircle)" />
-
-              {/* Subtle Tech / Architectural Grid Accent */}
-              <g opacity="0.12" stroke="#ffffff" strokeWidth="0.75" strokeDasharray="3 3">
-                <line x1="0" y1="40" x2="400" y2="40" />
-                <line x1="0" y1="80" x2="400" y2="80" />
-                <line x1="0" y1="120" x2="400" y2="120" />
-                <line x1="100" y1="0" x2="100" y2="160" />
-                <line x1="200" y1="0" x2="200" y2="160" />
-                <line x1="300" y1="0" x2="300" y2="160" />
+              {/* LAYER 1: Distant Background Skyscraper Silhouettes */}
+              <g fill="url(#bldgFarGrad)">
+                <rect x="25" y="52" width="28" height="108" />
+                <rect x="70" y="38" width="24" height="122" />
+                <polygon points="82,18 80,38 84,38" />
+                <rect x="110" y="58" width="32" height="102" />
+                <rect x="160" y="28" width="38" height="132" />
+                <polygon points="179,10 177,28 181,28" />
+                <rect x="220" y="46" width="36" height="114" />
+                <rect x="275" y="36" width="32" height="124" />
+                <polygon points="291,18 289,36 293,36" />
+                <rect x="325" y="50" width="34" height="110" />
+                <rect x="370" y="62" width="35" height="98" />
               </g>
 
-              {/* Dynamic Curved Flow Lines & Waves */}
-              <path
-                d="M-20 60 C 110 15, 230 130, 420 45 L 420 160 L -20 160 Z"
-                fill="url(#waveGrad1)"
-              />
-              <path
-                d="M-20 95 C 100 40, 240 150, 420 90 L 420 160 L -20 160 Z"
-                fill="url(#waveGrad2)"
-              />
-              <path
-                d="M-20 120 C 130 85, 260 160, 420 125 L 420 160 L -20 160 Z"
-                fill="#ffffff"
-                fillOpacity="0.22"
-              />
+              {/* LAYER 2: Midground Commercial High-Rises */}
+              <g fill="url(#bldgMidGrad)">
+                <polygon points="5,82 45,66 45,160 5,160" />
+                <rect x="58" y="65" width="38" height="95" />
+                <rect x="65" y="52" width="24" height="13" />
+                <polygon points="130,48 160,36 160,160 130,160" />
+                <polygon points="190,56 228,40 228,160 190,160" />
+                <rect x="240" y="60" width="34" height="100" />
+                <rect x="300" y="46" width="38" height="114" />
+                <polygon points="319,28 317,46 321,46" />
+                <rect x="355" y="68" width="45" height="92" />
+              </g>
+
+              {/* Subtle Facade Window Slits on Midground Towers */}
+              <g stroke="#ffffff" strokeOpacity="0.22" strokeWidth="1" strokeDasharray="1.5 3">
+                <line x1="70" y1="72" x2="70" y2="155" />
+                <line x1="82" y1="72" x2="82" y2="155" />
+                <line x1="145" y1="58" x2="145" y2="155" />
+                <line x1="205" y1="66" x2="205" y2="155" />
+                <line x1="216" y1="66" x2="216" y2="155" />
+                <line x1="252" y1="70" x2="252" y2="155" />
+                <line x1="262" y1="70" x2="262" y2="155" />
+                <line x1="312" y1="56" x2="312" y2="155" />
+                <line x1="326" y1="56" x2="326" y2="155" />
+              </g>
+
+              {/* LAYER 3: Foreground Modern Architectural Towers & Glass Pavilions */}
+              <g fill="url(#bldgNearGrad)">
+                <rect x="-10" y="94" width="45" height="66" />
+                <polygon points="35,108 76,90 76,160 35,160" />
+                <rect x="92" y="82" width="44" height="78" />
+                <rect x="102" y="72" width="24" height="10" />
+                <polygon points="168,70 205,58 205,160 168,160" />
+                <rect x="222" y="78" width="46" height="82" />
+                <polygon points="272,86 312,72 312,160 272,160" />
+                <rect x="338" y="84" width="75" height="76" />
+              </g>
+
+              {/* Architectural Glass Floor / Edge Highlights */}
+              <g stroke="#ffffff" strokeOpacity="0.30" strokeWidth="1">
+                <line x1="35" y1="108" x2="76" y2="90" />
+                <line x1="92" y1="82" x2="136" y2="82" />
+                <line x1="168" y1="70" x2="205" y2="58" />
+                <line x1="222" y1="78" x2="268" y2="78" />
+                <line x1="272" y1="86" x2="312" y2="72" />
+                <line x1="338" y1="84" x2="400" y2="84" />
+              </g>
+
+              {/* Base Ground Blend */}
+              <rect x="0" y="142" width="400" height="18" fill="url(#bldgSkyGrad)" opacity="0.65" />
             </svg>
 
             {/* Top-Right Decorative Status Pill */}
