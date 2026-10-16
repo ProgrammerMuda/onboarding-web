@@ -1,8 +1,8 @@
 import React from 'react';
-import { MagnifyingGlass, Bell, List } from '@phosphor-icons/react';
+import { MagnifyingGlass, Bell, List, SidebarSimple } from '@phosphor-icons/react';
 import avatarImg from '../../assets/avatar.png';
 
-export function TopNavbar({ onToggleMobileSidebar }) {
+export function TopNavbar({ onToggleMobileSidebar, onToggleSidebarCollapsed, isSidebarCollapsed }) {
   return (
     <header 
       className="bg-white border-bottom d-flex align-items-center justify-content-between px-4 px-lg-5 flex-shrink-0"
@@ -16,12 +16,28 @@ export function TopNavbar({ onToggleMobileSidebar }) {
     >
       {/* Left Area: Mobile Sidebar Toggle + Search Input */}
       <div className="d-flex align-items-center gap-3">
+        <button
+          type="button"
+          className="navbar-sidebar-toggle d-none d-lg-inline-flex"
+          onClick={onToggleSidebarCollapsed}
+          aria-label={isSidebarCollapsed ? 'Besarkan sidebar' : 'Kecilkan sidebar'}
+          aria-expanded={!isSidebarCollapsed}
+          title={isSidebarCollapsed ? 'Besarkan sidebar' : 'Kecilkan sidebar'}
+        >
+          <SidebarSimple
+            size={22}
+            weight={isSidebarCollapsed ? 'regular' : 'duotone'}
+            aria-hidden="true"
+          />
+        </button>
         {onToggleMobileSidebar && (
           <button
             type="button"
             className="btn btn-light d-lg-none p-2 rounded-2 text-dark border"
             onClick={onToggleMobileSidebar}
-            title="Toggle Sidebar"
+            title="Buka menu navigasi"
+            aria-label="Buka menu navigasi"
+            style={{ minWidth: '44px', minHeight: '44px' }}
           >
             <List size={22} weight="bold" />
           </button>

@@ -6,6 +6,7 @@ import { SIDEBAR_SECTIONS, SidebarModel } from '../models/SidebarModel';
  * Mediates between SidebarModel data and the Sidebar View.
  */
 export function useSidebarPresenter(initialActive = 'hr-permit-type') {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [state, setState] = useState(() => {
     const defaultState = SidebarModel.getDefaultState();
     if (initialActive) {
@@ -60,7 +61,8 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
       return {
         ...prev,
         activeItem: item.id,
-        activeParent: item.id
+        activeParent: item.id,
+        isSidebarOpen: false
       };
     });
   }, []);
@@ -74,8 +76,23 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
       expandedItems: {
         ...prev.expandedItems,
         [parentId]: true
-      }
+      },
+      isSidebarOpen: false
     }));
+  }, []);
+
+  const openParentFromCollapsed = useCallback((item) => {
+    setIsCollapsed(false);
+    setState((prev) => ({
+      ...prev,
+      activeParent: item.id,
+      activeItem: prev.activeParent === item.id ? prev.activeItem : item.children[0].id,
+      expandedItems: { ...prev.expandedItems, [item.id]: true }
+    }));
+  }, []);
+
+  const toggleSidebarCollapsed = useCallback(() => {
+    setIsCollapsed((prev) => !prev);
   }, []);
 
   const toggleSidebarMobile = useCallback(() => {
@@ -91,8 +108,11 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
     activeParent: state.activeParent,
     expandedItems: state.expandedItems,
     isSidebarOpen: state.isSidebarOpen,
+    isCollapsed,
     handleParentClick,
     handleSubItemClick,
+    openParentFromCollapsed,
+    toggleSidebarCollapsed,
     toggleSidebarMobile
   };
 }

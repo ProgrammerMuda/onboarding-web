@@ -255,7 +255,7 @@ export class SidebarModel {
         'fin-parameter': false,
         'hr-parameter': true
       },
-      isSidebarOpen: true
+      isSidebarOpen: false
     };
   }
 }

@@ -52,11 +52,23 @@ export default function App() {
     <div className="d-flex vh-100 overflow-hidden" style={{ backgroundColor: '#F1F5F9' }}>
       {/* Left Navigation Sidebar - Fixed in place */}
       <Sidebar presenter={sidebarPresenter} />
+      {sidebarPresenter.isSidebarOpen && (
+        <button
+          type="button"
+          className="sidebar-backdrop"
+          aria-label="Tutup menu navigasi"
+          onClick={sidebarPresenter.toggleSidebarMobile}
+        />
+      )}
 
       {/* Main Workspace Area */}
       <div className="flex-grow-1 d-flex flex-column h-100 overflow-hidden" style={{ backgroundColor: '#F1F5F9', minWidth: 0 }}>
         {/* Top Horizontal Navbar - Fixed at top */}
-        <TopNavbar onToggleMobileSidebar={sidebarPresenter.toggleSidebarMobile} />
+        <TopNavbar
+          onToggleMobileSidebar={sidebarPresenter.toggleSidebarMobile}
+          onToggleSidebarCollapsed={sidebarPresenter.toggleSidebarCollapsed}
+          isSidebarCollapsed={sidebarPresenter.isCollapsed}
+        />
 
         {/* Content Canvas - Spacious Slate 100 Container with independent scrolling */}
         <main 

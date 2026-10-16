@@ -1,0 +1,309 @@
+.app-sidebar {
+  width: 280px;
+  min-width: 280px;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  color: #fff;
+  background:
+    linear-gradient(rgba(5, 48, 121, 0.6), rgba(5, 48, 121, 0.6)),
+    linear-gradient(160deg, var(--app-primary, #053079) 12%, var(--app-secondary, #09b2ff) 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  font-family: 'Montserrat', sans-serif;
+  z-index: 1000;
+  transition: width 180ms ease, min-width 180ms ease;
+}
+
+.app-sidebar--collapsed {
+  width: 76px;
+  min-width: 76px;
+}
+
+.app-sidebar__header {
+  height: 68px;
+  min-height: 68px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.app-sidebar--collapsed .app-sidebar__header {
+  justify-content: center;
+  padding: 11px 12px;
+}
+
+.navbar-sidebar-toggle {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: #002b7f;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.navbar-sidebar-toggle:hover {
+  background: #edf3fa;
+}
+
+.navbar-sidebar-toggle:focus-visible {
+  outline: 3px solid #002b7f;
+  outline-offset: 2px;
+}
+
+.app-sidebar__logo {
+  width: 170px;
+  min-width: 0;
+  height: 44px;
+  flex: 0 1 170px;
+  display: flex;
+  align-items: center;
+}
+
+.app-sidebar--collapsed .app-sidebar__logo {
+  width: 44px;
+  flex: 0 0 44px;
+  justify-content: center;
+}
+
+.app-sidebar__logo img {
+  display: block;
+  width: auto;
+  height: 26px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.app-sidebar--collapsed .app-sidebar__logo img {
+  height: 32px;
+}
+
+.app-sidebar__toggle {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  padding: 0;
+  color: #fff;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.app-sidebar__toggle:hover,
+.app-sidebar__item:hover,
+.app-sidebar__subitem:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.app-sidebar__toggle:focus-visible,
+.app-sidebar__item:focus-visible,
+.app-sidebar__subitem:focus-visible,
+.sidebar-backdrop:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+}
+
+.app-sidebar__mobile-close {
+  display: none;
+}
+
+.app-sidebar__nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 14px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.36) transparent;
+}
+
+.app-sidebar__section + .app-sidebar__section {
+  margin-top: 24px;
+}
+
+.app-sidebar__section-title {
+  padding: 0 12px;
+  margin-bottom: 12px;
+  color: #e2edf8;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.app-sidebar__items {
+  display: grid;
+  gap: 4px;
+}
+
+.app-sidebar__item,
+.app-sidebar__subitem {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 12px;
+  color: #e2edf8;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.45;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.app-sidebar__item svg:first-child {
+  flex: 0 0 auto;
+}
+
+.app-sidebar__item--active,
+.app-sidebar__item--active:hover {
+  color: #fff;
+  background: linear-gradient(105deg, #075da5 0%, #0878ba 100%);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 3px 8px rgba(0, 16, 50, 0.18);
+}
+
+/* Parent menu dropdown when clicked / when sub-item is active: secondary color only, no background */
+.app-sidebar__item--parent-active,
+.app-sidebar__item--parent-active:hover {
+  color: var(--app-secondary, #09b2ff);
+  background: transparent;
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.app-sidebar__item--parent-active:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.app-sidebar__item--parent-active .app-sidebar__caret {
+  color: var(--app-secondary, #09b2ff);
+}
+
+.app-sidebar__item-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-sidebar__caret {
+  flex: 0 0 auto;
+}
+
+.app-sidebar__subitems {
+  display: grid;
+  gap: 2px;
+  padding: 6px 0 4px 30px;
+}
+
+.app-sidebar__subitem {
+  min-height: 44px;
+  justify-content: space-between;
+  padding: 7px 10px;
+  font-size: 0.8rem;
+}
+
+.app-sidebar__subitem--active,
+.app-sidebar__subitem--active:hover {
+  color: #fff;
+  background: linear-gradient(105deg, #075da5 0%, #0878ba 100%);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 6px rgba(0, 16, 50, 0.15);
+}
+
+.app-sidebar__active-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: var(--app-secondary, #09b2ff);
+  box-shadow: 0 0 6px rgba(9, 178, 255, 0.6);
+}
+
+.app-sidebar--collapsed .app-sidebar__nav {
+  padding: 24px 10px 28px;
+}
+
+.app-sidebar--collapsed .app-sidebar__section + .app-sidebar__section {
+  margin-top: 24px;
+}
+
+.app-sidebar--collapsed .app-sidebar__section-title {
+  padding: 0;
+  text-align: center;
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
+}
+
+.app-sidebar--collapsed .app-sidebar__item-label,
+.app-sidebar--collapsed .app-sidebar__caret {
+  display: none;
+}
+
+.app-sidebar--collapsed .app-sidebar__item {
+  justify-content: center;
+  padding: 8px;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  .app-sidebar,
+  .app-sidebar--collapsed {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(280px, calc(100vw - 56px));
+    min-width: 0;
+    height: 100dvh;
+    visibility: hidden;
+    transform: translateX(-100%);
+    transition: transform 180ms ease, visibility 180ms ease;
+  }
+
+  .app-sidebar--mobile-open {
+    visibility: visible;
+    transform: translateX(0);
+  }
+
+  .app-sidebar__mobile-close,
+  .sidebar-backdrop {
+    display: inline-flex;
+  }
+
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(7, 23, 51, 0.58);
+    border: 0;
+    cursor: pointer;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar,
+  .app-sidebar__item,
+  .app-sidebar__subitem {
+    transition: none;
+  }
+}

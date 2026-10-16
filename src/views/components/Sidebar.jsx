@@ -1,232 +1,154 @@
-import React from 'react';
-import { 
-  FileText, 
-  GearSix, 
-  ChartPieSlice, 
-  MegaphoneSimple, 
-  Ticket, 
-  Siren, 
-  Bell, 
-  Receipt, 
-  UserCheck, 
-  Database, 
-  Coins,
-  Buildings, 
-  BuildingApartment, 
-  Image as ImageIcon, 
-  Door, 
-  HouseLine, 
-  HouseSimple, 
-  Hammer, 
-  CalendarCheck, 
-  RocketLaunch,
-  CaretDown, 
-  CaretUp,
-  UsersThree,
-  ClockUser
+import React, { useEffect } from 'react';
+import {
+  FileText, GearSix, ChartPieSlice, MegaphoneSimple, Ticket, Siren,
+  Bell, Receipt, UserCheck, Database, Coins, Buildings,
+  BuildingApartment, Image as ImageIcon, Door, HouseLine, Hammer,
+  CalendarCheck, RocketLaunch, CaretDown, CaretUp,
+  X, UsersThree, ClockUser
 } from '@phosphor-icons/react';
-import logoImg from '../../assets/logo.png';
+import logoImg from '../../assets/proapps-mark-white.svg';
+import fullLogoImg from '../../assets/logo.png';
+import './sidebar.css';
 
-// Phosphor Icon Mapping
 const iconMap = {
   Rocket: RocketLaunch,
   FileContract: FileText,
   Settings: GearSix,
   PieChart: ChartPieSlice,
   Megaphone: MegaphoneSimple,
-  Ticket: Ticket,
-  Siren: Siren,
-  Bell: Bell,
-  Receipt: Receipt,
-  UserCheck: UserCheck,
-  Database: Database,
-  Coins: Coins,
+  Ticket,
+  Siren,
+  Bell,
+  Receipt,
+  UserCheck,
+  Database,
+  Coins,
   Building2: Buildings,
   Building: BuildingApartment,
   Layers: ImageIcon,
   DoorClosed: Door,
   Home: HouseLine,
-  Hammer: Hammer,
-  CalendarCheck: CalendarCheck,
+  Hammer,
+  CalendarCheck,
   Image: ImageIcon,
-  UsersThree: UsersThree,
-  ClockUser: ClockUser,
-  FileText: FileText
+  UsersThree,
+  ClockUser,
+  FileText
 };
 
 export function Sidebar({ presenter }) {
   const {
-    sections,
-    activeItem,
-    activeParent,
-    expandedItems,
-    handleParentClick,
-    handleSubItemClick
+    sections, activeItem, expandedItems, isCollapsed,
+    isSidebarOpen, handleParentClick, handleSubItemClick,
+    openParentFromCollapsed, toggleSidebarMobile
   } = presenter;
+  const compact = isCollapsed && !isSidebarOpen;
+
+  useEffect(() => {
+    if (!isSidebarOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') toggleSidebarMobile();
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [isSidebarOpen, toggleSidebarMobile]);
+
+  const selectItem = (item) => {
+    if (compact && item.hasChildren) {
+      openParentFromCollapsed(item);
+      return;
+    }
+    handleParentClick(item);
+  };
 
   return (
-    <aside 
-      className="d-flex flex-column text-white position-relative border-end flex-shrink-0"
-      style={{
-        width: '280px',
-        minWidth: '280px',
-        maxWidth: '280px',
-        backgroundColor: '#002B7F',
-        height: '100vh',
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        fontFamily: "'Montserrat', sans-serif",
-        zIndex: 1000
-      }}
+    <aside
+      className={`app-sidebar ${compact ? 'app-sidebar--collapsed' : ''} ${isSidebarOpen ? 'app-sidebar--mobile-open' : ''}`}
+      aria-label="Navigasi utama"
     >
-      {/* 1. Header with PROAPPS Logo */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="d-flex align-items-center">
-          <img 
-            src={logoImg} 
-            alt="PROAPPS" 
-            style={{ maxHeight: '34px', maxWidth: '170px', objectFit: 'contain' }}
-          />
+      <div className="app-sidebar__header">
+        <div className="app-sidebar__logo" title="PROAPPS">
+          <img src={compact ? logoImg : fullLogoImg} alt="PROAPPS" />
         </div>
+        <button
+          type="button"
+          className="app-sidebar__toggle app-sidebar__mobile-close"
+          onClick={toggleSidebarMobile}
+          aria-label="Tutup menu navigasi"
+        >
+          <X size={20} />
+        </button>
       </div>
 
-      {/* 2. Scrollable Navigation Menu with Phosphor Icons */}
-      <div 
-        className="flex-grow-1 overflow-y-auto px-3 py-4"
-        style={{
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(255,255,255,0.2) transparent'
-        }}
-      >
-        {sections.map((section, sIndex) => (
-          <div key={section.id} className={sIndex === 0 ? 'mb-4' : 'mb-4 pt-2'}>
-            {/* Section Title */}
+      <nav className="app-sidebar__nav" aria-label="Menu aplikasi">
+        {sections.map((section) => (
+          <div key={section.id} className="app-sidebar__section">
             {section.title && (
-              <div 
-                className="px-3 mb-2.5 fw-bold text-uppercase"
-                style={{
-                  fontSize: '0.72rem',
-                  letterSpacing: '0.1em',
-                  color: '#8EAAD6'
-                }}
+              <div
+                className="app-sidebar__section-title"
+                title={compact ? section.title : undefined}
+                aria-label={compact ? section.title : undefined}
               >
-                {section.title}
+                {compact ? section.title.slice(0, 4) : section.title}
               </div>
             )}
-
-            {/* Section Items */}
-            <div className="vstack gap-2">
+            <div className="app-sidebar__items">
               {section.items.map((item) => {
-                const IconComponent = iconMap[item.icon] || Database;
+                const Icon = iconMap[item.icon] || Database;
                 const isExpanded = !!expandedItems[item.id];
-                const isParentActive = activeParent === item.id;
-                const isDirectActive = activeItem === item.id;
+                const hasActiveChild = item.hasChildren && item.children.some((sub) => sub.id === activeItem);
+                const isDirectActive = !item.hasChildren && activeItem === item.id;
+                const isParentActive = item.hasChildren && (hasActiveChild || isExpanded);
 
-                if (item.hasChildren) {
-                  return (
-                    <div key={item.id} className="w-100">
-                      {/* Parent Accordion Button */}
-                      <button
-                        type="button"
-                        className={`btn w-100 d-flex align-items-center justify-content-between px-3 py-2.5 border-0 text-start ${
-                          isParentActive 
-                            ? 'text-white' 
-                            : 'text-white text-opacity-90 hover-bg-white-10'
-                        }`}
-                        style={{
-                          backgroundColor: isParentActive ? '#00B0FF' : 'transparent',
-                          borderRadius: '0.55rem',
-                          fontSize: '0.875rem',
-                          fontWeight: isParentActive ? 600 : 500,
-                          transition: 'all 0.2s ease-in-out'
-                        }}
-                        onClick={() => handleParentClick(item)}
-                      >
-                        <div className="d-flex align-items-center gap-3">
-                          <IconComponent 
-                            size={20} 
-                            weight={isParentActive ? 'fill' : 'regular'} 
-                            className="flex-shrink-0" 
-                          />
-                          <span>{item.label}</span>
-                        </div>
-                        {isExpanded ? (
-                          <CaretUp size={16} weight="bold" className="opacity-90" />
-                        ) : (
-                          <CaretDown size={16} weight="bold" className="opacity-75" />
-                        )}
-                      </button>
-
-                      {/* Accordion Sub-menu */}
-                      {isExpanded && item.children && (
-                        <div className="vstack gap-2 mt-2 mb-2 ps-4 pe-2">
-                          {item.children.map((sub) => {
-                            const isSubActive = activeItem === sub.id;
-                            return (
-                              <button
-                                key={sub.id}
-                                type="button"
-                                className="btn w-100 text-start py-2 px-3 border-0 d-flex align-items-center justify-content-between"
-                                style={{
-                                  backgroundColor: 'transparent',
-                                  color: isSubActive ? '#00B0FF' : '#E2EDF8',
-                                  fontSize: '0.84rem',
-                                  fontWeight: isSubActive ? 700 : 400,
-                                  borderRadius: '0.4rem',
-                                  transition: 'color 0.2s ease, transform 0.15s ease'
-                                }}
-                                onClick={() => handleSubItemClick(sub.id, item.id)}
-                              >
-                                <span>{sub.label}</span>
-                                {isSubActive && (
-                                  <span 
-                                    style={{
-                                      width: '6px',
-                                      height: '6px',
-                                      borderRadius: '50%',
-                                      backgroundColor: '#00B0FF',
-                                      display: 'inline-block'
-                                    }}
-                                  />
-                                )}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
+                let itemClass = 'app-sidebar__item';
+                if (isDirectActive) {
+                  itemClass += ' app-sidebar__item--active';
+                } else if (isParentActive) {
+                  itemClass += ' app-sidebar__item--parent-active';
                 }
 
-                // Standalone Item (No children)
                 return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className="btn w-100 d-flex align-items-center justify-content-between px-3 py-2.5 border-0 text-start text-white text-opacity-90"
-                    style={{
-                      backgroundColor: isDirectActive ? '#00B0FF' : 'transparent',
-                      borderRadius: '0.55rem',
-                      fontSize: '0.875rem',
-                      fontWeight: isDirectActive ? 600 : 500,
-                      transition: 'all 0.2s ease-in-out'
-                    }}
-                    onClick={() => handleParentClick(item)}
-                  >
-                    <div className="d-flex align-items-center gap-3">
-                      <IconComponent 
-                        size={20} 
-                        weight={isDirectActive ? 'fill' : 'regular'} 
-                        className="flex-shrink-0" 
-                      />
-                      <span>{item.label}</span>
-                    </div>
-                  </button>
+                  <div key={item.id} className="app-sidebar__item-group">
+                    <button
+                      type="button"
+                      className={itemClass}
+                      onClick={() => selectItem(item)}
+                      aria-label={compact ? item.label : undefined}
+                      aria-current={isDirectActive ? 'page' : undefined}
+                      aria-expanded={item.hasChildren && !compact ? isExpanded : undefined}
+                      title={compact ? item.label : undefined}
+                    >
+                      <Icon size={22} weight={isDirectActive || hasActiveChild ? 'fill' : 'regular'} aria-hidden="true" />
+                      <span className="app-sidebar__item-label">{item.label}</span>
+                      {item.hasChildren && (
+                        isExpanded
+                          ? <CaretUp className="app-sidebar__caret" size={16} aria-hidden="true" />
+                          : <CaretDown className="app-sidebar__caret" size={16} aria-hidden="true" />
+                      )}
+                    </button>
+                    {item.hasChildren && isExpanded && !compact && (
+                      <div className="app-sidebar__subitems">
+                        {item.children.map((sub) => (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            className={`app-sidebar__subitem ${activeItem === sub.id ? 'app-sidebar__subitem--active' : ''}`}
+                            onClick={() => handleSubItemClick(sub.id, item.id)}
+                            aria-current={activeItem === sub.id ? 'page' : undefined}
+                          >
+                            <span>{sub.label}</span>
+                            {activeItem === sub.id && <span className="app-sidebar__active-dot" aria-hidden="true" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
           </div>
         ))}
-      </div>
+      </nav>
     </aside>
   );
 }
