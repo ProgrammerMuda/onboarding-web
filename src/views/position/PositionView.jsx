@@ -23,12 +23,13 @@ function PositionSuccessModal({ title, subtext, onClose }) {
       ref={ref}
       className="position-dialog position-success-dialog border-0 shadow-lg p-0"
       aria-labelledby="position-success-title"
+      style={{ width: '440px', maxWidth: '90vw', borderRadius: '16px' }}
       onCancel={onClose}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
     >
-      <div className="position-relative p-4 p-md-5 text-center bg-white" style={{ borderRadius: '16px' }}>
+      <div className="position-relative text-center bg-white" style={{ padding: '40px 32px 32px', borderRadius: '16px' }}>
         <button
           type="button"
           className="position-dialog-close-btn position-absolute top-0 end-0 m-3"
@@ -38,15 +39,15 @@ function PositionSuccessModal({ title, subtext, onClose }) {
           <X size={20} weight="bold" />
         </button>
 
-        <div className="d-flex justify-content-center mb-3">
-          <CheckCircle size={68} weight="fill" style={{ color: '#10B981' }} />
+        <div className="d-flex justify-content-center" style={{ marginBottom: '16px' }}>
+          <CheckCircle size={64} weight="fill" style={{ color: '#10B981' }} />
         </div>
 
-        <h3 id="position-success-title" className="fw-bold text-dark mb-2" style={{ fontSize: '1.25rem' }}>
+        <h3 id="position-success-title" className="fw-bold text-dark mb-2" style={{ fontSize: '20px', lineHeight: 1.3 }}>
           {title || 'Operation Successful!'}
         </h3>
 
-        <p className="text-muted mx-auto mb-0" style={{ fontSize: '0.875rem', lineHeight: '1.55', maxWidth: '360px' }}>
+        <p className="text-muted mx-auto mb-0" style={{ fontSize: '15px', lineHeight: 1.55, maxWidth: '360px' }}>
           {subtext || 'The position settings have been successfully saved.'}
         </p>
       </div>

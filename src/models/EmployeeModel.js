@@ -190,7 +190,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2025-12-31',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-002',
@@ -205,7 +205,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2026-05-31',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-003',
@@ -220,7 +220,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2025-02-28',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-004',
@@ -235,7 +235,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2026-01-14',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-005',
@@ -250,7 +250,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2025-07-31',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-006',
@@ -265,7 +265,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2024-07-31',
     resignDate: '2024-07-31',
     status: 'Resigned',
-    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-007',
@@ -280,7 +280,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2025-04-17',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-008',
@@ -295,7 +295,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2026-01-31',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-009',
@@ -310,7 +310,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2025-08-31',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-010',
@@ -325,7 +325,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2024-12-31',
     resignDate: '2024-12-31',
     status: 'Resigned',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-011',
@@ -340,7 +340,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2025-06-30',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=800&auto=format&fit=crop&q=80'
   },
   {
     id: 'emp-012',
@@ -355,7 +355,7 @@ export const INITIAL_EMPLOYEES = [
     endDate: '2026-02-28',
     resignDate: '',
     status: 'Active',
-    avatar: 'https://images.unsplash.com/photo-1548142813-c348350df52b?w=150&auto=format&fit=crop&q=80'
+    avatar: 'https://images.unsplash.com/photo-1548142813-c348350df52b?w=800&auto=format&fit=crop&q=80'
   }
 ];
 

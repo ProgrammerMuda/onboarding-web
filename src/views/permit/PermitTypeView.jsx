@@ -52,12 +52,13 @@ function SuccessDialog({ title, subtext, onClose }) {
       ref={ref}
       className="permit-dialog permit-success-dialog border-0 shadow-lg p-0"
       aria-labelledby="permit-success-title"
+      style={{ width: '440px', maxWidth: '90vw', borderRadius: '16px' }}
       onCancel={onClose}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
     >
-      <div className="position-relative p-4 p-md-5 text-center bg-white" style={{ borderRadius: '16px' }}>
+      <div className="position-relative text-center bg-white" style={{ padding: '40px 32px 32px', borderRadius: '16px' }}>
         {/* Close Button */}
         <button
           type="button"
@@ -69,7 +70,7 @@ function SuccessDialog({ title, subtext, onClose }) {
         </button>
 
         {/* Filled Circular Checklist Icon */}
-        <div className="d-flex justify-content-center mb-3">
+        <div className="d-flex justify-content-center" style={{ marginBottom: '16px' }}>
           <CheckCircle size={64} weight="fill" style={{ color: '#10B981' }} />
         </div>
 
@@ -77,7 +78,7 @@ function SuccessDialog({ title, subtext, onClose }) {
         <h3 
           id="permit-success-title" 
           className="fw-bold text-dark mb-2"
-          style={{ fontSize: '1.25rem', letterSpacing: '-0.02em' }}
+          style={{ fontSize: '20px', lineHeight: 1.3, letterSpacing: '-0.02em' }}
         >
           {title || 'Action Completed Successfully!'}
         </h3>
@@ -85,7 +86,7 @@ function SuccessDialog({ title, subtext, onClose }) {
         {/* Contextual UX Writing Subtext */}
         <p 
           className="text-muted mx-auto mb-0" 
-          style={{ fontSize: '0.875rem', lineHeight: '1.55', maxWidth: '360px', color: '#64748B' }}
+          style={{ fontSize: '15px', lineHeight: 1.55, maxWidth: '360px', color: '#64748B' }}
         >
           {subtext || 'The operation has been successfully processed and updated in the system.'}
         </p>

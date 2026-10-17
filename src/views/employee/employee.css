@@ -884,6 +884,8 @@
 .emp-contact-text {
   color: #334155;
   font-size: 12.5px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .emp-contact-sub {
@@ -1186,12 +1188,31 @@
 .emp-btn-save {
   padding: 8px 20px;
   border-radius: 8px;
-  border: none;
+  border: 1px solid #002B7F;
   background-color: #002B7F;
   color: #ffffff;
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.emp-btn-save:disabled,
+.emp-btn-primary:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  background-color: #e2e8f0 !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+}
+
+.emp-btn-save:disabled svg,
+.emp-btn-primary:disabled svg {
+  color: #94a3b8 !important;
 }
 
 .emp-btn-danger {
@@ -1304,6 +1325,107 @@
   height: 1px;
   background-color: #f1f5f9;
   margin: 4px 0;
+}
+
+/* Official Import Template Banner */
+.emp-import-template-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #f0f7ff 0%, #e8f2fe 100%);
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #002B7F;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px rgba(0, 43, 127, 0.04);
+}
+
+.emp-import-template-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.emp-import-template-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #cce3ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #002B7F;
+  box-shadow: 0 2px 5px rgba(0, 43, 127, 0.08);
+  flex-shrink: 0;
+}
+
+.emp-import-template-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.emp-import-template-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emp-import-template-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.emp-import-template-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 20px;
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.emp-import-template-desc {
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.emp-import-template-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #ffffff;
+  color: #002B7F;
+  border: 1.5px solid #002B7F;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 43, 127, 0.06);
+  transition: all 0.15s ease-in-out;
+}
+
+.emp-import-template-btn:hover:not(:disabled) {
+  background: #002B7F;
+  color: #ffffff;
+  box-shadow: 0 3px 8px rgba(0, 43, 127, 0.2);
+}
+
+.emp-import-template-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 /* Upload Dropzone and Preview Table */
@@ -1441,11 +1563,74 @@
 }
 
 /* ============================================================ */
+/* BULK IMPORT EMPLOYEES MODAL                                  */
+/* ============================================================ */
+.emp-import-modal-card {
+  max-width: 860px !important;
+  width: 95vw !important;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+}
+
+.emp-import-modal-header {
+  padding: 20px 26px;
+}
+
+.emp-import-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.emp-import-modal-icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #eff6ff;
+  color: #1e3a8a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #dbeafe;
+}
+
+.emp-import-modal-title-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+
+.emp-import-modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 !important;
+  line-height: 1.25;
+}
+
+.emp-import-modal-subtitle {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 0 !important;
+  line-height: 1.35;
+}
+
+.emp-import-modal-card .emp-modal-body {
+  padding: 22px 26px;
+}
+
+.emp-import-modal-card .emp-modal-footer {
+  padding: 16px 26px 22px;
+}
+
+/* ============================================================ */
 /* RESIGNED HISTORY MODAL                                       */
 /* ============================================================ */
 .emp-resigned-modal-card {
-  max-width: 960px !important;
-  width: 95vw !important;
+  max-width: 1440px !important;
+  width: 96vw !important;
   border-radius: 16px;
   box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
   display: flex;
@@ -1519,8 +1704,9 @@
 .emp-resigned-search-icon {
   position: absolute;
   left: 12px;
-  color: #94a3b8;
+  color: #0088cc;
   pointer-events: none;
+  transition: color 0.15s ease;
 }
 
 .emp-resigned-search-input {
@@ -1564,9 +1750,17 @@
 }
 
 .emp-resigned-modal-body {
-  padding: 0 !important;
-  max-height: 60vh !important;
+  padding: 20px 24px 24px !important;
+  max-height: 65vh !important;
   overflow-y: auto;
+}
+
+.emp-resigned-table-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .emp-resigned-table-responsive {
@@ -1581,7 +1775,7 @@
 }
 
 .emp-resigned-table th {
-  padding: 12px 18px;
+  padding: 12px 14px;
   background: #f8fafc;
   color: #475569;
   font-weight: 600;
@@ -1593,13 +1787,14 @@
 }
 
 .emp-resigned-table td {
-  padding: 14px 18px;
+  padding: 12px 14px;
   border-bottom: 1px solid #e2e8f0;
   vertical-align: middle;
 }
 
+.emp-resigned-tr:hover td,
 .emp-resigned-tr:hover {
-  background-color: #f8fafc;
+  background-color: transparent;
 }
 
 .emp-resigned-tr:last-child td {
@@ -1668,6 +1863,47 @@
   border-top: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
+
+.emp-resigned-period-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #1e293b;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.emp-resigned-period-row.resign {
+  margin-top: 2px;
+}
+
+.emp-resigned-period-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  width: 60px;
+}
+
+.emp-resigned-period-date {
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.emp-resigned-tenure-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #002B7F;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 

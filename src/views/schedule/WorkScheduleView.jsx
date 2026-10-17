@@ -565,23 +565,34 @@ export default function WorkScheduleView({ presenter }) {
       {/* 9. Success Modal Feedback */}
       {successModal && (
         <div className="ws-modal-backdrop" onClick={closeSuccessModal}>
-          <div className="ws-modal-card text-center p-4" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
-            <div className="d-flex justify-content-center mb-3">
-              <CheckCircle size={56} weight="fill" color="#10B981" />
-            </div>
-            <h4 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-              {successModal.title}
-            </h4>
-            <p style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '20px' }}>
-              {successModal.subtext}
-            </p>
+          <div
+            className="ws-modal-card text-center"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '440px', position: 'relative', padding: '40px 32px 32px' }}
+          >
             <button
               type="button"
-              className="ws-btn-save w-100"
+              className="ws-modal-close"
               onClick={closeSuccessModal}
+              aria-label="Close modal"
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                color: '#94a3b8'
+              }}
             >
-              Done
+              <X size={20} />
             </button>
+            <div className="d-flex justify-content-center" style={{ marginBottom: '16px' }}>
+              <CheckCircle size={64} weight="fill" color="#10B981" />
+            </div>
+            <h4 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', marginBottom: '8px', lineHeight: 1.3 }}>
+              {successModal.title}
+            </h4>
+            <p style={{ fontSize: '15px', color: '#64748b', margin: 0, lineHeight: 1.55 }}>
+              {successModal.subtext}
+            </p>
           </div>
         </div>
       )}

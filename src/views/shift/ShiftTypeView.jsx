@@ -348,12 +348,13 @@ function SuccessDialog({ title, subtext, onClose }) {
       ref={ref}
       className="shift-dialog shift-success-dialog border-0 shadow-lg p-0"
       aria-labelledby="shift-success-title"
+      style={{ width: '440px', maxWidth: '90vw', borderRadius: '16px' }}
       onCancel={onClose}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
     >
-      <div className="position-relative p-4 p-md-5 text-center bg-white" style={{ borderRadius: '16px' }}>
+      <div className="position-relative text-center bg-white" style={{ padding: '40px 32px 32px', borderRadius: '16px' }}>
         <button
           type="button"
           className="btn btn-link p-1 text-muted text-decoration-none position-absolute top-0 end-0 m-3 d-flex align-items-center justify-content-center border-0 shadow-none"
@@ -364,15 +365,15 @@ function SuccessDialog({ title, subtext, onClose }) {
         </button>
 
         {/* Solid filled check circle */}
-        <div className="d-flex justify-content-center mb-3">
+        <div className="d-flex justify-content-center" style={{ marginBottom: '16px' }}>
           <CheckCircle size={64} weight="fill" style={{ color: '#10B981' }} />
         </div>
 
-        <h3 id="shift-success-title" className="fw-bold text-dark mb-2" style={{ fontSize: '1.25rem' }}>
+        <h3 id="shift-success-title" className="fw-bold text-dark mb-2" style={{ fontSize: '20px', lineHeight: 1.3 }}>
           {title || 'Operation Successful!'}
         </h3>
 
-        <p className="text-muted mx-auto mb-0" style={{ fontSize: '0.875rem', lineHeight: '1.55', maxWidth: '360px' }}>
+        <p className="text-muted mx-auto mb-0" style={{ fontSize: '15px', lineHeight: 1.55, maxWidth: '360px' }}>
           {subtext || 'The shift type settings have been successfully saved.'}
         </p>
       </div>

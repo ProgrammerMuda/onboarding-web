@@ -30,13 +30,13 @@ function DepartmentSuccessModal({ title, subtext, onClose }) {
     <dialog
       ref={ref}
       className="dept-dialog text-center border-0 p-0"
-      style={{ width: '420px', borderRadius: '16px' }}
+      style={{ width: '440px', maxWidth: '90vw', borderRadius: '16px' }}
       onCancel={onClose}
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
     >
-      <div className="position-relative p-4 p-md-5 bg-white" style={{ borderRadius: '16px' }}>
+      <div className="position-relative text-center bg-white" style={{ padding: '40px 32px 32px', borderRadius: '16px' }}>
         <button
           type="button"
           className="dept-dialog-close-btn position-absolute top-0 end-0 m-3"
@@ -46,15 +46,15 @@ function DepartmentSuccessModal({ title, subtext, onClose }) {
           <X size={20} weight="bold" />
         </button>
 
-        <div className="d-flex justify-content-center mb-3">
+        <div className="d-flex justify-content-center" style={{ marginBottom: '16px' }}>
           <CheckCircle size={64} weight="fill" style={{ color: '#10B981' }} />
         </div>
 
-        <h3 className="fw-bold text-dark mb-2" style={{ fontSize: '1.2rem' }}>
+        <h3 className="fw-bold text-dark mb-2" style={{ fontSize: '20px', lineHeight: 1.3 }}>
           {title || 'Operation Successful!'}
         </h3>
 
-        <p className="text-muted mx-auto mb-0" style={{ fontSize: '0.86rem', lineHeight: '1.5' }}>
+        <p className="text-muted mx-auto mb-0" style={{ fontSize: '15px', lineHeight: 1.55 }}>
           {subtext || 'The department data has been updated.'}
         </p>
       </div>

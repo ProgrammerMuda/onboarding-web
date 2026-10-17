@@ -85,168 +85,199 @@
   }
 }
 
-/* 3. Left Column: Profile Summary Card */
-.emp-detail-profile-card {
+/* 3. Left Column: Executive Profile Card (Matching Reference Mockup in PROAPPS Corporate Colors) */
+.emp-exec-card {
+  width: 100%;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03);
+  border-radius: 16px;
+  padding: 24px 20px 22px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
-/* Decorative Hero Banner */
-.emp-detail-cover {
-  height: 140px;
+/* Header: Name & Role above photo */
+.emp-exec-header {
+  margin-bottom: 14px;
+}
+
+.emp-exec-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.emp-exec-role {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* Photo Container */
+.emp-exec-photo-box {
+  width: 100%;
+  height: 250px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f1f5f9;
   position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, #052c6e 0%, #004eb6 50%, #09b2ff 100%);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.emp-detail-cover-svg {
+.emp-exec-photo-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center 20%;
   display: block;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
-.emp-detail-cover-badge {
+.emp-exec-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(145deg, #e0f2fe 0%, #f1f5f9 100%);
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Status Pill on Photo */
+.emp-exec-status-badge {
   position: absolute;
-  top: 14px;
-  right: 16px;
-  z-index: 3;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 9999px;
-  background: #10b981;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #ffffff;
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  text-transform: none;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e2e8f0;
 }
 
-.emp-detail-cover-badge--active {
-  background: #10b981;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+.emp-exec-status-badge--active {
+  color: #15803d;
 }
 
-.emp-detail-cover-badge-dot {
+.emp-exec-status-badge--resigned {
+  color: #b91c1c;
+}
+
+.emp-exec-status-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.85);
+  background-color: #16a34a;
 }
 
-.emp-detail-cover-badge--resigned {
-  background: #ef4444;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+.emp-exec-status-badge--resigned .emp-exec-status-dot {
+  background-color: #dc2626;
 }
 
-.emp-detail-cover-badge-dot--resigned {
-  background: #ffffff;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.85);
+/* Dashed Ticket/Card Divider */
+.emp-exec-divider {
+  border-top: 1.5px dashed #cbd5e1;
+  margin: 20px 0 16px;
 }
 
-/* Avatar Wrap with overlap */
-.emp-detail-avatar-container {
-  position: relative;
-  padding: 0 24px;
-  margin-top: -56px;
+/* Professional Details Section */
+.emp-exec-details-section {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
+  flex-direction: column;
 }
 
-.emp-detail-avatar-box {
-  position: relative;
-  display: inline-block;
-}
-
-.emp-detail-avatar-img {
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
-  border: 4px solid #ffffff;
-  object-fit: cover;
-  background-color: #f1f5f9;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-  display: block;
-}
-
-.emp-detail-avatar-placeholder {
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
-  border: 4px solid #ffffff;
-  background-color: #f1f5f9;
-  color: #64748b;
+.emp-exec-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 16px;
+  letter-spacing: -0.01em;
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  gap: 12px;
 }
 
-/* Header Global Edit Button */
-.emp-detail-header-edit-btn {
+.emp-exec-section-icon {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background-color: #002B7F;
-  border: 1px solid #002B7F;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 18px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  transform: none !important;
-  white-space: nowrap;
-}
-
-.emp-detail-header-edit-btn:hover {
-  background-color: #002266;
-  border-color: #002266;
-  color: #ffffff;
-}
-
-/* Profile Summary Card Edit Button */
-.emp-detail-profile-edit-btn {
-  width: 100%;
-  height: 40px;
-  margin-top: 20px;
-  border: 1px solid #cbd5e1;
-  background-color: #ffffff;
-  color: #0f172a;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  transform: none !important;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
 }
 
-.emp-detail-profile-edit-btn:hover {
-  background-color: #f8fafc;
-  border-color: #002B7F;
-  color: #002B7F;
+/* 1-Line Key-Value Rows for Basic Data */
+.emp-exec-rows-list {
+  display: flex;
+  flex-direction: column;
 }
 
-/* Profile Identity */
-.emp-detail-profile-body {
-  padding: 16px 24px 24px;
+.emp-exec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
 }
+
+.emp-exec-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.emp-exec-row:first-child {
+  padding-top: 0;
+}
+
+.emp-exec-row-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #64748b;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.emp-exec-row-val {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  text-align: right;
+  flex: 1;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.emp-exec-row-val--email {
+  word-break: break-all;
+  color: #1e3a8a;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.emp-exec-row-val--email:hover {
+  color: #0284c7;
+  text-decoration: underline;
+}
+
+
 
 .emp-detail-name-row {
   display: flex;
@@ -493,7 +524,7 @@
 .emp-detail-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 18px;
+  border-radius: 16px;
   padding: 24px;
   margin-bottom: 20px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
@@ -727,6 +758,9 @@
 }
 
 .emp-detail-address-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 12px;
   font-weight: 700;
   color: #475569;
@@ -734,6 +768,11 @@
   letter-spacing: 0.04em;
   padding-bottom: 6px;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.emp-detail-address-label svg {
+  color: #64748b;
+  flex-shrink: 0;
 }
 
 .emp-detail-address-text {

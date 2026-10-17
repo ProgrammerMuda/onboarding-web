@@ -28,11 +28,19 @@ import {
   UserPlus,
   FileArrowUp,
   FileArrowDown,
-  UploadSimple
+  UploadSimple,
+  FileText
 } from '@phosphor-icons/react';
 import './employee.css';
+import './add-employee.css';
 import AddEmployeeView from './AddEmployeeView';
 import EmployeeDetailView from './EmployeeDetailView';
+import {
+  exportResignedEmployeesToExcel,
+  exportAllEmployeesToExcel,
+  downloadEmployeeImportTemplate,
+  parseEmployeeImportFile
+} from '../../utils/excelExport';
 
 export default function EmployeeView({ presenter }) {
   const {
@@ -124,6 +132,58 @@ export default function EmployeeView({ presenter }) {
   // Resigned History Modal states
   const [resignedModalOpen, setResignedModalOpen] = useState(false);
   const [resignedSearchQuery, setResignedSearchQuery] = useState('');
+  const [resignedCurrentPage, setResignedCurrentPage] = useState(1);
+  const resignedPageSize = 5;
+
+  // Accurate Resign Date resolver (ignores future contract dates)
+  const resolveResignDate = (emp) => {
+    if (emp.resignDate) return emp.resignDate;
+    if (emp.endDate) {
+      const end = new Date(emp.endDate);
+      const now = new Date();
+      if (!isNaN(end.getTime()) && end <= now) {
+        return emp.endDate;
+      }
+    }
+    return null;
+  };
+
+  // Calculate tenure in years and months (English)
+  const calculateTenure = (joinDateStr, resignDateStr) => {
+    if (!joinDateStr) return '—';
+    const start = new Date(joinDateStr);
+    const end = resignDateStr ? new Date(resignDateStr) : new Date();
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return '—';
+
+    let years = end.getFullYear() - start.getFullYear();
+    let months = end.getMonth() - start.getMonth();
+    let days = end.getDate() - start.getDate();
+
+    if (days < 0) {
+      months -= 1;
+    }
+    if (months < 0) {
+      years -= 1;
+      months += 12;
+    }
+
+    if (years > 0 && months > 0) return `${years} ${years === 1 ? 'yr' : 'yrs'} ${months} ${months === 1 ? 'mo' : 'mos'}`;
+    if (years > 0) return `${years} ${years === 1 ? 'year' : 'years'}`;
+    if (months > 0) return `${months} ${months === 1 ? 'month' : 'months'}`;
+    return '< 1 month';
+  };
+
+  // Format short readable date in English format (e.g. 31 Jul 2024)
+  const formatShortDate = (dateStr) => {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
 
   // Resigned employees list & search filter
   const resignedEmployees = React.useMemo(() => {
@@ -135,7 +195,7 @@ export default function EmployeeView({ presenter }) {
     if (!q) return resignedEmployees;
     return resignedEmployees.filter((e) => {
       const name = (e.name || '').toLowerCase();
-      const nik = (e.nik || '').toLowerCase();
+      const nik = (e.nik || e.nip || '').toLowerCase();
       const email = (e.email || '').toLowerCase();
       const pos = (e.position || '').toLowerCase();
       const dept = (getDeptName(e.departmentId) || '').toLowerCase();
@@ -144,31 +204,37 @@ export default function EmployeeView({ presenter }) {
     });
   }, [resignedEmployees, resignedSearchQuery, getDeptName, getDivName]);
 
-  const handleExportResignedCsv = () => {
-    if (resignedEmployees.length === 0) return;
-    const headers = ['NIP', 'Name', 'Email', 'Phone', 'Department', 'Division', 'Position', 'Join Date', 'Resign Date', 'Status'];
-    const rows = resignedEmployees.map((emp) => [
-      `"${emp.nik || ''}"`,
-      `"${emp.name || ''}"`,
-      `"${emp.email || ''}"`,
-      `"${emp.phone || ''}"`,
-      `"${getDeptName(emp.departmentId)}"`,
-      `"${getDivName(emp.divisionId, emp.departmentId)}"`,
-      `"${emp.position || ''}"`,
-      `"${emp.joinDate || ''}"`,
-      `"${emp.resignDate || emp.endDate || ''}"`,
-      `"${emp.status || 'Resigned'}"`
-    ]);
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `resigned_employees_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  // Resigned pagination calculations
+  const totalResigned = filteredResignedEmployees.length;
+  const resignedTotalPages = Math.max(1, Math.ceil(totalResigned / resignedPageSize));
+  const resignedStartIndex = (resignedCurrentPage - 1) * resignedPageSize;
+  const resignedEndIndex = Math.min(resignedStartIndex + resignedPageSize, totalResigned);
+  const paginatedResignedEmployees = React.useMemo(() => {
+    return filteredResignedEmployees.slice(resignedStartIndex, resignedEndIndex);
+  }, [filteredResignedEmployees, resignedStartIndex, resignedEndIndex]);
+
+  const resignedPages = React.useMemo(() => {
+    return Array.from({ length: resignedTotalPages }, (_, i) => i + 1);
+  }, [resignedTotalPages]);
+
+  const [isExportingResigned, setIsExportingResigned] = useState(false);
+  const handleExportResignedExcel = async () => {
+    if (resignedEmployees.length === 0 || isExportingResigned) return;
+    try {
+      setIsExportingResigned(true);
+      await exportResignedEmployeesToExcel({
+        employees: resignedEmployees,
+        getDeptName,
+        getDivName,
+        resolveResignDate,
+        calculateTenure,
+        formatShortDate
+      });
+    } catch (err) {
+      console.error('Failed to export resigned employees to Excel:', err);
+    } finally {
+      setIsExportingResigned(false);
+    }
   };
 
   // Pagination state (10 records per page)
@@ -291,129 +357,57 @@ export default function EmployeeView({ presenter }) {
     return positions;
   }, [formData.divisionId, getPositionsForDivision, positions]);
 
-  // CSV Export handler
-  const handleExportCsv = () => {
-    const headers = ['ID', 'NIP', 'Nama', 'Email', 'Telepon', 'Departemen', 'Divisi', 'Jabatan', 'Join Date', 'End Date', 'Status', 'Resign Date'];
-    const rows = filteredEmployees.map((emp) => {
-      const dept = getDeptName(emp.departmentId);
-      const div = getDivName(emp.divisionId, emp.departmentId);
-      return [
-        emp.id,
-        emp.nik,
-        `"${(emp.name || '').replace(/"/g, '""')}"`,
-        emp.email,
-        emp.phone || '',
-        `"${dept}"`,
-        `"${div}"`,
-        `"${emp.position || ''}"`,
-        emp.joinDate || '',
-        emp.endDate || '',
-        emp.status || '',
-        emp.resignDate || ''
-      ].join(',');
-    });
-
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `employees_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Excel Export handler for all employees
+  const [isExportingAll, setIsExportingAll] = useState(false);
+  const handleExportAllExcel = async () => {
+    if (filteredEmployees.length === 0 || isExportingAll) return;
+    try {
+      setIsExportingAll(true);
+      await exportAllEmployeesToExcel({
+        employees: filteredEmployees,
+        getDeptName,
+        getDivName,
+        resolveResignDate,
+        calculateTenure,
+        formatShortDate
+      });
+    } catch (err) {
+      console.error('Failed to export employees to Excel:', err);
+    } finally {
+      setIsExportingAll(false);
+    }
   };
 
-  // CSV Download Template handler
-  const handleDownloadTemplate = () => {
-    const csvContent =
-      'NIP,Full Name,Work Email,Phone,Department Code,Division Code,Position,Join Date (YYYY-MM-DD),End Date (YYYY-MM-DD),Status\n' +
-      '3171015508920020,Suryadi Pratama,suryadi@indoland.co.id,0812-3456-7899,ENG,ENG,Staff,2025-01-01,2026-01-01,Active\n' +
-      '3171015508920021,Ani Wijaya,ani.w@indoland.co.id,0813-8877-9911,BS,SEC,Danru,2025-02-01,2026-02-01,Active\n' +
-      '3171015508920022,Bambang Kusuma,bambang.k@indoland.co.id,0815-1122-3344,BM,GEN,Building Manager,2025-03-01,2026-03-01,Active\n';
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'Employee_Import_Template.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+  // Excel Template Download handler (matches 4-step web manual Add Employee form)
+  const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
+  const handleDownloadTemplate = async () => {
+    try {
+      setIsDownloadingTemplate(true);
+      await downloadEmployeeImportTemplate({
+        departments,
+        divisions,
+        positions
+      });
+    } catch (err) {
+      console.error('Failed to download employee import template:', err);
+    } finally {
+      setIsDownloadingTemplate(false);
+    }
   };
 
-  // CSV File reading and parsing for bulk import
-  const handleFileSelected = (file) => {
+  // Universal File reading and parsing for bulk import (.xlsx, .xls, .csv)
+  const handleFileSelected = async (file) => {
     if (!file) return;
     setImportFile(file);
     setImportError('');
     setImportPreview([]);
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const text = e.target.result;
-        const lines = text.split(/\r\n|\n/).filter((l) => l.trim().length > 0);
-        if (lines.length <= 1) {
-          setImportError('File is empty or only contains headers.');
-          return;
-        }
-
-        const rows = lines.slice(1);
-        const parsedRecords = [];
-
-        rows.forEach((line, idx) => {
-          const cols = line.split(',').map((c) => c.trim().replace(/^"|"$/g, ''));
-          if (cols.length >= 2 && cols[0]) {
-            const nip = cols[0];
-            const name = cols[1] || `Employee ${idx + 1}`;
-            const email = cols[2] || `${nip.toLowerCase()}@indoland.co.id`;
-            const phone = cols[3] || '—';
-            const deptCode = (cols[4] || 'BM').toUpperCase();
-            const divCode = (cols[5] || 'GEN').toUpperCase();
-            const pos = cols[6] || 'Staff';
-            const join = cols[7] || new Date().toISOString().slice(0, 10);
-            const end = cols[8] || '';
-            const status = cols[9] || 'Active';
-
-            let deptId = 'dept-bm';
-            if (deptCode.includes('ENG')) deptId = 'dept-eng';
-            else if (deptCode.includes('BS') || deptCode.includes('SEC') || deptCode.includes('HK')) deptId = 'dept-bs';
-            else if (deptCode.includes('TR')) deptId = 'dept-tr';
-            else if (deptCode.includes('FIN')) deptId = 'dept-fin';
-
-            let divId = 'div-bm';
-            if (divCode.includes('ENG')) divId = 'div-eng';
-            else if (divCode.includes('SEC')) divId = 'div-sec';
-            else if (divCode.includes('HK')) divId = 'div-hk';
-            else if (divCode.includes('TR')) divId = 'div-tr';
-            else if (divCode.includes('FIN')) divId = 'div-fin';
-
-            parsedRecords.push({
-              nik: nip,
-              name,
-              email,
-              phone,
-              departmentId: deptId,
-              divisionId: divId,
-              position: pos,
-              joinDate: join,
-              endDate: end,
-              status
-            });
-          }
-        });
-
-        if (parsedRecords.length === 0) {
-          setImportError('No valid employee records found in the selected CSV file.');
-        } else {
-          setImportPreview(parsedRecords);
-        }
-      } catch (err) {
-        setImportError('Failed to read file: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
+    try {
+      const parsedRecords = await parseEmployeeImportFile(file, departments, divisions);
+      setImportPreview(parsedRecords);
+    } catch (err) {
+      setImportError(err.message || 'Failed to read employee import file.');
+    }
   };
 
   const handleConfirmImport = () => {
@@ -502,6 +496,7 @@ export default function EmployeeView({ presenter }) {
           className="emp-stat-card"
           onClick={() => {
             setResignedSearchQuery('');
+            setResignedCurrentPage(1);
             setResignedModalOpen(true);
           }}
           style={{ cursor: 'pointer' }}
@@ -531,17 +526,19 @@ export default function EmployeeView({ presenter }) {
             <button
               type="button"
               className="emp-btn-secondary"
-              onClick={handleExportCsv}
-              title="Export data to CSV format"
+              onClick={handleExportAllExcel}
+              disabled={isExportingAll || filteredEmployees.length === 0}
+              title="Export all employees to Excel (.xlsx)"
             >
               <FileXls size={16} weight="bold" />
-              <span>Export</span>
+              <span>{isExportingAll ? 'Exporting...' : 'Export All Employee'}</span>
             </button>
             <button
               type="button"
               className="emp-btn-secondary"
               onClick={() => {
                 setResignedSearchQuery('');
+                setResignedCurrentPage(1);
                 setResignedModalOpen(true);
               }}
               title="View resigned employee history"
@@ -1430,23 +1427,34 @@ export default function EmployeeView({ presenter }) {
       {/* 9. Success Feedback Modal */}
       {successModal && (
         <div className="emp-modal-backdrop" onClick={closeSuccessModal}>
-          <div className="emp-modal-card text-center p-4" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
-            <div className="d-flex justify-content-center mb-3">
-              <CheckCircle size={56} weight="fill" color="#10B981" />
-            </div>
-            <h4 style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
-              {successModal.title}
-            </h4>
-            <p style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '20px' }}>
-              {successModal.subtext}
-            </p>
+          <div
+            className="emp-modal-card text-center"
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '440px', position: 'relative', padding: '40px 32px 32px' }}
+          >
             <button
               type="button"
-              className="emp-btn-save w-100"
+              className="emp-modal-close"
               onClick={closeSuccessModal}
+              aria-label="Close modal"
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                color: '#94a3b8'
+              }}
             >
-              Done
+              <X size={20} />
             </button>
+            <div className="d-flex justify-content-center" style={{ marginBottom: '16px' }}>
+              <CheckCircle size={64} weight="fill" color="#10B981" />
+            </div>
+            <h4 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', marginBottom: '8px', lineHeight: 1.3 }}>
+              {successModal.title}
+            </h4>
+            <p style={{ fontSize: '15px', color: '#64748b', margin: 0, lineHeight: 1.55 }}>
+              {successModal.subtext}
+            </p>
           </div>
         </div>
       )}
@@ -1455,21 +1463,27 @@ export default function EmployeeView({ presenter }) {
       {importModalOpen && (
         <div className="emp-modal-backdrop" onClick={() => setImportModalOpen(false)}>
           <div
-            className="emp-modal-card"
+            className="emp-modal-card emp-import-modal-card"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '640px' }}
+            style={{ maxWidth: '860px' }}
           >
-            <div className="emp-modal-header">
-              <div>
-                <h3 className="emp-modal-title">Import Employees</h3>
-                <p className="emp-modal-subtitle">
-                  Upload a CSV or Excel file to batch add employee records to the directory.
-                </p>
+            <div className="emp-modal-header emp-import-modal-header">
+              <div className="emp-import-modal-header-left">
+                <div className="emp-import-modal-icon-badge" aria-hidden="true">
+                  <FileArrowUp size={22} weight="bold" />
+                </div>
+                <div className="emp-import-modal-title-group">
+                  <h3 className="emp-modal-title emp-import-modal-title">Import Employees</h3>
+                  <p className="emp-modal-subtitle emp-import-modal-subtitle">
+                    Upload a CSV or Excel file to batch add employee records to the directory.
+                  </p>
+                </div>
               </div>
               <button
                 type="button"
                 className="emp-modal-close"
                 onClick={() => setImportModalOpen(false)}
+                aria-label="Close modal"
               >
                 <X size={18} />
               </button>
@@ -1477,43 +1491,49 @@ export default function EmployeeView({ presenter }) {
 
             <div className="emp-modal-body">
               {/* Template Download Prompt Banner */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  backgroundColor: '#f0fdf4',
-                  border: '1px solid #bbf7d0',
-                  borderRadius: '10px',
-                  marginBottom: '18px'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <FileArrowDown size={22} color="#16a34a" />
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#166534' }}>
-                      Need the standard format?
+              <div className="emp-import-template-banner">
+                <div className="emp-import-template-left">
+                  <div className="emp-import-template-icon-wrap">
+                    <FileArrowDown size={22} weight="bold" />
+                  </div>
+                  <div className="emp-import-template-info">
+                    <div className="emp-import-template-title-row">
+                      <span className="emp-import-template-title">Official Import Template</span>
+                      <span className="emp-import-template-pill">.xlsx format</span>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#15803d' }}>
-                      Download our template with pre-formatted column headers.
+                    <div className="emp-import-template-desc">
+                      Excel template (.xlsx) with all 4 wizard steps (Personal, Employment, Payroll, Emergency Contact).
                     </div>
                   </div>
                 </div>
                 <button
                   type="button"
-                  className="emp-btn-secondary"
+                  className="emp-import-template-btn"
                   onClick={handleDownloadTemplate}
-                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                  disabled={isDownloadingTemplate}
                 >
-                  <FileArrowDown size={14} weight="bold" />
-                  <span>Download Template</span>
+                  <FileArrowDown size={16} weight="bold" />
+                  <span>{isDownloadingTemplate ? 'Downloading...' : 'Download Template (.xlsx)'}</span>
                 </button>
               </div>
 
-              {/* Upload Dropzone */}
+              {/* Hidden File Input */}
+              <input
+                id="emp-import-file-input"
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="d-none"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    handleFileSelected(e.target.files[0]);
+                  }
+                }}
+              />
+
+              {/* Single Unified Dropzone */}
               <div
-                className={`emp-upload-dropzone ${isDragging ? 'dragging' : ''}`}
+                className={`add-emp-unified-dropzone ${isDragging ? 'is-dragging' : ''}`}
+                onClick={() => document.getElementById('emp-import-file-input')?.click()}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setIsDragging(true);
@@ -1526,99 +1546,89 @@ export default function EmployeeView({ presenter }) {
                     handleFileSelected(e.dataTransfer.files[0]);
                   }
                 }}
-                onClick={() => document.getElementById('emp-import-file-input')?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') document.getElementById('emp-import-file-input')?.click();
+                }}
               >
-                <input
-                  id="emp-import-file-input"
-                  type="file"
-                  accept=".csv"
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleFileSelected(e.target.files[0]);
-                    }
+                <div className="dropzone-icon-box">
+                  <UploadSimple size={26} weight="bold" />
+                </div>
+                <span className="add-emp-dropzone-headline">
+                  Click or drag &amp; drop files here to upload
+                </span>
+                <span className="add-emp-dropzone-sub">
+                  Upload employee documents (Foto KTP, NPWP, Kartu Keluarga, etc.) &amp; completed Excel template up to 10MB.
+                </span>
+                <button
+                  type="button"
+                  className="btn add-emp-dropzone-browse-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    document.getElementById('emp-import-file-input')?.click();
                   }}
-                />
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '10px' }}>
-                  <div
-                    style={{
-                      width: '50px',
-                      height: '50px',
-                      borderRadius: '50%',
-                      backgroundColor: '#eff6ff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#002B7F'
-                    }}
-                  >
-                    <UploadSimple size={26} weight="bold" />
+                >
+                  <Plus size={14} weight="bold" />
+                  <span>Browse Documents</span>
+                </button>
+              </div>
+
+              {/* Uploaded File Card */}
+              {importFile && (
+                <div className="add-emp-doc-files-wrap" style={{ marginTop: '16px' }}>
+                  <div className="add-emp-doc-files-header">
+                    <span>Attached File (1)</span>
+                    <button
+                      type="button"
+                      className="btn btn-link text-primary p-0 text-decoration-none fw-semibold"
+                      style={{ fontSize: '12px' }}
+                      onClick={() => document.getElementById('emp-import-file-input')?.click()}
+                    >
+                      Change file
+                    </button>
+                  </div>
+
+                  <div className="add-emp-doc-file-card">
+                    <div className="add-emp-doc-file-left">
+                      <div className="add-emp-doc-file-icon" style={{ backgroundColor: '#eaf8ff', color: '#002B7F', borderColor: '#bfdbfe' }}>
+                        <FileXls size={20} weight="duotone" />
+                      </div>
+                      <div className="add-emp-doc-file-info">
+                        <span className="add-emp-doc-file-name" title={importFile.name}>
+                          {importFile.name}
+                        </span>
+                        <span className="add-emp-doc-file-meta">
+                          {(importFile.size / 1024).toFixed(1)} KB &bull; {importPreview.length > 0 ? `${importPreview.length} records ready` : 'Processing records...'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="add-emp-doc-file-actions">
+                      <button
+                        type="button"
+                        className="add-emp-btn-doc-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setImportFile(null);
+                          setImportPreview([]);
+                          setImportError('');
+                          const input = document.getElementById('emp-import-file-input');
+                          if (input) input.value = '';
+                        }}
+                        title="Remove file"
+                      >
+                        <Trash size={14} weight="bold" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-                <p style={{ margin: 0, fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>
-                  {importFile ? importFile.name : 'Click to upload or drag & drop CSV file'}
-                </p>
-                <span style={{ fontSize: '12px', color: '#64748b', marginTop: '4px', display: 'block' }}>
-                  Supported formats: CSV (UTF-8 formatted). Max 500 rows per batch.
-                </span>
-              </div>
+              )}
 
               {/* Error Alert */}
               {importError && (
                 <div className="emp-form-error" style={{ marginTop: '14px' }}>
                   {importError}
-                </div>
-              )}
-
-              {/* Parsed Preview Table */}
-              {importPreview.length > 0 && (
-                <div>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginTop: '16px',
-                      marginBottom: '8px'
-                    }}
-                  >
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a' }}>
-                      Ready to Import ({importPreview.length} records detected)
-                    </span>
-                    <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: 600 }}>
-                      &bull; Verification passed
-                    </span>
-                  </div>
-
-                  <div className="emp-import-preview-box">
-                    <table className="emp-import-preview-table">
-                      <thead>
-                        <tr>
-                          <th>NIP</th>
-                          <th>Full Name</th>
-                          <th>Department</th>
-                          <th>Division</th>
-                          <th>Position</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {importPreview.slice(0, 5).map((row, idx) => (
-                          <tr key={idx}>
-                            <td style={{ fontWeight: 600 }}>{row.nik}</td>
-                            <td>{row.name}</td>
-                            <td>{getDeptName(row.departmentId)}</td>
-                            <td>{getDivName(row.divisionId, row.departmentId)}</td>
-                            <td>{row.position}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {importPreview.length > 5 && (
-                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', textAlign: 'right' }}>
-                      ...and {importPreview.length - 5} more records
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -1641,12 +1651,8 @@ export default function EmployeeView({ presenter }) {
                 className="emp-btn-save"
                 disabled={importPreview.length === 0}
                 onClick={handleConfirmImport}
-                style={{
-                  opacity: importPreview.length === 0 ? 0.6 : 1,
-                  cursor: importPreview.length === 0 ? 'not-allowed' : 'pointer'
-                }}
               >
-                Import {importPreview.length > 0 ? `(${importPreview.length}) Employees` : ''}
+                Import Employee
               </button>
             </div>
           </div>
@@ -1672,12 +1678,7 @@ export default function EmployeeView({ presenter }) {
                   <ClockCounterClockwise size={22} weight="bold" />
                 </div>
                 <div>
-                  <div className="d-flex align-items-center gap-2">
-                    <h3 className="emp-resigned-modal-title">Resigned History</h3>
-                    <span className="emp-resigned-count-pill">
-                      {resignedEmployees.length} {resignedEmployees.length === 1 ? 'Record' : 'Records'}
-                    </span>
-                  </div>
+                  <h3 className="emp-resigned-modal-title">Resigned History</h3>
                   <p className="emp-resigned-modal-desc">
                     Historical directory of previous personnel who have resigned or left the company.
                   </p>
@@ -1693,7 +1694,7 @@ export default function EmployeeView({ presenter }) {
               </button>
             </div>
 
-            {/* Modal Controls (Search & Counter) */}
+            {/* Modal Controls (Search & Export) */}
             <div className="emp-resigned-controls">
               <div className="emp-resigned-search-wrap">
                 <MagnifyingGlass size={16} weight="bold" className="emp-resigned-search-icon" />
@@ -1702,22 +1703,35 @@ export default function EmployeeView({ presenter }) {
                   className="emp-resigned-search-input"
                   placeholder="Search resigned staff by name, NIP, position, or department..."
                   value={resignedSearchQuery}
-                  onChange={(e) => setResignedSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setResignedSearchQuery(e.target.value);
+                    setResignedCurrentPage(1);
+                  }}
                 />
                 {resignedSearchQuery && (
                   <button
                     type="button"
                     className="emp-resigned-clear-search"
-                    onClick={() => setResignedSearchQuery('')}
+                    onClick={() => {
+                      setResignedSearchQuery('');
+                      setResignedCurrentPage(1);
+                    }}
                     title="Clear search"
                   >
                     <X size={14} weight="bold" />
                   </button>
                 )}
               </div>
-              <div className="emp-resigned-stats-pill">
-                Showing <strong>{filteredResignedEmployees.length}</strong> of {resignedEmployees.length}
-              </div>
+              <button
+                type="button"
+                className="emp-btn-secondary"
+                onClick={handleExportResignedExcel}
+                disabled={resignedEmployees.length === 0 || isExportingResigned}
+                title="Export resigned list to Excel (.xlsx)"
+              >
+                <FileXls size={16} weight="bold" />
+                <span>{isExportingResigned ? 'Exporting...' : 'Export Resigned List'}</span>
+              </button>
             </div>
 
             {/* Modal Body / Table List */}
@@ -1735,122 +1749,164 @@ export default function EmployeeView({ presenter }) {
                   </p>
                 </div>
               ) : (
-                <div className="emp-resigned-table-responsive">
-                  <table className="emp-resigned-table">
-                    <thead>
-                      <tr>
-                        <th>Employee</th>
-                        <th>NIP</th>
-                        <th>Department &amp; Division</th>
-                        <th>Jabatan</th>
-                        <th>Masa Kerja</th>
-                        <th>Status</th>
-                        <th style={{ textAlign: 'center' }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredResignedEmployees.map((emp) => {
-                        const dept = departments.find((d) => d.id === emp.departmentId);
-                        const div = divisions.find((d) => d.id === emp.divisionId);
-                        return (
-                          <tr key={emp.id} className="emp-resigned-tr">
-                            {/* 1. Employee */}
-                            <td>
-                              <div className="emp-user-cell">
-                                <img
-                                  src={emp.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'}
-                                  alt={emp.name}
-                                  className="emp-avatar-small"
-                                />
-                                <div className="emp-user-meta">
-                                  <span className="emp-user-name">{emp.name}</span>
-                                  <span className="emp-user-email">{emp.email}</span>
+                <div className="emp-resigned-table-card">
+                  <div className="emp-resigned-table-responsive">
+                    <table className="emp-resigned-table">
+                      <thead>
+                        <tr>
+                          <th>Employee</th>
+                          <th>NIP</th>
+                          <th>Department &amp; Division</th>
+                          <th>Position</th>
+                          <th>Service Period</th>
+                          <th>Tenure</th>
+                          <th>Status</th>
+                          <th style={{ textAlign: 'center' }}>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paginatedResignedEmployees.map((emp) => {
+                          const dept = departments.find((d) => d.id === emp.departmentId);
+                          const div = divisions.find((d) => d.id === emp.divisionId);
+                          const resDate = resolveResignDate(emp);
+                          const tenure = calculateTenure(emp.joinDate, resDate);
+
+                          return (
+                            <tr key={emp.id} className="emp-resigned-tr">
+                              {/* 1. Employee */}
+                              <td>
+                                <div className="emp-profile-cell">
+                                  <img
+                                    src={(emp.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800').replace(/w=\d+/, 'w=800')}
+                                    alt={emp.name}
+                                    className="emp-avatar-img"
+                                    onError={(e) => {
+                                      e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800';
+                                    }}
+                                  />
+                                  <div>
+                                    <div className="emp-name-text">{emp.name}</div>
+                                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '1px', wordBreak: 'break-word' }}>{emp.email || '—'}</div>
+                                  </div>
                                 </div>
-                              </div>
-                            </td>
+                              </td>
 
-                            {/* 2. NIP */}
-                            <td>
-                              <span className="emp-nip-pill">{emp.nik}</span>
-                            </td>
+                              {/* 2. NIP */}
+                              <td>
+                                <span className="emp-nip-pill">{emp.nik || emp.nip || '—'}</span>
+                              </td>
 
-                            {/* 3. Dept & Div */}
-                            <td>
-                              <div className="emp-org-dept-text">
-                                {dept ? dept.name : getDeptName(emp.departmentId)}
-                              </div>
-                              <div className="emp-org-div-text">
-                                Division: {div ? div.name : getDivName(emp.divisionId, emp.departmentId)}
-                              </div>
-                            </td>
+                              {/* 3. Department & Division */}
+                              <td>
+                                <div className="emp-org-dept-text">
+                                  {dept ? dept.name : getDeptName(emp.departmentId)}
+                                </div>
+                                <div className="emp-org-div-text">
+                                  {div ? div.name : getDivName(emp.divisionId, emp.departmentId)}
+                                </div>
+                              </td>
 
-                            {/* 4. Jabatan */}
-                            <td>
-                              <span className="emp-pos-badge">{emp.position || 'Staff'}</span>
-                            </td>
+                              {/* 4. Position */}
+                              <td>
+                                <span className="emp-pos-badge">{emp.position || 'Staff'}</span>
+                              </td>
 
-                            {/* 5. Masa Kerja */}
-                            <td>
-                              <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '12.5px' }}>
-                                <span style={{ color: '#002B7F', fontWeight: 700 }}>Join:</span> {emp.joinDate || '—'}
-                              </div>
-                              <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '2px', fontWeight: 600 }}>
-                                <span>Resigned:</span> {emp.resignDate || emp.endDate || '—'}
-                              </div>
-                            </td>
+                              {/* 5. Service Period */}
+                              <td>
+                                <div className="emp-resigned-period-row">
+                                  <span className="emp-resigned-period-label">Join:</span>
+                                  <span className="emp-resigned-period-date">{formatShortDate(emp.joinDate)}</span>
+                                </div>
+                                <div className="emp-resigned-period-row resign">
+                                  <span className="emp-resigned-period-label">Resigned:</span>
+                                  <span className="emp-resigned-period-date text-danger">
+                                    {resDate ? formatShortDate(resDate) : '—'}
+                                  </span>
+                                </div>
+                              </td>
 
-                            {/* 6. Status */}
-                            <td>
-                              <span className="emp-status-badge resigned">
-                                <span className="emp-dot" />
-                                Resigned
-                              </span>
-                            </td>
+                              {/* 6. Tenure */}
+                              <td>
+                                <span className="emp-resigned-tenure-badge">
+                                  {tenure}
+                                </span>
+                              </td>
 
-                            {/* 7. Action */}
-                            <td style={{ textAlign: 'center' }}>
-                              <button
-                                type="button"
-                                className="emp-resigned-action-btn"
-                                onClick={() => {
-                                  setResignedModalOpen(false);
-                                  openEmployeeDetail(emp);
-                                }}
-                                title="View full profile"
-                              >
-                                <Eye size={15} weight="bold" />
-                                <span>Detail</span>
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                              {/* 7. Status */}
+                              <td>
+                                <span className="emp-status-badge resigned">
+                                  <span className="emp-dot" />
+                                  {emp.status || 'Resigned'}
+                                </span>
+                              </td>
+
+                              {/* 8. Action */}
+                              <td style={{ textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  className="emp-resigned-action-btn"
+                                  onClick={() => {
+                                    setResignedModalOpen(false);
+                                    openEmployeeDetail(emp);
+                                  }}
+                                  title="View employee profile"
+                                >
+                                  <Eye size={15} weight="bold" />
+                                  <span>Detail</span>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Table Footer with Showing info on Left and Pagination on Right */}
+                  <div className="emp-table-footer">
+                    <div className="emp-table-footer-info">
+                      Showing <strong className="emp-text-dark">{totalResigned === 0 ? 0 : resignedStartIndex + 1}</strong> to{' '}
+                      <strong className="emp-text-dark">{resignedEndIndex}</strong> of{' '}
+                      <strong className="emp-text-dark">{totalResigned}</strong> employees
+                    </div>
+
+                    <div className="emp-pagination-controls" aria-label="Resigned history pagination">
+                      <button
+                        type="button"
+                        className="emp-page-btn"
+                        disabled={resignedCurrentPage === 1}
+                        onClick={() => setResignedCurrentPage((p) => Math.max(p - 1, 1))}
+                        title="Previous page"
+                        aria-label="Previous page"
+                      >
+                        <CaretLeft size={14} weight="bold" />
+                      </button>
+
+                      {resignedPages.map((pg) => (
+                        <button
+                          key={pg}
+                          type="button"
+                          className={`emp-page-btn ${resignedCurrentPage === pg ? 'active' : ''}`}
+                          onClick={() => setResignedCurrentPage(pg)}
+                        >
+                          {pg}
+                        </button>
+                      ))}
+
+                      <button
+                        type="button"
+                        className="emp-page-btn"
+                        disabled={resignedCurrentPage === resignedTotalPages}
+                        onClick={() => setResignedCurrentPage((p) => Math.min(p + 1, resignedTotalPages))}
+                        title="Next page"
+                        aria-label="Next page"
+                      >
+                        <CaretRight size={14} weight="bold" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
-
-            {/* Modal Footer */}
-            <div className="emp-modal-footer emp-resigned-modal-footer">
-              <button
-                type="button"
-                className="emp-btn-secondary"
-                onClick={handleExportResignedCsv}
-                disabled={resignedEmployees.length === 0}
-                title="Export resigned list to CSV"
-              >
-                <FileXls size={16} weight="bold" />
-                <span>Export Resigned List</span>
-              </button>
-
-              <button
-                type="button"
-                className="emp-btn-cancel"
-                onClick={() => setResignedModalOpen(false)}
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>

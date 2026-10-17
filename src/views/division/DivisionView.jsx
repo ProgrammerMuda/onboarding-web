@@ -29,33 +29,35 @@ function DivisionSuccessModal({ title, subtext, onClose }) {
   return (
     <dialog
       ref={ref}
-      className="dept-dialog text-center"
-      style={{ width: '420px', maxWidth: '90vw' }}
+      className="dept-dialog text-center border-0 p-0"
+      style={{ width: '440px', maxWidth: '90vw', borderRadius: '16px' }}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
       }}
+      onClick={(e) => {
+        if (e.target === ref.current) onClose();
+      }}
     >
-      <div className="p-4 p-md-5 bg-white d-flex flex-column align-items-center">
-        <div
-          className="d-flex align-items-center justify-content-center rounded-circle mb-3"
-          style={{ width: '56px', height: '56px', backgroundColor: '#ECFDF5', color: '#059669' }}
-        >
-          <CheckCircle size={32} weight="bold" />
-        </div>
-        <h3 className="fw-bold text-dark mb-2" style={{ fontSize: '1.25rem' }}>
-          {title}
-        </h3>
-        <p className="text-muted small mb-4" style={{ lineHeight: 1.5 }}>
-          {subtext}
-        </p>
+      <div className="position-relative text-center bg-white" style={{ padding: '40px 32px 32px', borderRadius: '16px' }}>
         <button
           type="button"
-          className="dept-button primary px-4 py-2"
+          className="dept-dialog-close-btn position-absolute top-0 end-0 m-3"
+          aria-label="Close"
           onClick={onClose}
         >
-          Done
+          <X size={20} weight="bold" />
         </button>
+
+        <div className="d-flex justify-content-center" style={{ marginBottom: '16px' }}>
+          <CheckCircle size={64} weight="fill" color="#10B981" />
+        </div>
+        <h3 className="fw-bold text-dark mb-2" style={{ fontSize: '20px', lineHeight: 1.3 }}>
+          {title}
+        </h3>
+        <p className="text-muted mx-auto mb-0" style={{ fontSize: '15px', lineHeight: 1.55 }}>
+          {subtext}
+        </p>
       </div>
     </dialog>
   );

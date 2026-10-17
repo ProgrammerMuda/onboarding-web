@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ArrowLeft,
   CaretRight,
@@ -20,7 +20,10 @@ import {
   User,
   Buildings,
   CheckCircle,
-  FolderSimple
+  FolderSimple,
+  ClockCounterClockwise,
+  Check,
+  Info
 } from '@phosphor-icons/react';
 import './add-employee.css';
 import './employee.css';
@@ -34,6 +37,12 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
   } = presenter;
 
   const [activeTab, setActiveTab] = useState('personal'); // 'personal' | 'employee' | 'payroll' | 'emergency'
+  const [toastMsg, setToastMsg] = useState('');
+
+  const showToast = (msg) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(''), 2500);
+  };
 
   // Fallback defaults if viewing an employee with partial data
   const emp = useMemo(() => {
@@ -46,6 +55,25 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
       shiftSchedule: employee.shiftSchedule || 'Normal (08:00 - 17:00)'
     };
   }, [employee]);
+
+  // Resolve avatar source from all potential photo properties with auto HD upgrade for crisp rendering
+  const avatarSrc = useMemo(() => {
+    let src = emp.avatar || emp.photo || emp.photoUrl || emp.avatarUrl || emp.image || '';
+    if (src && typeof src === 'string' && src.includes('images.unsplash.com')) {
+      // Upgrade low-res thumbnail (e.g. w=150) to high-res HD (w=800) to prevent blur/pixelation
+      src = src.replace(/w=\d+/, 'w=800');
+      if (!src.includes('q=')) src += '&q=85';
+    }
+    return src;
+  }, [emp.avatar, emp.photo, emp.photoUrl, emp.avatarUrl, emp.image]);
+
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarSrc]);
+
+  const hasPhoto = Boolean(avatarSrc && !imageError);
 
   // Resolve Department and Division names
   const deptName = useMemo(() => {
@@ -98,6 +126,58 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
     }
     return emp.position;
   }, [emp.position]);
+
+  const displayNip = useMemo(() => {
+    return emp.nip || emp.nik || emp.id || '—';
+  }, [emp.nip, emp.nik, emp.id]);
+
+  const { firstName, lastName } = useMemo(() => {
+    if (!emp.name) return { firstName: 'Employee', lastName: '—' };
+    const parts = emp.name.trim().split(/\s+/);
+    if (parts.length === 1) return { firstName: parts[0], lastName: '—' };
+    return {
+      firstName: parts[0],
+      lastName: parts.slice(1).join(' ')
+    };
+  }, [emp.name]);
+
+  const handleCopy = (text, label) => {
+    if (!text || text === '—') return;
+    try {
+      navigator.clipboard.writeText(text);
+      showToast(label || 'Copied to clipboard!');
+    } catch {
+      showToast('Copied to clipboard!');
+    }
+  };
+
+  const formattedJoinDate = useMemo(() => {
+    if (!emp.joinDate) return '14 February 2024';
+    try {
+      const d = new Date(emp.joinDate);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      }
+    } catch {}
+    return emp.joinDate;
+  }, [emp.joinDate]);
+
+  const displayWorkModel = useMemo(() => {
+    if (!emp.workLocation) return 'Hybrid';
+    const wl = emp.workLocation.toLowerCase();
+    if (wl.includes('head office') || wl.includes('onsite') || wl.includes('on-site')) return 'Onsite';
+    if (wl.includes('remote')) return 'Remote';
+    return 'Hybrid';
+  }, [emp.workLocation]);
+
+  const displayEmploymentType = useMemo(() => {
+    if (!emp.employmentType) return 'Full-Time';
+    const et = emp.employmentType.toLowerCase();
+    if (et.includes('pkwt') || et.includes('kontrak') || et.includes('contract')) return 'Contract';
+    if (et.includes('intern')) return 'Internship';
+    if (et.includes('part')) return 'Part-Time';
+    return 'Full-Time';
+  }, [emp.employmentType]);
 
   const handleEdit = () => {
     if (typeof openEditModal === 'function') {
@@ -154,181 +234,83 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
       {/* 2. Main 2-Column Grid Layout */}
       <div className="emp-detail-layout">
         {/* ============================================================ */}
-        {/* LEFT COLUMN: Profile Summary Card                            */}
+        {/* LEFT COLUMN: Executive Profile Card (Matching Uploaded Mockup) */}
         {/* ============================================================ */}
-        <div className="emp-detail-profile-card">
-          {/* Decorative Modern Architecture Curve Banner */}
-          <div className="emp-detail-cover">
-            <svg
-              className="emp-detail-cover-svg"
-              viewBox="0 0 400 160"
-              preserveAspectRatio="none"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <linearGradient id="coverBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#052c6e" />
-                  <stop offset="45%" stopColor="#004eb6" />
-                  <stop offset="85%" stopColor="#007ecc" />
-                  <stop offset="100%" stopColor="#09b2ff" />
-                </linearGradient>
-                <linearGradient id="waveGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.25" />
-                  <stop offset="60%" stopColor="#38bdf8" stopOpacity="0.35" />
-                  <stop offset="100%" stopColor="#09b2ff" stopOpacity="0.1" />
-                </linearGradient>
-                <linearGradient id="waveGrad2" x1="100%" y1="100%" x2="0%" y2="0%">
-                  <stop offset="0%" stopColor="#ffffff" stopOpacity="0.28" />
-                  <stop offset="50%" stopColor="#7dd3fc" stopOpacity="0.18" />
-                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0" />
-                </linearGradient>
-                <radialGradient id="glowCircle" cx="85%" cy="20%" r="55%">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
-                </radialGradient>
-              </defs>
+        <div className="emp-exec-card">
+          {/* 1. Top Header: Name & Title (Above Photo) */}
+          <div className="emp-exec-header">
+            <h2 className="emp-exec-name">{emp.name}</h2>
+            <div className="emp-exec-role">
+              {displayPosition}
+            </div>
+          </div>
 
-              {/* Base Gradient Canvas */}
-              <rect width="400" height="160" fill="url(#coverBgGrad)" />
-
-              {/* Ambient Glow */}
-              <circle cx="340" cy="30" r="120" fill="url(#glowCircle)" />
-
-              {/* Subtle Tech / Architectural Grid Accent */}
-              <g opacity="0.12" stroke="#ffffff" strokeWidth="0.75" strokeDasharray="3 3">
-                <line x1="0" y1="40" x2="400" y2="40" />
-                <line x1="0" y1="80" x2="400" y2="80" />
-                <line x1="0" y1="120" x2="400" y2="120" />
-                <line x1="100" y1="0" x2="100" y2="160" />
-                <line x1="200" y1="0" x2="200" y2="160" />
-                <line x1="300" y1="0" x2="300" y2="160" />
-              </g>
-
-              {/* Dynamic Curved Flow Lines & Waves */}
-              <path
-                d="M-20 60 C 110 15, 230 130, 420 45 L 420 160 L -20 160 Z"
-                fill="url(#waveGrad1)"
+          {/* 2. Photo Box with Status Badge */}
+          <div className="emp-exec-photo-box">
+            {hasPhoto ? (
+              <img
+                src={avatarSrc}
+                alt={emp.name}
+                className="emp-exec-photo-img"
+                onError={() => setImageError(true)}
               />
-              <path
-                d="M-20 95 C 100 40, 240 150, 420 90 L 420 160 L -20 160 Z"
-                fill="url(#waveGrad2)"
-              />
-              <path
-                d="M-20 120 C 130 85, 260 160, 420 125 L 420 160 L -20 160 Z"
-                fill="#ffffff"
-                fillOpacity="0.22"
-              />
-            </svg>
-
-            {/* Top-Right Decorative Status Pill */}
-            <div
-              className={`emp-detail-cover-badge ${
-                emp.status === 'Resigned'
-                  ? 'emp-detail-cover-badge--resigned'
-                  : 'emp-detail-cover-badge--active'
+            ) : (
+              <div className="emp-exec-photo-placeholder">
+                <User size={80} weight="duotone" />
+              </div>
+            )}
+            <span
+              className={`emp-exec-status-badge ${
+                emp.status === 'Resigned' ? 'emp-exec-status-badge--resigned' : 'emp-exec-status-badge--active'
               }`}
             >
-              <span
-                className={`emp-detail-cover-badge-dot ${
-                  emp.status === 'Resigned' ? 'emp-detail-cover-badge-dot--resigned' : ''
-                }`}
-              />
-              <span>{emp.status === 'Resigned' ? 'Resigned' : 'Active Employee'}</span>
-            </div>
+              <span className="emp-exec-status-dot" />
+              <span>{emp.status === 'Resigned' ? 'Resigned' : 'Active'}</span>
+            </span>
           </div>
 
-          {/* Avatar with overlap & floating edit button */}
-          <div className="emp-detail-avatar-container">
-            <div className="emp-detail-avatar-box">
-              {emp.avatar ? (
-                <img
-                  src={emp.avatar}
-                  alt={emp.name}
-                  className="emp-detail-avatar-img"
-                  onError={(e) => {
-                    e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
-                  }}
-                />
-              ) : (
-                <div className="emp-detail-avatar-placeholder">
-                  <User size={48} weight="duotone" />
-                </div>
-              )}
-            </div>
-          </div>
+          {/* 3. Dashed Ticket/Card Divider */}
+          <div className="emp-exec-divider" />
 
-          {/* Profile Identity Details */}
-          <div className="emp-detail-profile-body">
-            <div className="emp-detail-name-row">
-              <h2 className="emp-detail-name">{emp.name}</h2>
-            </div>
-
-            <div className="emp-detail-role-wrap">
-              <span className="emp-detail-role-pill secondary">
-                <Briefcase size={14} weight="bold" />
-                <span>{displayPosition}</span>
+          {/* 5. Basic Data (1-Line Horizontal Key-Value Rows) */}
+          <div className="emp-exec-details-section">
+            <h3 className="emp-exec-section-title">
+              <span className="emp-exec-section-icon emp-badge-secondary" aria-hidden="true">
+                <Info size={20} weight="bold" />
               </span>
-            </div>
+              <span>Basic Data</span>
+            </h3>
 
-            {/* Basic Information Section */}
-            <div className="emp-detail-subheading">Basic Information</div>
-
-            <div className="emp-detail-info-list">
-              {/* 1. Email */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <Envelope size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Email</span>
-                  <span className="emp-detail-info-val">{emp.email || '—'}</span>
-                </div>
+            <div className="emp-exec-rows-list">
+              <div className="emp-exec-row">
+                <span className="emp-exec-row-label">Email</span>
+                {emp.email ? (
+                  <a
+                    href={`mailto:${emp.email}`}
+                    className="emp-exec-row-val emp-exec-row-val--email"
+                    title={emp.email}
+                  >
+                    {emp.email}
+                  </a>
+                ) : (
+                  <span className="emp-exec-row-val">—</span>
+                )}
               </div>
-
-              {/* 2. Mobile Phone */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <Phone size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Mobile Phone</span>
-                  <span className="emp-detail-info-val">{emp.phone || '—'}</span>
-                </div>
+              <div className="emp-exec-row">
+                <span className="emp-exec-row-label">Mobile Phone</span>
+                <span className="emp-exec-row-val">{emp.phone || '—'}</span>
               </div>
-
-
-              {/* 5. Gender */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <GenderIntersex size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Gender</span>
-                  <span className="emp-detail-info-val">{emp.gender || 'Male'}</span>
-                </div>
+              <div className="emp-exec-row">
+                <span className="emp-exec-row-label">Gender</span>
+                <span className="emp-exec-row-val">{emp.gender || 'Male'}</span>
               </div>
-
-              {/* 6. Nationality */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <Globe size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Nationality</span>
-                  <span className="emp-detail-info-val">{emp.citizenship || 'Indonesia'}</span>
-                </div>
+              <div className="emp-exec-row">
+                <span className="emp-exec-row-label">Nationality</span>
+                <span className="emp-exec-row-val">{emp.citizenship || 'Indonesia'}</span>
               </div>
-
-              {/* 7. Age */}
-              <div className="emp-detail-info-item">
-                <div className="emp-detail-info-icon">
-                  <CalendarBlank size={16} weight="bold" />
-                </div>
-                <div className="emp-detail-info-texts">
-                  <span className="emp-detail-info-label">Age</span>
-                  <span className="emp-detail-info-val">{calculatedAge}</span>
-                </div>
+              <div className="emp-exec-row">
+                <span className="emp-exec-row-label">Age</span>
+                <span className="emp-exec-row-val">{calculatedAge} Years</span>
               </div>
             </div>
           </div>
@@ -439,7 +421,10 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 <div className="emp-detail-address-grid">
                   {/* Kiri: Current Address */}
                   <div className="emp-detail-address-panel">
-                    <div className="emp-detail-address-label">Current</div>
+                    <div className="emp-detail-address-label">
+                      <CalendarBlank size={15} weight="bold" />
+                      <span>Current</span>
+                    </div>
                     <div className="emp-detail-address-text">
                       {emp.domicileAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan'}
                     </div>
@@ -447,7 +432,10 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
 
                   {/* Kanan: Address ID Card */}
                   <div className="emp-detail-address-panel">
-                    <div className="emp-detail-address-label">Address ID Card</div>
+                    <div className="emp-detail-address-label">
+                      <CalendarBlank size={15} weight="bold" />
+                      <span>Address ID Card</span>
+                    </div>
                     <div className="emp-detail-address-text">
                       {emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan'}
                     </div>
@@ -721,7 +709,10 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
                 <div className="emp-detail-address-grid">
                   {/* Kiri: Current Address */}
                   <div className="emp-detail-address-panel">
-                    <div className="emp-detail-address-label">Current</div>
+                    <div className="emp-detail-address-label">
+                      <CalendarBlank size={15} weight="bold" />
+                      <span>Current</span>
+                    </div>
                     <div className="emp-detail-address-text">
                       {emp.domicileAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan'}
                     </div>
@@ -729,7 +720,10 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
 
                   {/* Kanan: Address ID Card */}
                   <div className="emp-detail-address-panel">
-                    <div className="emp-detail-address-label">Address ID Card</div>
+                    <div className="emp-detail-address-label">
+                      <CalendarBlank size={15} weight="bold" />
+                      <span>Address ID Card</span>
+                    </div>
                     <div className="emp-detail-address-text">
                       {emp.idCardAddress || emp.address || 'Jl. Gatot Subroto Kav. 52, No. 12B, Menteng, Jakarta Selatan'}
                     </div>
@@ -740,6 +734,14 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
           )}
         </div>
       </div>
+
+      {/* Interactive Feedback Toast */}
+      {toastMsg && (
+        <div className="emp-detail-copied-toast">
+          <Check size={16} weight="bold" color="#16a34a" />
+          <span>{toastMsg}</span>
+        </div>
+      )}
     </div>
   );
 }
