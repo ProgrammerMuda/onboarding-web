@@ -5,6 +5,7 @@ import { Step2TeamView } from './Step2TeamView';
 import { Step3WorkspaceView } from './Step3WorkspaceView';
 import { Step4SummaryView } from './Step4SummaryView';
 import { ArrowLeft, ArrowRight, Shield } from 'lucide-react';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 export function OnboardingWizardView({ presenter, onGoToDashboard }) {
   const {
@@ -32,6 +33,14 @@ export function OnboardingWizardView({ presenter, onGoToDashboard }) {
 
   return (
     <div className="container py-4 py-lg-5" style={{ maxWidth: '960px' }}>
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Main' },
+          { label: 'Onboarding Wizard' }
+        ]}
+      />
+
       {/* Hero Header */}
       <div className="text-center mb-4">
         <span className="badge badge-subtle-primary rounded-pill px-3 py-1 mb-2 font-monospace small">

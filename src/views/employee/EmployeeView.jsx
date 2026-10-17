@@ -35,6 +35,7 @@ import './employee.css';
 import './add-employee.css';
 import AddEmployeeView from './AddEmployeeView';
 import EmployeeDetailView from './EmployeeDetailView';
+import { Breadcrumb } from '../components/Breadcrumb';
 import {
   exportResignedEmployeesToExcel,
   exportAllEmployeesToExcel,
@@ -445,11 +446,13 @@ export default function EmployeeView({ presenter }) {
   return (
     <div className="emp-container">
       {/* 1. Breadcrumb matching Add Employee */}
-      <nav className="emp-breadcrumb" aria-label="Breadcrumb">
-        <span className="emp-breadcrumb-item">HR Parameter</span>
-        <CaretRight size={14} weight="bold" className="emp-breadcrumb-sep" />
-        <span className="emp-breadcrumb-current">List Employee</span>
-      </nav>
+      <Breadcrumb
+        className="emp-breadcrumb"
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'List Employee' }
+        ]}
+      />
 
       {/* 2. Top Hero Banner matching Organization Structure */}
       <div className="emp-hero-banner">

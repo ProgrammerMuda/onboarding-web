@@ -14,6 +14,7 @@ import {
   Briefcase
 } from '@phosphor-icons/react';
 import { formatDateKey } from '../../models/WorkScheduleModel';
+import { Breadcrumb } from '../components/Breadcrumb';
 import './work-schedule.css';
 
 export default function WorkScheduleView({ presenter }) {
@@ -86,13 +87,13 @@ export default function WorkScheduleView({ presenter }) {
   return (
     <div className="ws-container">
       {/* 1. Breadcrumb */}
-      <div className="ws-breadcrumb">
-        <span className="ws-breadcrumb-item">HR Parameter</span>
-        <span className="ws-breadcrumb-sep">&gt;</span>
-        <span className="ws-breadcrumb-item">Attendance</span>
-        <span className="ws-breadcrumb-sep">&gt;</span>
-        <span className="ws-breadcrumb-current">Work Schedules</span>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'Attendance' },
+          { label: 'Work Schedules' }
+        ]}
+      />
 
       {/* 2. Hero Header with Live Shift Type Connection indicator */}
       <div className="ws-hero">

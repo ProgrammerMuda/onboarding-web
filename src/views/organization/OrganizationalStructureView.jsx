@@ -17,6 +17,7 @@ import {
   IdentificationCard
 } from '@phosphor-icons/react';
 import { useOrgStructurePresenter } from '../../presenters/useOrgStructurePresenter';
+import { Breadcrumb } from '../components/Breadcrumb';
 import './organization-structure.css';
 
 function OrgPositionNode({
@@ -526,11 +527,12 @@ export default function OrganizationalStructureView() {
       }}
     >
       {/* 1. Breadcrumb */}
-      <div className="org-breadcrumb">
-        <span className="org-breadcrumb-item">HR Parameter</span>
-        <span className="org-breadcrumb-sep">&gt;</span>
-        <span className="org-breadcrumb-current">Organization structure</span>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'Organization structure' }
+        ]}
+      />
 
       {/* 2. Top Hero Banner */}
       <div className="org-hero-banner">

@@ -9,6 +9,7 @@ import {
   DotsThreeVertical,
   CheckCircle
 } from '@phosphor-icons/react';
+import { Breadcrumb } from '../components/Breadcrumb';
 import './division.css';
 
 function DivisionSuccessModal({ title, subtext, onClose }) {
@@ -256,6 +257,14 @@ export function DivisionView({ presenter }) {
 
   return (
     <div className="div-page-container">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'Division' }
+        ]}
+      />
+
       {/* Page Header */}
       <header className="div-page-header">
         <div className="div-title-group">

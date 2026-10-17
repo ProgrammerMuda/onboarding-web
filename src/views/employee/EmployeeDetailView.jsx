@@ -28,6 +28,7 @@ import {
 import './add-employee.css';
 import './employee.css';
 import './employee-detail.css';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 export default function EmployeeDetailView({ presenter, employee, onBack }) {
   const {
@@ -188,15 +189,14 @@ export default function EmployeeDetailView({ presenter, employee, onBack }) {
   return (
     <div className="emp-detail-page">
       {/* 1. Breadcrumbs */}
-      <nav className="add-emp-breadcrumb" aria-label="Breadcrumb">
-        <span className="add-emp-breadcrumb-item">HR Parameter</span>
-        <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
-        <button type="button" className="add-emp-breadcrumb-link" onClick={onBack}>
-          <span>List Employee</span>
-        </button>
-        <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
-        <span className="add-emp-breadcrumb-current">Employee Profile</span>
-      </nav>
+      <Breadcrumb
+        className="add-emp-breadcrumb"
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'List Employee', onClick: onBack },
+          { label: 'Employee Profile' }
+        ]}
+      />
 
       {/* 2. Top Hero Banner matching Organization Structure */}
       <div className="emp-hero-banner">

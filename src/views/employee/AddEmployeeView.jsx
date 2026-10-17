@@ -30,6 +30,7 @@ import {
 import './add-employee.css';
 import './employee.css';
 import './employee-detail.css';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 const BANK_OPTIONS = [
   'Bank Central Asia (BCA)',
@@ -681,17 +682,14 @@ export default function AddEmployeeView({ presenter, onBack, isEdit }) {
   return (
     <div className="add-emp-container">
       {/* 1. Breadcrumbs */}
-      <nav className="add-emp-breadcrumb" aria-label="Breadcrumb">
-        <span className="add-emp-breadcrumb-item">HR Parameter</span>
-        <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
-        <button type="button" className="add-emp-breadcrumb-link" onClick={onBack}>
-          <span>List Employee</span>
-        </button>
-        <CaretRight size={14} weight="bold" className="add-emp-breadcrumb-sep" />
-        <span className="add-emp-breadcrumb-current">
-          {isEditMode ? 'Edit Employee' : 'Add Employee'}
-        </span>
-      </nav>
+      <Breadcrumb
+        className="add-emp-breadcrumb"
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'List Employee', onClick: onBack },
+          { label: isEditMode ? 'Edit Employee' : 'Add Employee' }
+        ]}
+      />
 
       {/* 2. Top Hero Banner matching Employee Profile View */}
       <div className="emp-hero-banner">

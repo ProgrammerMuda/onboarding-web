@@ -30,6 +30,7 @@ import {
   isOvernightShift,
   calculateWorkHours 
 } from '../../models/ShiftTypeModel';
+import { Breadcrumb } from '../components/Breadcrumb';
 import './shift-type.css';
 
 // Period Icon mapping helper
@@ -484,6 +485,14 @@ export function ShiftTypeView({ presenter: p }) {
 
   return (
     <section className="shift-page">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'Shift Type' }
+        ]}
+      />
+
       {/* 1. Header with Title & Add Shift Button */}
       <header className="shift-header d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div>

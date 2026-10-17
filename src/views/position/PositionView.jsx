@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { MagnifyingGlass, Plus, PencilSimple, Trash, X, Info, Crown, DotsThreeVertical, CheckCircle } from '@phosphor-icons/react';
+import { Breadcrumb } from '../components/Breadcrumb';
 import { TOP_POSITION_ID, formatPositionNameWithDivision } from '../../models/PositionModel';
 import './position.css';
 
@@ -318,6 +319,14 @@ export function PositionView({ presenter: p }) {
 
   return (
     <section className="position-page" aria-labelledby="position-heading">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'Positions' }
+        ]}
+      />
+
       <header className="position-header">
         <div>
           <h1 className="position-page-title">Positions</h1>

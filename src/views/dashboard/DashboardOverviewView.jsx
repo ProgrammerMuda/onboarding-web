@@ -13,12 +13,21 @@ import {
   Sparkles,
   Server
 } from 'lucide-react';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 export function DashboardOverviewView({ presenter, onStartNewOnboarding }) {
   const { currentUser, timeFilter, setTimeFilter, metrics, activities } = presenter;
 
   return (
     <div className="container-fluid px-3 px-lg-5 py-4">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Main' },
+          { label: 'Dashboard' }
+        ]}
+      />
+
       {/* Top Banner Greeting */}
       <div className="card-modern p-4 mb-4 bg-gradient-proapps text-white border-0">
         <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">

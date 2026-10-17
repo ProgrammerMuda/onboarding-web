@@ -15,6 +15,7 @@ import {
   X 
 } from '@phosphor-icons/react';
 import { ALLOWED_DATE_OPTIONS, formatPermitReset, RESET_FREQUENCIES, validatePermitType } from '../../models/PermitTypeModel';
+import { Breadcrumb } from '../components/Breadcrumb';
 import './permit-type.css';
 
 function PermitDialog({ title, description, onClose, children }) {
@@ -110,8 +111,17 @@ export function PermitTypeView({ presenter: p }) {
       : p.currentPage >= p.totalPages - 2 ? [1, '…', p.totalPages - 2, p.totalPages - 1, p.totalPages]
         : [1, '…', p.currentPage, '…', p.totalPages];
 
-  return <section className="permit-page">
-    <header className="permit-header d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+  return (
+    <section className="permit-page">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'Permit Type' }
+        ]}
+      />
+
+      <header className="permit-header d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
       <div>
         <h1 className="h3 fw-bold text-primary mb-1" style={{ letterSpacing: '-0.02em' }}>Permit Type</h1>
         <p className="text-muted small mb-0">Configure permit types, employee quotas, and reset schedules</p>
@@ -314,6 +324,7 @@ export function PermitTypeView({ presenter: p }) {
         onClose={p.closeSuccessModal}
       />
     )}
-  </section>;
+    </section>
+  );
 }
 

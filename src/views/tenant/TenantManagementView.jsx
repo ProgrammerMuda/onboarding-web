@@ -27,6 +27,8 @@ import {
   Check
 } from '@phosphor-icons/react';
 import { TenantDetailView } from './TenantDetailView';
+import { Breadcrumb } from '../components/Breadcrumb';
+
 
 export function TenantManagementView({ presenter }) {
   const {
@@ -137,6 +139,14 @@ export function TenantManagementView({ presenter }) {
           </div>
         </div>
       )}
+
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Tenant' },
+          { label: 'Tenant Management' }
+        ]}
+      />
 
       {/* 1. Page Header with Title, Breadcrumb & Action Buttons */}
       <div 

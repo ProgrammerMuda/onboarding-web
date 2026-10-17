@@ -9,6 +9,7 @@ import {
   DotsThreeVertical,
   CheckCircle
 } from '@phosphor-icons/react';
+import { Breadcrumb } from '../components/Breadcrumb';
 import './department.css';
 
 function DepartmentSuccessModal({ title, subtext, onClose }) {
@@ -271,6 +272,14 @@ export function DepartmentView({ presenter }) {
           formError={p.formError}
         />
       )}
+
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'Department' }
+        ]}
+      />
 
       {/* Page Header */}
       <header className="department-header">

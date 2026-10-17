@@ -3,6 +3,7 @@ import { CheckCircle, WarningCircle, Info, ShieldCheck, X } from '@phosphor-icon
 import { ScopeList } from './ScopeList';
 import { ApprovalChainBuilder } from './ApprovalChainBuilder';
 import { ConfirmDialog } from './ConfirmDialog';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 export function ApprovalFlowView({ presenter }) {
   const {
@@ -54,6 +55,14 @@ export function ApprovalFlowView({ presenter }) {
 
   return (
     <div className="d-flex flex-column h-100">
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'HR Parameter' },
+          { label: 'Request Approval' }
+        ]}
+      />
+
       {/* Page Title Header */}
       <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
         <div>

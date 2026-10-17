@@ -427,3 +427,49 @@ body {
   }
 }
 
+// Standardized Proapps Breadcrumb System
+.app-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.app-breadcrumb-item {
+  color: #334155;
+  font-weight: 600;
+}
+
+.app-breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  transform: none !important;
+
+  &:hover {
+    color: #002B7F;
+    text-decoration: underline;
+  }
+}
+
+.app-breadcrumb-sep {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.app-breadcrumb-current {
+  font-weight: 700;
+  color: #002B7F;
+}
+
+

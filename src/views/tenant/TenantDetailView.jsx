@@ -31,6 +31,7 @@ import {
   Eye,
   SignOut
 } from '@phosphor-icons/react';
+import { Breadcrumb } from '../components/Breadcrumb';
 
 export function TenantDetailView({ presenter }) {
   const {
@@ -261,6 +262,15 @@ export function TenantDetailView({ presenter }) {
           </div>
         </div>
       )}
+
+      {/* Breadcrumb */}
+      <Breadcrumb
+        items={[
+          { label: 'Tenant' },
+          { label: 'Tenant Management', onClick: handleBackToList },
+          { label: `Detail Tenant: ${selectedTenant.name}` }
+        ]}
+      />
 
       {/* 1. Page Header: Back Icon (←) + Large Title + Subtle Sub-text */}
       <div 
