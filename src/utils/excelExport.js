@@ -427,12 +427,6 @@ export const IMPORT_TEMPLATE_COLUMNS = [
   { header: 'Current Address (Domicile) *', key: 'domicileAddress', width: 38, align: 'left', group: 'STEP 1: PERSONAL DATA & IDENTITY', example: 'Jl. Gatot Subroto No. 12, Menteng, Jakarta' },
   { header: 'ID Card Address (KTP) *', key: 'idCardAddress', width: 38, align: 'left', group: 'STEP 1: PERSONAL DATA & IDENTITY', example: 'Jl. Gatot Subroto No. 12, Menteng, Jakarta' },
 
-  // Step 1: Document Attachments (Matching Web Add Employee Form: KTP, NPWP, KK, Contract)
-  { header: 'Document: ID Card / KTP (File Name)', key: 'docKtp', width: 32, align: 'left', group: 'STEP 1: DOCUMENT ATTACHMENTS', example: 'KTP_Suryadi_Pratama.pdf' },
-  { header: 'Document: NPWP Card (File Name)', key: 'docNpwp', width: 30, align: 'left', group: 'STEP 1: DOCUMENT ATTACHMENTS', example: 'NPWP_Suryadi_Pratama.png' },
-  { header: 'Document: Family Card / KK (File Name)', key: 'docKk', width: 32, align: 'left', group: 'STEP 1: DOCUMENT ATTACHMENTS', example: 'Kartu_Keluarga_Suryadi.pdf' },
-  { header: 'Document: Contract / Certificate (File Name)', key: 'docOther', width: 36, align: 'left', group: 'STEP 1: DOCUMENT ATTACHMENTS', example: 'Perjanjian_Kerja_Suryadi.pdf' },
-
   // Step 2: Employment & Organization
   { header: 'Employee NIP *', key: 'nik', width: 22, align: 'center', isString: true, group: 'STEP 2: EMPLOYMENT & ORGANIZATION', example: '3171015508920020' },
   { header: 'Department *', key: 'dept', width: 26, align: 'left', group: 'STEP 2: EMPLOYMENT & ORGANIZATION', example: 'Engineering' },
@@ -443,7 +437,6 @@ export const IMPORT_TEMPLATE_COLUMNS = [
   { header: 'Shift Schedule', key: 'shiftSchedule', width: 24, align: 'left', group: 'STEP 2: EMPLOYMENT & ORGANIZATION', example: 'Normal (08:00 - 17:00)' },
   { header: 'Join Date (YYYY-MM-DD) *', key: 'joinDate', width: 22, align: 'center', group: 'STEP 2: EMPLOYMENT & ORGANIZATION', example: '2024-01-01' },
   { header: 'Contract End Date (YYYY-MM-DD)', key: 'endDate', width: 24, align: 'center', group: 'STEP 2: EMPLOYMENT & ORGANIZATION', example: '2026-01-01' },
-  { header: 'Status', key: 'status', width: 14, align: 'center', group: 'STEP 2: EMPLOYMENT & ORGANIZATION', example: 'Active' },
 
   // Step 3: Payroll & Social Security
   { header: 'Bank Name', key: 'bankName', width: 26, align: 'left', group: 'STEP 3: PAYROLL & SOCIAL SECURITY', example: 'Bank Central Asia (BCA)' },
@@ -490,7 +483,7 @@ export async function downloadEmployeeImportTemplate({ departments = [], divisio
   // 2. Instructions Subtitle (Row 2)
   ws.mergeCells(2, 1, 2, totalCols);
   const subCell = ws.getCell('A2');
-  subCell.value = 'Form fields match web manual addition (Step 1 Personal & Documents, Step 2 Employment, Step 3 Payroll, Step 4 Emergency). Columns with (*) are mandatory. Date format: YYYY-MM-DD.';
+  subCell.value = 'Form fields match web manual addition (Step 1 Personal Data, Step 2 Employment, Step 3 Payroll, Step 4 Emergency). Columns with (*) are mandatory. Date format: YYYY-MM-DD.';
   subCell.font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FF64748B' } };
   subCell.alignment = { vertical: 'middle', horizontal: 'left' };
   ws.getRow(2).height = 20;
@@ -498,12 +491,12 @@ export async function downloadEmployeeImportTemplate({ departments = [], divisio
   // Row 3 is blank spacer
 
   // 3. Category Group Headers (Row 4)
+  // Step 1: Primary (#002B7F), Step 2: Secondary (#0284C7), Step 3: Primary (#002B7F), Step 4: Secondary (#0284C7)
   const groupRanges = [
-    { start: 1, end: 13, label: 'STEP 1: PERSONAL DATA & IDENTITY', bg: 'FF1E3A8A' },
-    { start: 14, end: 17, label: 'STEP 1: DOCUMENT ATTACHMENTS (KTP, NPWP, KK, CONTRACT)', bg: 'FF0284C7' },
-    { start: 18, end: 27, label: 'STEP 2: EMPLOYMENT & ORGANIZATION', bg: 'FF1E3A8A' },
-    { start: 28, end: 32, label: 'STEP 3: PAYROLL & SOCIAL SECURITY', bg: 'FF0284C7' },
-    { start: 33, end: 36, label: 'STEP 4: EMERGENCY CONTACT', bg: 'FF0F172A' }
+    { start: 1, end: 13, label: 'STEP 1: PERSONAL DATA & IDENTITY', bg: 'FF002B7F' },
+    { start: 14, end: 22, label: 'STEP 2: EMPLOYMENT & ORGANIZATION', bg: 'FF0284C7' },
+    { start: 23, end: 27, label: 'STEP 3: PAYROLL & SOCIAL SECURITY', bg: 'FF002B7F' },
+    { start: 28, end: 31, label: 'STEP 4: EMERGENCY CONTACT', bg: 'FF0284C7' }
   ];
 
   const groupRow = ws.getRow(4);
@@ -532,6 +525,13 @@ export async function downloadEmployeeImportTemplate({ departments = [], divisio
   const headerRow = ws.getRow(5);
   headerRow.height = 28;
 
+  const STEP_HEADER_COLORS = {
+    'STEP 1: PERSONAL DATA & IDENTITY': 'FF002B7F',
+    'STEP 2: EMPLOYMENT & ORGANIZATION': 'FF0284C7',
+    'STEP 3: PAYROLL & SOCIAL SECURITY': 'FF002B7F',
+    'STEP 4: EMERGENCY CONTACT': 'FF0284C7'
+  };
+
   IMPORT_TEMPLATE_COLUMNS.forEach((col, idx) => {
     const colIndex = idx + 1;
     const cell = headerRow.getCell(colIndex);
@@ -540,7 +540,7 @@ export async function downloadEmployeeImportTemplate({ departments = [], divisio
     cell.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF1E3A8A' }
+      fgColor: { argb: STEP_HEADER_COLORS[col.group] || 'FF002B7F' }
     };
     cell.alignment = { vertical: 'middle', horizontal: col.align, wrapText: true };
     cell.border = {
@@ -564,24 +564,21 @@ export async function downloadEmployeeImportTemplate({ departments = [], divisio
     [
       'Suryadi Pratama', 'Male', '3171015508920020', '09.254.678.9-012.000', 'Indonesia', 'Jakarta', '1992-08-15', 'Islam', 'Married',
       'suryadi@indoland.co.id', '0812-3456-7899', 'Jl. Gatot Subroto No. 12, Menteng, Jakarta', 'Jl. Gatot Subroto No. 12, Menteng, Jakarta',
-      'KTP_Suryadi_Pratama.pdf', 'NPWP_Suryadi_Pratama.png', 'Kartu_Keluarga_Suryadi.pdf', 'Perjanjian_Kerja_Suryadi.pdf',
-      '3171015508920020', 'Engineering', 'MEP', 'Staff MEP', 'PKWT/KONTRAK', 'Onsite', 'Normal (08:00 - 17:00)', '2024-01-01', '2026-01-01', 'Active',
+      '3171015508920020', 'Engineering', 'MEP', 'Staff MEP', 'PKWT/KONTRAK', 'Onsite', 'Normal (08:00 - 17:00)', '2024-01-01', '2026-01-01',
       'Bank Central Asia (BCA)', '8271-9920-112', 'Suryadi Pratama', '000189283921', '000293849182',
       'Ratna Dewi', 'Spouse', '0812-8899-0011', 'Jl. Gatot Subroto No. 12, Menteng, Jakarta'
     ],
     [
       'Ani Wijaya', 'Female', '3171015508920021', '09.254.678.9-012.001', 'Indonesia', 'Bandung', '1995-03-22', 'Islam', 'Single',
       'ani.w@indoland.co.id', '0813-8877-9911', 'Jl. Sudirman Kav. 45, Jakarta', 'Jl. Sudirman Kav. 45, Jakarta',
-      'KTP_Ani_Wijaya.pdf', 'NPWP_Ani_Wijaya.png', 'Kartu_Keluarga_Ani.pdf', 'Perjanjian_Kerja_Ani.pdf',
-      '3171015508920021', 'Building Service', 'Security', 'Komandan Regu (Danru) Security', 'PKWT/KONTRAK', 'Onsite', 'Shift A (07:00 - 15:00)', '2024-02-01', '2026-02-01', 'Active',
+      '3171015508920021', 'Building Service', 'Security', 'Komandan Regu (Danru) Security', 'PKWT/KONTRAK', 'Onsite', 'Shift A (07:00 - 15:00)', '2024-02-01', '2026-02-01',
       'Bank Mandiri', '1230-0987-654', 'Ani Wijaya', '000189283922', '000293849183',
       'Bambang Wijaya', 'Parent', '0813-9988-7766', 'Jl. Sudirman Kav. 45, Jakarta'
     ],
     [
       'Hendra Kusuma', 'Male', '3171015508920022', '09.254.678.9-012.002', 'Indonesia', 'Surabaya', '1990-11-10', 'Kristen', 'Married',
       'hendra.k@indoland.co.id', '0815-1122-3344', 'Jl. Rasuna Said Blok B3, Jakarta', 'Jl. Rasuna Said Blok B3, Jakarta',
-      'KTP_Hendra_Kusuma.pdf', 'NPWP_Hendra_Kusuma.png', 'Kartu_Keluarga_Hendra.pdf', 'Perjanjian_Kerja_Hendra.pdf',
-      '3171015508920022', 'Building Management', 'General Operation', 'Building Manager', 'PKWT/PERMANEN', 'Head Office', 'Normal (08:00 - 17:00)', '2023-05-01', '2026-05-01', 'Active',
+      '3171015508920022', 'Building Management', 'General Operation', 'Building Manager', 'PKWT/PERMANEN', 'Head Office', 'Normal (08:00 - 17:00)', '2023-05-01', '2026-05-01',
       'Bank Central Asia (BCA)', '7721-3344-556', 'Hendra Kusuma', '000189283923', '000293849184',
       'Maria Kusuma', 'Spouse', '0815-7788-9900', 'Jl. Rasuna Said Blok B3, Jakarta'
     ]
@@ -836,13 +833,8 @@ export async function downloadEmployeeImportTemplate({ departments = [], divisio
     ['Employment Status', 'PKWT/KONTRAK, PKWT/PERMANEN, Vendor, Magang, Freelance', 'Dropdown List (Mandatory)', 'PKWT/KONTRAK'],
     ['Work Location', 'Onsite, Head Office, Hybrid', 'Dropdown List', 'Onsite'],
     ['Shift Schedule', 'Normal (08:00 - 17:00), Shift A, Shift B, Shift C', 'Dropdown List', 'Normal (08:00 - 17:00)'],
-    ['Status', 'Active, Resigned', 'Dropdown List', 'Active'],
     ['Bank Name', 'Bank Central Asia (BCA), Bank Mandiri, BRI, BNI, BSI, CIMB Niaga, Permata, Other', 'Dropdown List', 'Bank Central Asia (BCA)'],
     ['Relationship (Emergency)', 'Spouse, Parent, Sibling, Child, Relative, Friend, Other', 'Dropdown List (Mandatory)', 'Spouse'],
-    ['Document: KTP / ID Card', 'File name or relative path (PDF, JPG, PNG)', 'Step 1 Document Attachment', 'KTP_Suryadi_Pratama.pdf'],
-    ['Document: NPWP Card', 'File name or relative path (PDF, JPG, PNG)', 'Step 1 Document Attachment', 'NPWP_Suryadi_Pratama.png'],
-    ['Document: Family Card (KK)', 'File name or relative path (PDF, JPG, PNG)', 'Step 1 Document Attachment', 'Kartu_Keluarga_Suryadi.pdf'],
-    ['Document: Contract / Certificate', 'File name or relative path (PDF, DOCX)', 'Step 1 Document Attachment', 'Perjanjian_Kerja_Suryadi.pdf'],
     ['Date Fields', 'Join Date, Date of Birth, Contract End Date', 'Format YYYY-MM-DD required', '2024-01-15']
   ];
 

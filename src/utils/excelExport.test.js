@@ -100,28 +100,40 @@ describe('excelExport utility test suite', () => {
     const maritalVal = ws.getCell('I6').dataValidation;
     expect(maritalVal.formulae[0]).toContain('Single,Married');
 
-    const deptVal = ws.getCell('S6').dataValidation;
+    const deptVal = ws.getCell('O6').dataValidation;
     expect(deptVal.formulae[0]).toContain('Engineering');
 
-    const divVal = ws.getCell('T6').dataValidation;
+    const divVal = ws.getCell('P6').dataValidation;
     expect(divVal.formulae[0]).toContain('MEP');
 
-    const posVal = ws.getCell('U6').dataValidation;
+    const posVal = ws.getCell('Q6').dataValidation;
     expect(posVal.formulae[0]).toContain('Staff');
 
-    const empTypeVal = ws.getCell('V6').dataValidation;
+    const empTypeVal = ws.getCell('R6').dataValidation;
     expect(empTypeVal.formulae[0]).toContain('PKWT/KONTRAK');
 
-    const bankVal = ws.getCell('AB6').dataValidation;
+    const bankVal = ws.getCell('W6').dataValidation;
     expect(bankVal.formulae[0]).toContain('Bank Central Asia (BCA)');
 
-    const emgRelVal = ws.getCell('AH6').dataValidation;
+    const emgRelVal = ws.getCell('AC6').dataValidation;
     expect(emgRelVal.formulae[0]).toContain('Spouse');
 
     // Blank input row (Row 50) also has dropdown attached for easy user entry
     const row50GenderVal = ws.getCell('B50').dataValidation;
     expect(row50GenderVal).toBeDefined();
     expect(row50GenderVal.type).toBe('list');
+
+    // Verify Row 4 Category Group Colors (Step 1 Primary, Step 2 Secondary, Step 3 Primary, Step 4 Secondary)
+    expect(ws.getCell(4, 1).fill.fgColor.argb).toBe('FF002B7F');
+    expect(ws.getCell(4, 14).fill.fgColor.argb).toBe('FF0284C7');
+    expect(ws.getCell(4, 23).fill.fgColor.argb).toBe('FF002B7F');
+    expect(ws.getCell(4, 28).fill.fgColor.argb).toBe('FF0284C7');
+
+    // Verify Row 5 Column Header Colors matching steps
+    expect(ws.getCell(5, 1).fill.fgColor.argb).toBe('FF002B7F'); // Step 1
+    expect(ws.getCell(5, 14).fill.fgColor.argb).toBe('FF0284C7'); // Step 2 (Secondary)
+    expect(ws.getCell(5, 23).fill.fgColor.argb).toBe('FF002B7F'); // Step 3 (Primary)
+    expect(ws.getCell(5, 28).fill.fgColor.argb).toBe('FF0284C7'); // Step 4 (Secondary)
   });
 
   it('parses CSV import file into standardized employee records with full fields and document attachments', async () => {

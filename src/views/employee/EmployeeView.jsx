@@ -1562,7 +1562,7 @@ export default function EmployeeView({ presenter }) {
                   Click or drag &amp; drop files here to upload
                 </span>
                 <span className="add-emp-dropzone-sub">
-                  Upload employee documents (Foto KTP, NPWP, Kartu Keluarga, etc.) &amp; completed Excel template up to 10MB.
+                  Upload completed Excel template (.xlsx, .xls, or .csv) up to 10MB.
                 </span>
                 <button
                   type="button"
