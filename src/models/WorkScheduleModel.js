@@ -12,6 +12,7 @@ export const OFF_SHIFT = {
   id: 'off',
   code: 'OFF',
   name: 'Day Off',
+  offType: 'regular',
   period: 'off',
   checkIn: '—',
   checkOut: '—',
@@ -19,6 +20,36 @@ export const OFF_SHIFT = {
   color: '#94A3B8',
   isActive: true
 };
+
+export const HOLIDAY_SHIFT = {
+  id: 'off-holiday',
+  code: 'LBR',
+  name: 'Hari Raya Idhul Adha',
+  offType: 'holiday',
+  period: 'holiday',
+  quotaNote: 'Hari libur • Mengurangi kuota',
+  checkIn: '—',
+  checkOut: '—',
+  workHours: 0,
+  color: '#0284c7',
+  isActive: true
+};
+
+export const CUTI_BERSAMA_SHIFT = {
+  id: 'off-cuti-bersama',
+  code: 'CUTI',
+  name: 'Cuti Bersama Idul Adha',
+  offType: 'cuti_bersama',
+  period: 'cuti_bersama',
+  quotaNote: 'Cuti bersama • Mengurangi kuota',
+  checkIn: '—',
+  checkOut: '—',
+  workHours: 0,
+  color: '#0284c7',
+  isActive: true
+};
+
+export const ALL_OFF_SHIFTS = [OFF_SHIFT, HOLIDAY_SHIFT, CUTI_BERSAMA_SHIFT];
 
 /**
  * Format a Date object to YYYY-MM-DD
@@ -61,8 +92,48 @@ export function resolveShift(shiftTypeId, shiftTypes = []) {
   if (!shiftTypeId || shiftTypeId === 'off') {
     return OFF_SHIFT;
   }
+  if (shiftTypeId === 'off-holiday') {
+    return HOLIDAY_SHIFT;
+  }
+  if (shiftTypeId === 'off-cuti-bersama') {
+    return CUTI_BERSAMA_SHIFT;
+  }
   const found = shiftTypes.find((s) => s.id === shiftTypeId || s.code === shiftTypeId);
   return found || OFF_SHIFT;
+}
+
+/**
+ * Resolves the assigned shift for a specific employee on a date.
+ * If not already explicitly set in schedules, calculates default based on rotational/regular pattern.
+ */
+export function getEmployeeShiftForDate(schedules, employee, dateStr, shiftTypes = INITIAL_SHIFT_TYPES) {
+  if (!employee) return OFF_SHIFT;
+  const key = `${employee.id}_${dateStr}`;
+  if (schedules && schedules[key]?.shiftTypeId) {
+    return resolveShift(schedules[key].shiftTypeId, shiftTypes);
+  }
+
+  // Deterministic fallback based on department and date
+  const d = new Date(dateStr);
+  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+  const isShiftWorker = ['dept-eng', 'dept-sec', 'dept-hk'].includes(employee.departmentId);
+  const rotationalShifts = ['s-1', 's-3', 's-9', 'off'];
+  const regularShifts = ['s-5', 's-6'];
+
+  let hash = 0;
+  for (let i = 0; i < (employee.id || '').length; i++) {
+    hash += employee.id.charCodeAt(i);
+  }
+  hash += (d.getDate() || 1) * 3 + (d.getMonth() || 0) * 7;
+
+  let shiftId = 'off';
+  if (isShiftWorker) {
+    shiftId = rotationalShifts[Math.abs(hash) % rotationalShifts.length];
+  } else {
+    shiftId = isWeekend ? 'off' : regularShifts[Math.abs(hash) % regularShifts.length];
+  }
+
+  return resolveShift(shiftId, shiftTypes);
 }
 
 /**
@@ -80,6 +151,11 @@ export function generateInitialScheduleRoster(employees = EMPLOYEES, shiftTypes 
     dates.push(formatDateKey(d));
   }
 
+  // Active week sample holiday dates
+  const weekDates = getWeekDates(today);
+  const sampleHolidayStr = formatDateKey(weekDates[3]); // Thursday
+  const sampleCutiStr = formatDateKey(weekDates[4]); // Friday
+
   // Engineering & Security shifts (rotational: P1, S1, M1, OFF)
   const rotationalShifts = ['s-1', 's-3', 's-9', 'off'];
   // Office / Admin shifts (R1, R2 on Mon-Fri, OFF on Sat-Sun)
@@ -93,7 +169,13 @@ export function generateInitialScheduleRoster(employees = EMPLOYEES, shiftTypes 
       const isWeekend = d.getDay() === 0 || d.getDay() === 6;
       let shiftId = 'off';
 
-      if (isShiftWorker) {
+      if (dateStr === sampleHolidayStr) {
+        // Sample Hari Raya Idhul Adha (Tanggal Merah)
+        shiftId = 'off-holiday';
+      } else if (dateStr === sampleCutiStr) {
+        // Sample Cuti Bersama
+        shiftId = 'off-cuti-bersama';
+      } else if (isShiftWorker) {
         // Deterministic rotational pattern based on employee index and date index
         const patternIdx = (empIdx * 2 + dateIdx) % rotationalShifts.length;
         shiftId = rotationalShifts[patternIdx];
@@ -108,7 +190,7 @@ export function generateInitialScheduleRoster(employees = EMPLOYEES, shiftTypes 
         employeeId: emp.id,
         date: dateStr,
         shiftTypeId: shiftId,
-        note: ''
+        note: shiftId === 'off-holiday' ? 'Hari Raya Idhul Adha' : (shiftId === 'off-cuti-bersama' ? 'Cuti Bersama' : '')
       };
     });
   });
@@ -132,6 +214,29 @@ export function readWorkSchedules() {
     }
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+      const hasHoliday = Object.values(parsed).some((item) => item?.shiftTypeId === 'off-holiday');
+      if (!hasHoliday) {
+        const weekDates = getWeekDates(new Date());
+        const sampleHolidayStr = formatDateKey(weekDates[3]);
+        const sampleCutiStr = formatDateKey(weekDates[4]);
+        EMPLOYEES.forEach((emp) => {
+          parsed[`${emp.id}_${sampleHolidayStr}`] = {
+            id: `${emp.id}_${sampleHolidayStr}`,
+            employeeId: emp.id,
+            date: sampleHolidayStr,
+            shiftTypeId: 'off-holiday',
+            note: 'Hari Raya Idhul Adha'
+          };
+          parsed[`${emp.id}_${sampleCutiStr}`] = {
+            id: `${emp.id}_${sampleCutiStr}`,
+            employeeId: emp.id,
+            date: sampleCutiStr,
+            shiftTypeId: 'off-cuti-bersama',
+            note: 'Cuti Bersama'
+          };
+        });
+        window.localStorage.setItem(WORK_SCHEDULE_STORAGE_KEY, JSON.stringify(parsed));
+      }
       return parsed;
     }
     const fallback = generateInitialScheduleRoster();
@@ -193,20 +298,23 @@ export function bulkAssignEmployeeShifts(schedules, employeeIds = [], dateString
 }
 
 /**
- * Compute employee's total work hours and shift counts for the selected week.
+ * Compute employee's total work hours and shift counts for the selected date range.
  */
-export function calculateEmployeeWeekStats(employeeId, weekDates, schedules, shiftTypes) {
+export function calculateEmployeeWeekStats(employee, weekDates, schedules, shiftTypes) {
   let totalHours = 0;
   let workDays = 0;
   let offDays = 0;
 
+  const empObj = typeof employee === 'object' && employee !== null
+    ? employee
+    : (EMPLOYEES.find((e) => e.id === employee) || { id: employee });
+
   weekDates.forEach((dateObj) => {
     const dStr = formatDateKey(dateObj);
-    const key = `${employeeId}_${dStr}`;
-    const entry = schedules[key];
-    const shift = resolveShift(entry?.shiftTypeId, shiftTypes);
+    const shift = getEmployeeShiftForDate(schedules, empObj, dStr, shiftTypes);
 
-    if (shift.id === 'off') {
+    const isOffShift = shift.id === 'off' || shift.id === 'off-holiday' || shift.id === 'off-cuti-bersama' || !shift.workHours;
+    if (isOffShift) {
       offDays += 1;
     } else {
       workDays += 1;
@@ -222,7 +330,7 @@ export function calculateEmployeeWeekStats(employeeId, weekDates, schedules, shi
 }
 
 /**
- * Calculate department and roster overall statistics for the displayed week.
+ * Calculate department and roster overall statistics for the displayed date range.
  */
 export function calculateRosterSummary(weekDates, employees, schedules, shiftTypes) {
   let totalScheduledHours = 0;
@@ -232,13 +340,16 @@ export function calculateRosterSummary(weekDates, employees, schedules, shiftTyp
   let offCount = 0;
 
   employees.forEach((emp) => {
+    const empObj = typeof emp === 'object' && emp !== null
+      ? emp
+      : (EMPLOYEES.find((e) => e.id === emp) || { id: emp });
+
     weekDates.forEach((dateObj) => {
       const dStr = formatDateKey(dateObj);
-      const key = `${emp.id}_${dStr}`;
-      const entry = schedules[key];
-      const shift = resolveShift(entry?.shiftTypeId, shiftTypes);
+      const shift = getEmployeeShiftForDate(schedules, empObj, dStr, shiftTypes);
+      const isOffShift = shift.id === 'off' || shift.id === 'off-holiday' || shift.id === 'off-cuti-bersama' || !shift.workHours;
 
-      if (shift.id === 'off') {
+      if (isOffShift) {
         offCount += 1;
       } else {
         totalScheduledHours += Number(shift.workHours || 0);

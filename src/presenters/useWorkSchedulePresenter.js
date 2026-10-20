@@ -14,7 +14,9 @@ import {
   bulkAssignEmployeeShifts,
   calculateEmployeeWeekStats,
   calculateRosterSummary,
-  OFF_SHIFT
+  OFF_SHIFT,
+  HOLIDAY_SHIFT,
+  CUTI_BERSAMA_SHIFT
 } from '../models/WorkScheduleModel';
 import { readShiftTypes, SHIFT_STORAGE_KEY } from '../models/ShiftTypeModel';
 import { EMPLOYEES, DEPARTMENTS } from '../models/ApprovalFlowModel';
@@ -47,6 +49,7 @@ export function useWorkSchedulePresenter() {
 
   // 4. Filters & Search
   const [selectedDepartment, setSelectedDepartment] = useState('all');
+  const [selectedShift, setSelectedShift] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState('week'); // 'week' | 'month'
 
@@ -204,19 +207,57 @@ export function useWorkSchedulePresenter() {
     setSuccessModal(null);
   }, []);
 
+  const validateScheduleImport = (text) => {
+    const lines = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
+    if (lines.shift()?.trim() !== 'employee_id,date,shift_code' || !lines.length) {
+      throw new Error('Gunakan template CSV dengan kolom employee_id,date,shift_code dan isi minimal satu jadwal.');
+    }
+    const availableShifts = [OFF_SHIFT, ...shiftTypes];
+    const seen = new Set();
+    const rows = lines.map((line, index) => {
+      const [employeeId, date, code, extra] = line.split(',').map((value) => value.trim());
+      const shift = availableShifts.find((item) => item.code === code);
+      const parsedDate = new Date(`${date}T00:00:00`);
+      const key = `${employeeId}_${date}`;
+      if (extra !== undefined || !EMPLOYEES.some((emp) => emp.id === employeeId)
+        || !shift || !/^\d{4}-\d{2}-\d{2}$/.test(date)
+        || Number.isNaN(parsedDate.getTime()) || formatDateKey(parsedDate) !== date || seen.has(key)) {
+        throw new Error(`Baris ${index + 2}: periksa ID karyawan, tanggal, kode shift, atau jadwal duplikat.`);
+      }
+      seen.add(key);
+      return { employeeId, date, shift };
+    });
+    return rows;
+  };
+
+  const importSchedules = (text) => {
+    const rows = validateScheduleImport(text);
+    let next = schedules;
+    rows.forEach(({ employeeId, date, shift }) => {
+      next = setEmployeeShift(next, employeeId, date, shift.id);
+    });
+    persistWorkSchedules(next);
+    setSchedules(next);
+    setSuccessModal({ title: 'Schedules Imported', subtext: `${rows.length} schedules imported successfully.` });
+  };
+
   return {
     // Live data
     shiftTypes,
-    allShiftsWithOff: useMemo(() => [OFF_SHIFT, ...shiftTypes], [shiftTypes]),
+    allShiftsWithOff: useMemo(() => [OFF_SHIFT, HOLIDAY_SHIFT, CUTI_BERSAMA_SHIFT, ...shiftTypes], [shiftTypes]),
     schedules,
     departments: DEPARTMENTS,
+    employees: EMPLOYEES,
     filteredEmployees,
     weekDates,
     referenceDate,
+    setReferenceDate,
 
     // Filters & Navigation
     selectedDepartment,
     setSelectedDepartment,
+    selectedShift,
+    setSelectedShift,
     searchQuery,
     setSearchQuery,
     viewMode,
@@ -241,6 +282,8 @@ export function useWorkSchedulePresenter() {
     openBulkModal,
     closeBulkModal,
     saveBulkAssign,
+    importSchedules,
+    validateScheduleImport,
 
     successModal,
     closeSuccessModal,

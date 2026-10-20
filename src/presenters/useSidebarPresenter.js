@@ -22,6 +22,9 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
       ) {
         defaultState.activeParent = 'hr-parameter';
         defaultState.expandedItems['hr-parameter'] = true;
+      } else if (initialActive === 'hr-work-schedules') {
+        defaultState.activeParent = 'hr-attendance';
+        defaultState.expandedItems['hr-attendance'] = true;
       }
     }
     return defaultState;

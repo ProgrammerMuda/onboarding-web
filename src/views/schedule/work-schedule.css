@@ -1,5 +1,53 @@
 /* Work Schedule - Modern Proapps B2B Theme */
 
+.ws-import-progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin-top: 6px;
+  accent-color: #0ea5e9;
+}
+
+.emp-modal-card.ws-import-dialog {
+  margin: auto;
+  padding: 0;
+  border: 0;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.ws-import-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.ws-import-dialog .add-emp-unified-dropzone:focus-visible {
+  outline: 2px solid #002B7F;
+  outline-offset: 2px;
+}
+
+.ws-template-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  background-color: #f0f9ff;
+  color: #0369a1;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ws-template-info svg {
+  flex-shrink: 0;
+  color: var(--bs-info, #0ea5e9);
+}
+
+.ws-template-info p {
+  margin: 0;
+}
+
 .ws-container {
   width: 100%;
   padding: 0 0 48px;
@@ -34,78 +82,129 @@
   font-weight: 700;
 }
 
-/* Hero Banner */
+/* Hero Banner matching Data Karyawan (Employee directory) & Organization Structure */
 .ws-hero {
+  background: linear-gradient(135deg, #00227a 0%, #0042b4 55%, #0284c7 100%);
+  border-radius: 16px;
+  padding: 26px 32px;
+  color: #ffffff;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(0, 43, 127, 0.12);
+  position: relative;
+  overflow: hidden;
   flex-wrap: wrap;
-  gap: 16px;
+}
+
+.ws-hero::before {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: 18%;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%);
+  pointer-events: none;
 }
 
 .ws-hero-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
+  position: relative;
+  z-index: 1;
 }
 
 .ws-hero-icon-box {
   width: 52px;
   height: 52px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #002B7F 0%, #0284C7 100%);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 43, 127, 0.2);
+  color: #ffffff;
   flex-shrink: 0;
+  box-shadow: none;
 }
 
 .ws-hero-tag {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  color: #0088cc;
   text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
   margin-bottom: 4px;
 }
 
 .ws-hero-title {
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 700;
-  color: #0f172a;
+  color: #ffffff;
   margin: 0 0 4px 0;
   letter-spacing: -0.02em;
 }
 
 .ws-hero-desc {
   font-size: 13.5px;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
+}
+
+.ws-hero-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .ws-hero-badge-sync {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  background-color: #ecfdf5;
-  border: 1px solid #a7f3d0;
-  color: #065f46;
+  padding: 6px 14px;
+  background-color: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
   font-size: 12px;
   font-weight: 600;
   border-radius: 20px;
+  backdrop-filter: blur(4px);
 }
 
 .ws-sync-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background-color: #10b981;
+  background-color: #34d399;
   display: inline-block;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.35);
+}
+
+.ws-hero-sync-btn {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ws-hero-sync-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
 }
 
 /* Stats Row */
@@ -250,12 +349,67 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px 12px 0 0;
-  padding: 16px 20px;
+  padding: 14px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.ws-toolbar.is-standalone {
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.ws-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* Integrated Tabs inside Toolbar Card */
+.ws-toolbar-tabs {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f1f5f9;
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.ws-toolbar-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ws-toolbar-tab:hover {
+  color: #002B7F;
+}
+
+.ws-toolbar-tab.is-active {
+  background-color: #ffffff;
+  color: #002B7F;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.ws-toolbar-divider {
+  width: 1px;
+  height: 28px;
+  background-color: #e2e8f0;
 }
 
 .ws-nav-cluster {
@@ -390,15 +544,33 @@
 .ws-matrix-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-top: none;
-  border-radius: 0 0 12px 12px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .ws-table-container {
   overflow-x: auto;
   max-width: 100%;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+.ws-table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.ws-table-container::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.ws-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.ws-table-container::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .ws-table {
@@ -408,28 +580,56 @@
   font-size: 13px;
 }
 
+.ws-matrix-card .ws-table th:first-child,
+.emp-table-card-inner .ws-table th:first-child {
+  border-top-left-radius: 11px;
+}
+
+.ws-matrix-card .ws-table th:last-child,
+.emp-table-card-inner .ws-table th:last-child {
+  border-top-right-radius: 11px;
+}
+
+.ws-matrix-card .ws-table tr:last-child td:first-child,
+.emp-table-card-inner .ws-table tr:last-child td:first-child {
+  border-bottom-left-radius: 11px;
+}
+
+.ws-matrix-card .ws-table tr:last-child td:last-child,
+.emp-table-card-inner .ws-table tr:last-child td:last-child {
+  border-bottom-right-radius: 11px;
+}
+
 .ws-table th {
   background-color: #f8fafc;
   color: #475569;
   font-weight: 600;
-  font-size: 12px;
-  padding: 12px 14px;
+  font-size: 11.5px;
+  padding: 10px 8px;
   text-align: center;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
   white-space: nowrap;
 }
 
 .ws-table th.col-emp {
   text-align: left;
-  min-width: 250px;
+  min-width: 210px;
+  width: 220px;
   position: sticky;
   left: 0;
-  z-index: 10;
+  z-index: 20;
   background-color: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  padding: 10px 12px;
+  box-shadow: none !important;
 }
 
 .ws-table th.col-day {
-  min-width: 120px;
+  min-width: 195px;
+  width: 205px;
+  padding: 8px 6px;
+  position: relative;
+  z-index: 5;
 }
 
 .ws-table th.col-day.is-today {
@@ -439,7 +639,7 @@
 }
 
 .ws-day-name {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -448,11 +648,11 @@
 }
 
 .ws-day-num {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 12px;
+  padding: 2px 7px;
+  border-radius: 10px;
 }
 
 .is-today .ws-day-num {
@@ -461,42 +661,66 @@
 }
 
 .ws-table th.col-summary {
-  min-width: 110px;
+  min-width: 116px;
+  width: 116px;
+  max-width: 116px;
   text-align: right;
-  padding-right: 20px;
+  padding-right: 14px;
+  border-left: 1px solid #e2e8f0;
+  position: sticky;
+  right: 76px;
+  z-index: 20;
+  background-color: #f8fafc;
+  box-shadow: none !important;
+}
+
+.ws-table th.col-action {
+  min-width: 76px;
+  width: 76px;
+  max-width: 76px;
+  text-align: right;
+  padding-right: 14px;
+  position: sticky;
+  right: 0;
+  z-index: 20;
+  background-color: #f8fafc;
+  box-shadow: none !important;
 }
 
 .ws-table td {
-  padding: 12px 14px;
+  padding: 10px 8px;
   border-bottom: 1px solid #f1f5f9;
   vertical-align: middle;
 }
 
-.ws-table tr:hover td {
-  background-color: #f8fafc;
+.ws-table tr:last-child td {
+  border-bottom: none;
 }
 
 .ws-table td.col-emp {
   position: sticky;
   left: 0;
   background-color: #ffffff;
-  z-index: 9;
+  z-index: 15;
   border-right: 1px solid #e2e8f0;
-}
-
-.ws-table tr:hover td.col-emp {
-  background-color: #f8fafc;
+  padding: 10px 12px;
+  box-shadow: none !important;
+  min-width: 210px;
+  width: 220px;
+  max-width: 220px;
 }
 
 .ws-emp-cell {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .ws-emp-avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
   border: 1.5px solid #e2e8f0;
@@ -506,21 +730,41 @@
 .ws-emp-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .ws-emp-name {
-  font-weight: 600;
+  font-weight: 700;
   color: #0f172a;
-  font-size: 13.5px;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
 }
 
 .ws-emp-sub {
-  font-size: 11.5px;
-  color: #64748b;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  margin-top: 1px;
+}
+
+.ws-emp-sub-text {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
 }
 
 .ws-dept-tag {
@@ -533,71 +777,272 @@
   font-weight: 600;
 }
 
-/* Shift Slot Cell & Badge */
+/* Shift Slot Cell & Card Layout */
 .ws-slot-cell {
-  text-align: center;
+  text-align: left;
   padding: 8px !important;
+  vertical-align: top;
 }
 
 .ws-shift-btn {
   width: 100%;
-  border-radius: 8px;
-  padding: 8px 6px;
-  border: 1.5px solid transparent;
+  min-width: 160px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1.5px solid #e2e8f0;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  transition: all 0.15s ease;
+  align-items: stretch;
+  gap: 8px;
+  transition: all 0.18s ease;
   background-color: #f8fafc;
   outline: none;
   position: relative;
+  text-align: left;
 }
 
-.ws-shift-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+.ws-shift-btn:not(.is-locked):hover {
+  transform: translateY(-1px);
+  filter: brightness(0.98);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
-.ws-shift-code-tag {
-  font-size: 12px;
+.ws-shift-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+}
+
+.ws-shift-badges-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.ws-shift-period-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  flex-shrink: 0;
 }
 
-.ws-shift-timing-text {
-  font-size: 10.5px;
-  font-weight: 500;
-  opacity: 0.85;
+.ws-shift-type-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background-color: #e8edf3;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ws-shift-edit-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #1e3a8a;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: all 0.15s ease;
+}
+
+.ws-shift-btn:not(.is-locked):hover .ws-shift-edit-btn {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #002B7F;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+}
+
+.ws-shift-btn.is-locked {
+  cursor: not-allowed;
+}
+
+.ws-shift-btn.is-locked .ws-shift-edit-btn {
+  color: #64748b;
+  background-color: #f1f5f9;
+  box-shadow: none;
+}
+
+.ws-shift-btn:focus-visible {
+  outline: 2px solid #002B7F;
+  outline-offset: 2px;
+}
+
+.ws-shift-card-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+}
+
+.ws-shift-card-time-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ws-shift-clock-icon {
+  color: #0284c7;
+  flex-shrink: 0;
+}
+
+.ws-shift-card-time-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ws-shift-btn.is-off {
-  background-color: #f1f5f9;
+  background-color: #f8fafc;
   border-color: #e2e8f0;
   color: #64748b;
 }
 
 .ws-shift-btn.is-off:hover {
-  background-color: #e2e8f0;
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
-/* Summary Cell */
-.ws-summary-cell {
+.ws-shift-btn.is-off .ws-shift-card-name {
+  color: #475569;
+}
+
+.ws-shift-btn.is-off .ws-shift-card-time-row {
+  color: #64748b;
+}
+
+.ws-shift-btn.is-off .ws-shift-clock-icon {
+  color: #94a3b8;
+}
+
+.ws-shift-btn.is-off .ws-shift-edit-btn {
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+
+.ws-shift-btn.is-off:hover .ws-shift-edit-btn {
+  background-color: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+/* Special Holiday styling (Red) */
+.ws-shift-btn.is-holiday {
+  background-color: #fef2f2;
+  border-color: #fecdd3;
+  color: #991b1b;
+}
+
+.ws-shift-btn.is-holiday:hover {
+  background-color: #fee2e2;
+  border-color: #fda4af;
+}
+
+.ws-shift-btn.is-holiday .ws-shift-card-name {
+  color: #475569;
+}
+
+.ws-shift-btn.is-holiday .ws-shift-card-time-row {
+  color: #64748b;
+}
+
+.ws-shift-btn.is-holiday .ws-shift-clock-icon {
+  color: #94a3b8;
+}
+
+.ws-shift-btn.is-holiday .ws-shift-edit-btn {
+  color: #1e3a8a;
+  border-color: #e2e8f0;
+}
+
+.ws-shift-btn.is-holiday:hover .ws-shift-edit-btn {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #002B7F;
+}
+
+/* Summary Cell (Frozen on Right) */
+.ws-table td.ws-summary-cell {
+  min-width: 116px;
+  width: 116px;
+  max-width: 116px;
   text-align: right;
-  padding-right: 20px !important;
+  padding-right: 14px !important;
+  white-space: nowrap;
+  border-left: 1px solid #e2e8f0;
+  position: sticky;
+  right: 76px;
+  z-index: 15;
+  background-color: #ffffff;
+  box-shadow: none !important;
 }
 
 .ws-summary-hours {
-  font-size: 14px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #002B7F;
 }
 
 .ws-summary-days {
-  font-size: 11.5px;
-  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
   margin-top: 2px;
+}
+
+/* Action Cell (Frozen on Right) */
+.ws-table td.col-action {
+  min-width: 76px;
+  width: 76px;
+  max-width: 76px;
+  text-align: right;
+  padding-right: 14px !important;
+  white-space: nowrap;
+  position: sticky;
+  right: 0;
+  z-index: 15;
+  background-color: #ffffff;
+  box-shadow: none !important;
+}
+
+/* Multi-day horizontal scrolling (e.g. This Month / Custom > 7 days) */
+.ws-table.is-scrollable {
+  min-width: max-content;
+}
+
+.ws-table.is-scrollable th.col-day,
+.ws-table.is-scrollable td.ws-slot-cell {
+  width: 205px;
+  min-width: 195px;
 }
 
 /* Modals */
@@ -700,7 +1145,7 @@
   transition: all 0.15s ease;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   background-color: #ffffff;
   text-align: left;
 }
@@ -720,6 +1165,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .ws-picker-code {
@@ -731,14 +1177,19 @@
 }
 
 .ws-picker-name {
-  font-size: 12px;
-  color: #334155;
-  font-weight: 500;
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
 }
 
 .ws-picker-time {
-  font-size: 11px;
-  color: #64748b;
+  font-size: 11.5px;
+  color: #475569;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
 }
 
 .ws-modal-footer {
@@ -766,17 +1217,804 @@
 }
 
 .ws-btn-save {
-  padding: 8px 20px;
-  border-radius: 8px;
-  border: none;
+  padding: 8px 22px;
+  border-radius: 6px;
+  border: 1px solid #002B7F;
   background-color: #002B7F;
   color: #ffffff;
   font-weight: 600;
   font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
+  transform: none;
+  transition: all 0.15s ease;
+}
+
+.ws-btn-save:hover:not(:disabled) {
+  background-color: #002266;
+  border-color: #002266;
+  color: #ffffff;
+}
+
+.ws-btn-save:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+  background-color: #e2e8f0 !important;
+  border-color: #e2e8f0 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+}
+
+.ws-btn-save:disabled svg {
+  color: #94a3b8 !important;
+}
+
+/* ==========================================================================
+   2-Tab Navigation (Semua Karyawan vs Per Karyawan) & Individual Schedule
+   ========================================================================== */
+
+.ws-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  padding: 4px 12px 0;
+  border-radius: 12px 12px 0 0;
+}
+
+.ws-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: -1px;
+}
+
+.ws-tab-btn:hover {
+  color: #002B7F;
+}
+
+.ws-tab-btn.is-active {
+  color: #002B7F;
+  border-bottom-color: #002B7F;
+  font-weight: 700;
+}
+
+.ws-tab-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background-color: #f1f5f9;
+  color: #475569;
+  font-weight: 700;
+}
+
+.ws-tab-btn.is-active .ws-tab-badge {
+  background-color: #e0e7ff;
+  color: #002B7F;
+}
+
+/* Tab 2: Individual Employee Header & Selector */
+.ws-indiv-header-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.ws-indiv-top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 20px;
+}
+
+.ws-indiv-emp-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ws-indiv-select {
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  background-color: #ffffff;
+  min-width: 260px;
+  cursor: pointer;
+}
+
+.ws-indiv-select:focus {
+  outline: none;
+  border-color: #002B7F;
+  box-shadow: 0 0 0 3px rgba(0, 43, 127, 0.1);
+}
+
+.ws-indiv-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ws-indiv-nav-btn:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  border-color: #94a3b8;
+  color: #002B7F;
+}
+
+.ws-indiv-nav-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ws-indiv-month-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ws-indiv-month-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  min-width: 140px;
+  text-align: center;
+}
+
+/* Individual Employee Profile & Quick Stats */
+.ws-indiv-profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.ws-indiv-emp-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ws-indiv-avatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #e0e7ff;
+}
+
+.ws-indiv-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.ws-indiv-details h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.ws-indiv-nip-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.ws-indiv-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+  flex-wrap: wrap;
+}
+
+.ws-indiv-role {
+  font-weight: 500;
+  color: #475569;
+}
+
+.ws-indiv-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ws-indiv-stat-pill {
+  padding: 10px 16px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 145px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: all 0.2s ease;
+}
+
+.ws-indiv-stat-pill:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.ws-stat-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ws-stat-icon-blue {
+  background-color: #eff6ff;
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.2);
+}
+
+.ws-stat-icon-emerald {
+  background-color: #ecfdf5;
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.ws-stat-icon-gray {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.ws-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-indiv-stat-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: none;
+  letter-spacing: normal;
+  line-height: 1.2;
+}
+
+.ws-indiv-stat-val {
+  font-size: 16px;
+  font-weight: 700;
+  margin-top: 3px;
+  line-height: 1.2;
+}
+
+.ws-stat-val-blue {
+  color: #0284c7;
+}
+
+.ws-stat-val-emerald {
+  color: #059669;
+}
+
+.ws-stat-val-gray {
+  color: #475569;
+}
+
+/* Monthly Calendar Grid */
+.ws-calendar-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.ws-calendar-grid-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.ws-cal-day-title {
+  padding: 12px 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ws-cal-day-title.is-weekend {
+  color: #dc2626;
+}
+
+.ws-calendar-grid-body {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.ws-cal-cell {
+  min-height: 100px;
+  padding: 10px;
+  border-right: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  background-color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+
+.ws-cal-cell:nth-child(7n) {
+  border-right: none;
+}
+
+.ws-cal-cell:not(.is-locked):hover {
+  background-color: #f8fafc;
+  box-shadow: inset 0 0 0 2px #0284c7;
+  z-index: 2;
+}
+
+.ws-cal-cell.is-locked {
+  cursor: not-allowed;
+}
+
+.ws-cal-cell:focus-visible {
+  outline: 2px solid #002B7F;
+  outline-offset: -2px;
+}
+
+.ws-cal-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #1e3a8a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  flex-shrink: 0;
+}
+
+.ws-cal-cell.is-locked .ws-cal-action-icon {
+  color: #64748b;
+  background-color: #f1f5f9;
+  box-shadow: none;
+}
+
+.ws-cal-cell.is-other-month {
+  background-color: #fbfcfe;
+  opacity: 0.45;
+}
+
+.ws-cal-cell.is-today {
+  background-color: #eff6ff;
+}
+
+.ws-cal-cell-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.ws-cal-date-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.ws-cal-cell.is-today .ws-cal-date-num {
+  background-color: #002B7F;
+  color: #ffffff;
+}
+
+.ws-cal-today-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #002B7F;
+  text-transform: uppercase;
+  background: #dbeafe;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.ws-cal-shift-pill {
+  border-radius: 8px;
+  padding: 6px 8px;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  transition: transform 0.1s ease;
+}
+
+.ws-cal-cell:hover .ws-cal-shift-pill {
+  transform: translateY(-1px);
+}
+
+.ws-cal-shift-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ws-cal-shift-code {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ws-cal-shift-hours {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.ws-cal-shift-name {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-cal-shift-time {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.ws-cal-shift-time svg {
+  flex-shrink: 0;
+}
+
+/* Table Quick Action Button to Open Individual View */
+.ws-view-indiv-btn {
+  background: none;
+  border: none;
+  color: #002B7F;
+  font-size: 11.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 4px;
   transition: background-color 0.15s ease;
 }
 
-.ws-btn-save:hover {
-  background-color: #001f5c;
+.ws-view-indiv-btn:hover {
+  background-color: #e0e7ff;
+  text-decoration: underline;
 }
+
+/* ==========================================================================
+   All Schedules List Table (Matching Screenshot Revamp)
+   ========================================================================== */
+
+.ws-list-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0 0 12px 12px;
+  border-top: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.ws-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  text-align: left;
+}
+
+.ws-list-table thead {
+  background-color: #fafbfc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.ws-list-table th {
+  padding: 14px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.01em;
+}
+
+.ws-list-table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.15s ease;
+}
+
+/* Ensure row hover in Work Schedule never compromises sticky opacity */
+.ws-container .emp-table tr:hover td,
+.ws-container .emp-table tbody tr:hover {
+  background-color: transparent !important;
+}
+
+/* Frozen columns MUST always maintain solid opaque background, even on row hover */
+.ws-table th.col-emp,
+.ws-table th.col-summary,
+.ws-table th.col-action {
+  background-color: #f8fafc !important;
+  box-shadow: none !important;
+}
+
+.ws-table td.col-emp,
+.ws-table td.ws-summary-cell,
+.ws-table td.col-action,
+.ws-table tr:hover td.col-emp,
+.ws-table tr:hover td.ws-summary-cell,
+.ws-table tr:hover td.col-action,
+.ws-table tbody tr:hover td.col-emp,
+.ws-table tbody tr:hover td.ws-summary-cell,
+.ws-table tbody tr:hover td.col-action,
+.ws-container .ws-table td.col-emp,
+.ws-container .ws-table td.ws-summary-cell,
+.ws-container .ws-table td.col-action,
+.ws-container .ws-table tr:hover td.col-emp,
+.ws-container .ws-table tr:hover td.ws-summary-cell,
+.ws-container .ws-table tr:hover td.col-action,
+.ws-container .ws-table tbody tr:hover td.col-emp,
+.ws-container .ws-table tbody tr:hover td.ws-summary-cell,
+.ws-container .ws-table tbody tr:hover td.col-action {
+  background-color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+.ws-container .ws-table tbody tr:hover td {
+  background-color: #ffffff;
+}
+
+.ws-list-table td {
+  padding: 14px 18px;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.ws-col-no {
+  width: 50px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.ws-col-date {
+  font-weight: 500;
+  color: #1e293b;
+  white-space: nowrap;
+}
+
+.ws-emp-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ws-emp-avatar-sm {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.ws-emp-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-emp-name-bold {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ws-emp-email-muted {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 1px;
+}
+
+.ws-col-dept {
+  color: #475569;
+  font-weight: 600;
+}
+
+.ws-col-shift-type {
+  color: #334155;
+  font-weight: 500;
+}
+
+/* Rounded pill badge matching shift color */
+.ws-shift-code-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #002B7F;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-align: center;
+  letter-spacing: 0.04em;
+  min-width: 44px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.ws-shift-code-pill.is-off {
+  background-color: #64748b;
+}
+
+/* Pagination matching screenshot */
+.ws-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 18px 24px;
+  background-color: #ffffff;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ws-page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ws-page-btn:hover:not(:disabled) {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+  color: #002B7F;
+}
+
+.ws-page-btn.is-active {
+  background-color: #002B7F;
+  border-color: #002B7F;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.ws-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ws-page-ellipsis {
+  padding: 0 6px;
+  color: #94a3b8;
+  font-size: 13px;
+}
+
+/* Date Input Filter */
+.ws-date-input {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+  background-color: #ffffff;
+  cursor: pointer;
+}
+
+.ws-date-input:focus {
+  outline: none;
+  border-color: #002B7F;
+  box-shadow: 0 0 0 3px rgba(0, 43, 127, 0.1);
+}
+
+.ws-btn-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ws-btn-export:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #002B7F;
+}
+
+
+.ws-modal-card.ws-template-dialog {
+  padding: 0;
+  border: 0;
+  margin: auto;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+
+.ws-template-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+

@@ -31,7 +31,7 @@ import { usePermitTypePresenter } from './presenters/usePermitTypePresenter';
 import { useShiftTypePresenter } from './presenters/useShiftTypePresenter';
 
 export default function App() {
-  const sidebarPresenter = useSidebarPresenter('hr-data-karyawan');
+  const sidebarPresenter = useSidebarPresenter('hr-work-schedules');
   const onboardingPresenter = useOnboardingPresenter();
   const dashboardPresenter = useDashboardPresenter();
   const shiftPresenter = useShiftTypePresenter();
