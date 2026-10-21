@@ -4,14 +4,37 @@ import {
   Bell, Receipt, UserCheck, Database, Coins, Buildings,
   BuildingApartment, Image as ImageIcon, Door, HouseLine, Hammer,
   CalendarCheck, RocketLaunch, CaretDown, CaretUp,
-  X, UsersThree, ClockUser, SignOut, SidebarSimple
+  X, UsersThree, ClockUser, SignOut, SidebarSimple,
+  Sliders, Invoice, Checks, MinusCircle, Wallet, WarningCircle, ChartBar
 } from '@phosphor-icons/react';
+import { CalendarClock } from 'lucide-react';
 import logoImg from '../../assets/proapps-mark-white.svg';
 import fullLogoImg from '../../assets/logo.png';
 import avatarImg from '../../assets/avatar.png';
 import './sidebar.css';
 
+function SidebarCalendarClock({ weight, size = 22, ...props }) {
+  const maskId = React.useId();
+  if (weight !== 'fill') return <CalendarClock size={size} {...props} />;
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <defs>
+        <mask id={maskId}>
+          <rect x="3" y="4" width="18" height="17" rx="2" fill="white" />
+          <path d="M3 9h18" stroke="black" strokeWidth="1.5" />
+          <circle cx="17" cy="17" r="7" fill="black" />
+          <circle cx="17" cy="17" r="5.5" fill="white" />
+          <path d="M17 13.5V17l2.5 1.5" fill="none" stroke="black" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </mask>
+      </defs>
+      <path d="M8 2v4M16 2v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <rect width="24" height="24" mask={`url(#${maskId})`} />
+    </svg>
+  );
+}
+
 const iconMap = {
+  CalendarClock: SidebarCalendarClock,
   Rocket: RocketLaunch,
   FileContract: FileText,
   Settings: GearSix,
@@ -34,7 +57,8 @@ const iconMap = {
   Image: ImageIcon,
   UsersThree,
   ClockUser,
-  FileText
+  FileText,
+  Sliders, Invoice, Checks, MinusCircle, Wallet, WarningCircle, ChartBar
 };
 
 export function Sidebar({ presenter }) {
@@ -145,7 +169,7 @@ export function Sidebar({ presenter }) {
               {section.items.map((item) => {
                 const Icon = iconMap[item.icon] || Database;
                 const isExpanded = !!expandedItems[item.id];
-                const hasActiveChild = item.hasChildren && item.children.some((sub) => sub.id === activeItem);
+                const hasActiveChild = item.hasChildren && (item.id === activeItem || item.children.some((sub) => sub.id === activeItem));
                 const isDirectActive = !item.hasChildren && activeItem === item.id;
                 const isParentActive = hasActiveChild;
 
@@ -177,6 +201,9 @@ export function Sidebar({ presenter }) {
                     </button>
                     {item.hasChildren && isExpanded && !compact && (
                       <div className="app-sidebar__subitems">
+                        {item.children.length === 0 && (
+                          <span className="app-sidebar__subitem">Submenu belum tersedia</span>
+                        )}
                         {item.children.map((sub) => (
                           <button
                             key={sub.id}

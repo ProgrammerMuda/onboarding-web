@@ -96,7 +96,8 @@ describe('Sidebar active states', () => {
     const html = renderToString(<Sidebar presenter={presenter} />);
     expect(html).toContain('Budi Hartono');
     expect(html).toContain('Building Manager');
-    expect(html).not.toContain('Finance');
+    const footer = html.slice(html.indexOf('app-sidebar__footer'));
+    expect(footer).not.toContain('Finance');
     expect(html).not.toContain('Jurnal Accounting');
   });
 });

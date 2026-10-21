@@ -1,0 +1,71 @@
+.manage-plan-summary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px; margin-bottom: 20px; }
+.manage-installment-page .emp-card-header { border-bottom: 1.5px solid #e2e8f0; }
+.manage-plan-pay-all { background: #15803d; border-color: #15803d; }
+.manage-plan-pay-all:hover:not(:disabled) { background: #166534; }
+.manage-plan-table { min-width: 1050px; }
+.manage-plan-table th { white-space: nowrap; }
+.manage-plan-table td { vertical-align: middle; }
+.manage-plan-table td > strong { color: #334155; font-weight: 600; font-size: 13px; }
+.manage-plan-currency { white-space: nowrap; font-weight: 600; font-variant-numeric: tabular-nums; }
+.manage-plan-revision { color: #475569; background: #f1f5f9; padding: 4px 8px; border-radius: 5px; font-size: 12px; }
+.manage-plan-invoice { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.manage-plan-invoice-number { display: inline-flex; align-items: center; gap: 5px; color: #002b7f; font-size: 12.5px; font-weight: 600; overflow-wrap: anywhere; }
+.manage-plan-invoice-number:hover { text-decoration: underline; text-underline-offset: 3px; }
+.manage-plan-actions { display: flex; justify-content: flex-end; gap: 8px; white-space: nowrap; }
+.manage-plan-no-action { color: #64748b; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.manage-plan-actions .emp-btn-secondary { font-size: 12px; padding: 8px 10px; }
+.manage-plan-actions svg { color: var(--app-secondary, #09b2ff); }
+.manage-plan-table tfoot { background: #f8fafc; color: #475569; font-size: 12px; }
+.manage-plan-table tfoot .manage-plan-currency { color: #002b7f; }
+.manage-plan-preview-note { color: #64748b; font-size: 12px; margin-top: 12px; }
+.manage-plan-info { display: flex; gap: 8px; align-items: flex-start; padding: 12px 16px; margin: 16px 24px 0; background: #f0f9ff; color: #0369a1; border-radius: 8px; font-size: 12px; line-height: 1.6; }
+.manage-plan-info svg { flex-shrink: 0; }
+.manage-action-facts { display: grid; gap: 14px; margin: 0; }
+.manage-action-facts > div { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; }
+.manage-action-facts dt { color: #64748b; font-weight: 400; }
+.manage-action-facts dd { text-align: right; margin: 0; overflow-wrap: anywhere; }
+.manage-transfer-dialog { width: min(680px, calc(100vw - 32px)); }
+.manage-transfer-body { display: grid; gap: 20px; }
+.manage-transfer-warning { display: flex; align-items: flex-start; gap: 9px; padding: 13px 15px; border: 1px solid #fed7aa; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 13px; line-height: 1.5; }
+.manage-transfer-warning svg { flex-shrink: 0; margin-top: 1px; }
+.manage-transfer-field { display: grid; gap: 7px; }
+.manage-transfer-field label { color: #475569; font-size: 13px; font-weight: 600; }
+.manage-transfer-field label span { color: #dc2626; }
+.manage-transfer-field :is(input, select) { width: 100%; min-height: 42px; border: 1px solid #cbd5e1; border-radius: 7px; padding: 9px 12px; background-color: #fff; color: #334155; font: inherit; font-size: 13px; transition: border-color .15s ease, box-shadow .15s ease; }
+.manage-transfer-field select.form-select { padding-right: 36px; }
+.manage-transfer-field .manage-transfer-current { background: #eaf6f5; color: #334155; font-size: 15px; font-weight: 600; }
+.manage-transfer-field small { color: #64748b; font-size: 11.5px; }
+.manage-transfer-amount-wrap { display: flex; align-items: stretch; border: 1px solid #cbd5e1; border-radius: 7px; overflow: hidden; transition: border-color .15s ease, box-shadow .15s ease; }
+.manage-transfer-amount-wrap > span { display: flex; align-items: center; padding: 0 12px; background: #f8fafc; color: #64748b; border-right: 1px solid #e2e8f0; font-size: 13px; font-weight: 600; }
+.manage-transfer-field .manage-transfer-amount-wrap input { border: 0; border-radius: 0; min-width: 0; color: #0f172a; font-size: 13px; font-weight: 500; }
+.manage-transfer-field .manage-transfer-amount-wrap input::placeholder { color: #94a3b8; font-weight: 400; }
+.manage-installment-page .manage-transfer-field > :is(input:not([readonly]), select):focus,
+.manage-installment-page .manage-transfer-amount-wrap:focus-within { border-color: #0088cc; box-shadow: 0 0 0 3px rgba(9, 178, 255, 0.15); outline: none; }
+.manage-installment-page .manage-transfer-amount-wrap input:focus-visible { outline: none; }
+.manage-transfer-error { margin: 0; color: #b91c1c; font-size: 12px; }
+.manage-transfer-preview { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid #dbeafe; border-radius: 8px; background: #f8fbff; font-size: 12.5px; }
+.manage-transfer-preview > div { display: flex; justify-content: space-between; gap: 12px; }
+.manage-transfer-preview span { color: #475569; }
+.manage-transfer-preview strong { color: #002b7f; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.manage-transfer-preview .manage-transfer-preview-total { padding-top: 8px; border-top: 1px solid #dbeafe; font-weight: 700; }
+.manage-transfer-submit { display: inline-flex; align-items: center; justify-content: center; padding: 8px 18px; border: 1px solid #002b7f; border-radius: 8px; background: #002b7f; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+.manage-transfer-submit:hover:not(:disabled) { background: #001f5c; border-color: #001f5c; }
+.manage-transfer-success-dialog { width: min(440px, calc(100vw - 32px)); }
+.manage-transfer-success-body { padding: 30px 26px 26px; text-align: center; }
+.manage-transfer-success-icon { width: 56px; height: 56px; display: grid; place-items: center; margin: 0 auto 16px; border-radius: 50%; background: #dcfce7; color: #16a34a; }
+.manage-transfer-success-body h3 { margin: 0 0 7px; color: #0f172a; font-size: 18px; font-weight: 700; }
+.manage-transfer-success-body > p { margin: 0; color: #64748b; font-size: 13px; line-height: 1.5; }
+.manage-transfer-success-details { display: grid; gap: 10px; margin: 22px 0; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; text-align: left; }
+.manage-transfer-success-details > div { display: flex; justify-content: space-between; gap: 16px; font-size: 12.5px; }
+.manage-transfer-success-details dt { color: #64748b; }
+.manage-transfer-success-details dd { margin: 0; color: #002b7f; font-weight: 700; text-align: right; }
+.manage-transfer-success-done { width: 100%; min-height: 40px; border: 1px solid #002b7f; border-radius: 8px; background: #002b7f; color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+.manage-transfer-success-done:hover { background: #001f5c; }
+.manage-installment-page .emp-modal-body .manage-plan-info { margin: 20px 0 0; }
+.manage-installment-page button:disabled { opacity: .5; cursor: not-allowed; }
+.manage-installment-page .manage-plan-actions .emp-btn-secondary:disabled { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; opacity: 1; cursor: not-allowed; }
+.manage-installment-page .manage-plan-actions .emp-btn-secondary:disabled svg { color: #64748b; }
+.manage-installment-page .manage-transfer-submit:disabled { background: #f1f5f9; border-color: #e2e8f0; color: #64748b; opacity: 1; cursor: not-allowed; }
+.manage-installment-page :is(button,input):focus-visible { outline: 2px solid #0284c7; outline-offset: 3px; }
+@media (max-width: 900px) { .manage-plan-summary { grid-template-columns: 1fr; } .manage-installment-page .emp-card-header { flex-wrap: wrap; gap: 16px; } }
+@media (max-width: 600px) { .manage-installment-page .emp-hero-banner-desc { overflow-wrap: anywhere; } }

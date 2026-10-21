@@ -1,0 +1,735 @@
+/* Add Installment Plan Styles */
+.add-installment-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.add-installment-breadcrumb {
+  margin-bottom: 0;
+}
+
+/* Two-column layout */
+.add-installment-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+@media (max-width: 1200px) {
+  .add-installment-grid {
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 992px) {
+  .add-installment-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Form sections on the left */
+.add-installment-form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.add-installment-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.add-installment-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: -24px -24px 4px -24px;
+  padding: 18px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+.add-installment-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(9, 178, 255, 0.12);
+  color: #009fe3;
+  border: 1px solid rgba(9, 178, 255, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.add-installment-card-icon.secondary {
+  background: rgba(9, 178, 255, 0.14);
+  color: #009fe3;
+  border: 1px solid rgba(9, 178, 255, 0.32);
+}
+
+.add-installment-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.add-installment-card-desc {
+  font-size: 12.5px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+/* Field styling */
+.add-installment-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.add-installment-field-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.add-installment-field-label .required-star {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+.add-installment-field-hint {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.add-installment-input,
+.add-installment-select,
+.add-installment-textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  color: #0f172a;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.add-installment-input:focus,
+.add-installment-select:focus,
+.add-installment-textarea:focus {
+  outline: none;
+  border-color: #09B2FF;
+  box-shadow: 0 0 0 3px rgba(9, 178, 255, 0.2);
+}
+
+.add-installment-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 256 256'%3E%3Cpath fill='%2364748b' d='m213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 14px 14px;
+  padding-right: 46px;
+  cursor: pointer;
+}
+
+.add-installment-input:disabled,
+.add-installment-select:disabled,
+.add-installment-textarea:disabled {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.add-installment-input:disabled:not(:placeholder-shown) {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.add-installment-select:disabled {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 256 256'%3E%3Cpath fill='%23cbd5e1' d='m213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32'/%3E%3C/svg%3E");
+}
+
+/* Input group with addon */
+.add-installment-input-group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.add-installment-input-group .add-installment-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  flex: 1;
+}
+
+.add-installment-input-addon {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-left: none;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.add-installment-input-group:focus-within .add-installment-input-addon {
+  border-color: #09B2FF;
+}
+
+.add-installment-input-group:has(.add-installment-input:disabled) .add-installment-input-addon {
+  background: #f8fafc;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+
+.add-installment-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+/* Quick pills */
+.add-installment-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.add-installment-pill {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.add-installment-pill:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.add-installment-pill.active {
+  background: #002B7F;
+  color: #ffffff;
+  border-color: #002B7F;
+  box-shadow: none;
+}
+
+.add-installment-pill.active:hover {
+  background: #001f5c;
+  border-color: #001f5c;
+}
+
+.add-installment-pill:disabled {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* Card Footer Actions integrated into schedule card */
+.add-installment-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin: 16px -24px -24px -24px;
+  padding: 16px 24px;
+  border-top: 1px solid #e2e8f0;
+  border-bottom-left-radius: 14px;
+  border-bottom-right-radius: 14px;
+  background-color: #f8fafc;
+}
+
+.add-installment-btn-cancel {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.add-installment-btn-cancel:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.add-installment-btn-submit {
+  border: none;
+  background: #002B7F;
+  color: #ffffff;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 43, 127, 0.25);
+}
+
+.add-installment-btn-submit:hover:not(:disabled) {
+  background: #001f5c;
+}
+
+.add-installment-btn-submit:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Right column sticky summary */
+.add-installment-summary-col {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.add-installment-summary-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.add-installment-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -24px -24px 0 -24px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+.add-installment-summary-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.add-installment-summary-desc {
+  font-size: 12px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+  line-height: 1.35;
+}
+
+.add-installment-summary-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: rgba(9, 178, 255, 0.12);
+  color: #009fe3;
+  border: 1px solid rgba(9, 178, 255, 0.28);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.add-installment-summary-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.add-installment-summary-badge.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+/* Metric items */
+.add-installment-metric-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.add-installment-metric-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.add-installment-metric-label {
+  color: #64748b;
+}
+
+.add-installment-metric-value {
+  font-weight: 600;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.add-installment-metric-value.highlight {
+  color: #002B7F;
+  font-weight: 800;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.add-installment-metric-item.estimated-item {
+  padding-top: 10px;
+  margin-top: 2px;
+  border-top: 1px dashed #cbd5e1;
+}
+
+.add-installment-metric-item.estimated-item .add-installment-metric-label {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.add-installment-metric-item.estimated-item .add-installment-metric-value {
+  color: #002B7F;
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.add-installment-metric-value.accent-orange {
+  color: #ea580c;
+  font-weight: 700;
+}
+
+/* Approval notice below metric list */
+.add-installment-approval-notice {
+  margin-top: 4px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background-color: #15803d;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(21, 128, 61, 0.2);
+}
+
+.add-installment-approval-icon {
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.add-installment-approval-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.add-installment-approval-info strong {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.add-installment-approval-info p {
+  margin: 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.35;
+}
+
+/* Full-Width Installment Schedule Preview Card matching screenshot */
+.add-installment-form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.add-installment-schedule-full-card {
+  width: 100%;
+}
+
+.add-installment-schedule-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.add-installment-schedule-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.add-installment-schedule-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.add-installment-interval-group {
+  display: inline-flex;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+}
+
+.add-installment-interval-btn {
+  border: none;
+  background: #ffffff;
+  color: #334155;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-right: 1px solid #cbd5e1;
+  transition: all 0.15s ease;
+}
+
+.add-installment-interval-btn:last-child {
+  border-right: none;
+}
+
+.add-installment-interval-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.add-installment-interval-btn.active {
+  background: #002B7F;
+  color: #ffffff;
+}
+
+.add-installment-interval-btn.active:hover:not(:disabled) {
+  background: #001f5c;
+}
+
+.add-installment-interval-btn:disabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.add-installment-tool-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.add-installment-tool-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.add-installment-tool-btn:disabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+.add-installment-badge-pill {
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Schedule Table */
+.add-installment-schedule-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.add-installment-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.add-installment-preview-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.add-installment-preview-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.add-installment-preview-table tbody tr:hover td {
+  background: #fbfcfe;
+}
+
+.add-installment-rev-cell {
+  font-weight: 700;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.add-installment-month-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.add-installment-schedule-date-input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 13px;
+  color: #0f172a;
+  background: #ffffff;
+  width: 160px;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.add-installment-schedule-date-input:focus {
+  outline: none;
+  border-color: #09B2FF;
+  box-shadow: 0 0 0 2px rgba(9, 178, 255, 0.2);
+}
+
+.add-installment-schedule-date-input:read-only {
+  background: #f8fafc;
+  color: #64748b;
+  cursor: default;
+}
+
+.add-installment-short-month-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+/* Badges for Application to Invoice */
+.add-installment-badge-attached {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e0f2fe;
+  color: #0284c7;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.add-installment-badge-auto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.add-installment-preview-table tfoot td,
+.add-installment-preview-table tfoot tr:hover td {
+  padding: 14px 16px;
+  background-color: #f1f5f9 !important;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: none;
+}
+
+.add-installment-tfoot-label {
+  text-align: left !important;
+  font-weight: 700;
+  color: #334155;
+  font-size: 13.5px;
+}
+
+.add-installment-tfoot-amount {
+  text-align: right !important;
+  font-weight: 800;
+  color: #002B7F !important;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.add-installment-schedule-empty {
+  padding: 36px 20px;
+  text-align: center;
+  font-size: 13.5px;
+  color: #94a3b8;
+}

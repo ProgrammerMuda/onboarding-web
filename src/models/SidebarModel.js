@@ -222,6 +222,22 @@ export const SIDEBAR_SECTIONS = [
     ]
   },
   {
+    id: 'finance',
+    title: 'FINANCE',
+    items: [
+      { id: 'finance-invoice-adjustments', label: 'Invoice Adjustments', icon: 'Sliders', hasChildren: false },
+      { id: 'finance-installments', label: 'Installments', icon: 'CalendarClock', hasChildren: false },
+      { id: 'finance-payment-approval', label: 'Payment Approval', icon: 'Checks', hasChildren: false },
+      { id: 'finance-fine-removal', label: 'Fine Removal', icon: 'MinusCircle', hasChildren: false },
+      { id: 'finance-deposit', label: 'Deposit', icon: 'Wallet', hasChildren: true, children: [] },
+      { id: 'finance-invoice', label: 'Invoice', icon: 'Invoice', hasChildren: true, children: [] },
+      { id: 'finance-transactions', label: 'Transactions', icon: 'Receipt', hasChildren: true, children: [] },
+      { id: 'finance-warning-letter', label: 'Surat Peringatan', icon: 'WarningCircle', hasChildren: false },
+      { id: 'finance-final-warning-letter', label: 'Surat Peringatan Terakhir', icon: 'ChartBar', hasChildren: false },
+      { id: 'finance-report', label: 'Report Finance', icon: 'ChartBar', hasChildren: false }
+    ]
+  },
+  {
     id: 'tenant-relation',
     title: 'TENANT RELATION',
     items: [

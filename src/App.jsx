@@ -19,6 +19,7 @@ import OrganizationalStructureView from './views/organization/OrganizationalStru
 import WorkScheduleView from './views/schedule/WorkScheduleView';
 import { useWorkSchedulePresenter } from './presenters/useWorkSchedulePresenter';
 import EmployeeView from './views/employee/EmployeeView';
+import InstallmentView from './views/finance/InstallmentView';
 import { useEmployeePresenter } from './presenters/useEmployeePresenter';
 
 // MVP Presenters
@@ -31,7 +32,7 @@ import { usePermitTypePresenter } from './presenters/usePermitTypePresenter';
 import { useShiftTypePresenter } from './presenters/useShiftTypePresenter';
 
 export default function App() {
-  const sidebarPresenter = useSidebarPresenter('hr-work-schedules');
+  const sidebarPresenter = useSidebarPresenter('finance-installments');
   const onboardingPresenter = useOnboardingPresenter();
   const dashboardPresenter = useDashboardPresenter();
   const shiftPresenter = useShiftTypePresenter();
@@ -108,6 +109,8 @@ export default function App() {
               <WorkScheduleView presenter={workSchedulePresenter} />
             ) : sidebarPresenter.activeItem === 'hr-data-karyawan' ? (
               <EmployeeView presenter={employeePresenter} />
+            ) : sidebarPresenter.activeItem === 'finance-installments' ? (
+              <InstallmentView />
             ) : (
               <div className="bg-white p-5 border text-center my-4 shadow-sm" style={{ borderRadius: '12px' }}>
                 <h4 className="fw-bold text-dark mb-2 text-capitalize">

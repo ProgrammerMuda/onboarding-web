@@ -27,6 +27,11 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
         defaultState.expandedItems['hr-attendance'] = true;
       }
     }
+    const parent = SIDEBAR_SECTIONS.flatMap((section) => section.items)
+      .find((item) => item.hasChildren && (item.id === defaultState.activeItem
+        || item.children?.some((child) => child.id === defaultState.activeItem)));
+    defaultState.activeParent = parent?.id || defaultState.activeItem;
+    defaultState.expandedItems = parent ? { [parent.id]: true } : {};
     return defaultState;
   });
 
@@ -36,15 +41,14 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
       const isCurrentlyExpanded = !!prev.expandedItems[item.id];
       const isCurrentlyActiveParent = prev.activeParent === item.id;
 
-      if (item.hasChildren && item.children && item.children.length > 0) {
+      if (item.hasChildren && item.children) {
         // If clicking a new parent, open it and select its first child
         if (!isCurrentlyActiveParent) {
           return {
             ...prev,
             activeParent: item.id,
-            activeItem: item.children[0].id,
+            activeItem: item.children[0]?.id || item.id,
             expandedItems: {
-              ...prev.expandedItems,
               [item.id]: true
             }
           };
@@ -54,7 +58,6 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
         return {
           ...prev,
           expandedItems: {
-            ...prev.expandedItems,
             [item.id]: !isCurrentlyExpanded
           }
         };
@@ -77,7 +80,6 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
       activeItem: subId,
       activeParent: parentId,
       expandedItems: {
-        ...prev.expandedItems,
         [parentId]: true
       },
       isSidebarOpen: false
@@ -89,8 +91,8 @@ export function useSidebarPresenter(initialActive = 'hr-permit-type') {
     setState((prev) => ({
       ...prev,
       activeParent: item.id,
-      activeItem: prev.activeParent === item.id ? prev.activeItem : item.children[0].id,
-      expandedItems: { ...prev.expandedItems, [item.id]: true }
+      activeItem: prev.activeParent === item.id ? prev.activeItem : (item.children[0]?.id || item.id),
+      expandedItems: { [item.id]: true }
     }));
   }, []);
 

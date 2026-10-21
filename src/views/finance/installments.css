@@ -1,0 +1,464 @@
+.installment-stats {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.installment-stats .emp-stat-card { padding: 18px; gap: 12px; }
+.installment-stats .emp-stat-label { font-size: 12px; }
+.installment-demo-note { color: #64748b; font-size: 12px; margin: 0 0 12px; }
+.installment-toolbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.installment-toolbar .emp-search-input-group { flex: 1; min-width: 230px; }
+.installment-status-filter { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #475569; }
+.installment-status-filter select { width: 155px; font-size: 13px; }
+.installment-filter-panel { padding: 16px 24px; display: flex; gap: 16px; align-items: end; flex-wrap: wrap; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+.installment-filter-panel label { display: grid; gap: 6px; font-size: 12px; color: #475569; }
+.installment-filter-panel input { font-size: 13px; }
+.installment-table-scroll { overflow-x: auto; }
+.installment-table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 13px; }
+.installment-table th { background: #f8fafc; color: #64748b; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; text-align: left; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+.installment-table td { padding: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; color: #334155; }
+.installment-table tbody tr:hover { background: #f8fafc; }
+.installment-table strong { display: block; color: #0f172a; font-weight: 600; }
+.installment-creator { display: flex; flex-direction: column; gap: 2px; }
+.installment-creator-name { display: block; color: #0f172a; font-weight: 600; font-size: 13px; line-height: 1.25; }
+.installment-creator-email { display: block; color: #64748b; font-size: 12px; line-height: 1.25; word-break: break-all; }
+.installment-creator-date-sub { display: block; color: #0088cc; font-size: 11px; font-weight: 500; line-height: 1.25; margin-top: 2px; }
+.installment-muted { display: block; color: #64748b; font-size: 12px; margin-top: 4px; }
+.installment-unit-btn {
+  display: block;
+  color: #0f172a;
+  font-weight: 700;
+  font-size: 13px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+.installment-unit-btn:hover,
+.installment-unit-btn:focus-visible {
+  color: #002b7f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.installment-invoice { color: #002b7f; display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; margin-top: 4px; border: 0; padding: 0; background: transparent; cursor: pointer; text-align: left; }
+.installment-invoice:hover,
+.installment-invoice:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+.installment-payment { min-width: 195px; max-width: 250px; }
+.installment-payment-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; font-variant-numeric: tabular-nums; }
+.installment-percent-badge { font-size: 11px; font-weight: 600; color: #0284c7; background: #f0f9ff; padding: 2px 6px; border-radius: 4px; }
+.installment-payment-bottom { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px; margin-top: 5px; font-variant-numeric: tabular-nums; }
+.installment-paid-text { color: #166534; font-weight: 500; }
+.installment-rem-text { color: #dc2626; font-weight: 600; }
+.installment-payment progress { display: block; width: 100%; height: 5px; margin-top: 6px; border: 0; border-radius: 4px; overflow: hidden; background: #e2e8f0; accent-color: #0284c7; }
+.installment-payment progress::-webkit-progress-bar { background: #e2e8f0; }
+.installment-payment progress::-webkit-progress-value { background: #0284c7; }
+.installment-status-group { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.installment-approval-stack { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+.installment-approval-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+.installment-approval-badge.pending,
+.installment-approval-badge.rejected,
+.installment-approval-badge.approved {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-style: solid;
+}
+.installment-status { display: inline-flex; gap: 6px; align-items: center; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.installment-status.pending-approval,
+.installment-status.pending { color: #c2410c; background-color: #fff7ed; border: 1px solid #fed7aa; }
+.installment-status.pending-deletion { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; }
+.installment-status.active { color: #065f46; background-color: #ecfdf5; border: 1px solid #a7f3d0; }
+.installment-status.rejected { color: #dc2626; background-color: #fef2f2; border: 1px solid #fecaca; }
+.installment-status.completed { color: #475569; background-color: #f1f5f9; border: 1px solid #e2e8f0; }
+.emp-stat-icon-wrap.pending { background: #fff7ed; color: #ea580c; border: 1px solid #fed7aa; }
+.emp-stat-icon-wrap.completed { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+.installment-table th.installment-th-action { text-align: center; width: 70px; min-width: 70px; max-width: 80px; }
+.installment-action-cell { text-align: center; width: 70px; min-width: 70px; max-width: 80px; }
+.installment-action-cell .emp-action-menu-wrap { display: inline-flex; justify-content: center; }
+.installment-btn-view {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  color: var(--app-secondary, #09b2ff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  padding: 0;
+}
+.installment-btn-view svg {
+  color: inherit;
+  flex-shrink: 0;
+}
+.installment-btn-view:hover {
+  border-color: #cbd5e1;
+  background-color: #ffffff;
+  color: var(--app-secondary, #09b2ff);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+}
+.installment-btn-view:active {
+  transform: translateY(0);
+}
+.installment-row-actions { display: flex; gap: 6px; }
+.installment-empty { text-align: center; padding: 48px !important; }
+.installment-dialog { border: 0; border-radius: 14px; padding: 0; margin: auto; width: min(800px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; color: #334155; }
+.installment-dialog::backdrop { background: rgba(15,23,42,.45); }
+.installment-modal-subtitle { font-size: 13px; color: #64748b; font-weight: normal; margin-top: 2px; display: block; }
+.installment-detail-summary-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; }
+.installment-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; margin: 0; }
+.installment-detail-grid dt { color: #64748b; font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+.installment-detail-grid dd { margin: 0; font-size: 13px; font-weight: 600; color: #0f172a; }
+.installment-approval-stack-inline { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.installment-muted-inline { color: #64748b; font-size: 12px; font-weight: normal; }
+
+.installment-items-section { margin-top: 8px; }
+.installment-items-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; }
+.installment-items-title { font-size: 15px; font-weight: 700; color: #0f172a; margin: 0; }
+.installment-items-desc { font-size: 12px; color: #64748b; margin: 3px 0 0; }
+.installment-items-badge { font-size: 12px; font-weight: 600; color: #0284c7; background: #e0f2fe; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+
+.installment-items-table-wrap { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #fff; }
+.installment-items-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.installment-items-table th { background: #f8fafc; color: #64748b; font-size: 11px; font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 1px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.03em; }
+.installment-items-table td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle; }
+.installment-items-table tbody tr:last-child td { border-bottom: none; }
+.installment-items-table tbody tr:hover { background: #f8fafc; }
+
+.installment-item-amount { font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums; }
+.installment-item-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; }
+.installment-item-status.waiting_approval { color: #c2410c; background: #fff7ed; border: 1px solid #fed7aa; }
+.installment-item-status.pending { color: #0369a1; background: #f0f9ff; border: 1px solid #bae6fd; }
+.installment-item-status.paid { color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; }
+.installment-item-status.rejected { color: #b91c1c; background: #fee2e2; border: 1px solid #fecaca; }
+
+.installment-item-payment-info { display: flex; flex-direction: column; gap: 2px; }
+.installment-payment-badge { display: inline-block; font-size: 11px; font-weight: 600; color: #0f172a; }
+.installment-payment-ref { font-size: 11px; color: #64748b; font-family: monospace; }
+.installment-payment-ref-pending { font-size: 11px; color: #64748b; font-style: italic; }
+.installment-muted-dash { color: #94a3b8; }
+.installment-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.installment-form label { display: grid; gap: 7px; font-size: 13px; }
+.installment-form input { font-size: 13px; }
+.installment-page :is(button,input,select):focus-visible { outline: 2px solid #0284c7; outline-offset: 3px; }
+
+/* Create Installment Plan Modal (matching Division modal architecture & image design) */
+.installment-create-dialog {
+  width: min(960px, calc(100vw - 32px));
+  max-height: calc(100dvh - 40px);
+}
+.installment-create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+}
+.installment-create-header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.installment-multi-party-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+.installment-create-body {
+  padding: 0;
+  max-height: calc(100dvh - 160px);
+  overflow-y: auto;
+}
+
+/* Sections */
+.installment-create-section {
+  background: #ffffff;
+  padding: 0;
+  margin: 0;
+}
+.installment-create-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #002b7f;
+  margin-bottom: 18px;
+}
+.installment-create-section-title.navy {
+  color: #002b7f;
+}
+.installment-create-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.installment-field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+.installment-required {
+  color: #e11d48;
+}
+.installment-create-select {
+  font-size: 13px;
+}
+.installment-create-select:disabled,
+.installment-page input:disabled,
+.installment-page select:disabled,
+.installment-page textarea:disabled {
+  background-color: #f8fafc;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+/* Summary Cards (3 Columns) */
+.installment-create-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.installment-create-summary-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.installment-create-card-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+.installment-create-card-main {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.installment-create-card-sub {
+  font-size: 11px;
+  line-height: 1.3;
+}
+.installment-create-card-sub.blue {
+  color: #002b7f;
+  font-weight: 600;
+}
+.installment-create-summary-card.danger-card {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+.danger-text {
+  color: #be123c !important;
+}
+.danger-sub {
+  color: #e11d48;
+}
+
+/* Terms Input & Quick Select */
+.installment-input-group {
+  display: flex;
+  align-items: stretch;
+}
+.installment-input-group .form-control {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  font-size: 13px;
+}
+.installment-input-addon {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-left: none;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+}
+.installment-quick-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.installment-quick-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+.installment-quick-pills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.installment-quick-pill {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  padding: 7px 11px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.installment-quick-pill:hover:not(:disabled) {
+  background: #e0f2fe;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+.installment-quick-pill.active {
+  background: #002b7f;
+  color: #ffffff;
+  border-color: #002b7f;
+}
+.installment-quick-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Estimated Box */
+.installment-estimate-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 40px;
+}
+.installment-estimate-label {
+  font-size: 12px;
+  color: #64748b;
+}
+.installment-estimate-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: #002b7f;
+  font-variant-numeric: tabular-nums;
+}
+.installment-estimate-note {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 4px;
+  line-height: 1.3;
+}
+
+/* Footer & Buttons */
+.installment-create-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+.installment-create-footer .emp-btn-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: #94a3b8;
+  border-color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .installment-create-summary-grid {
+    grid-template-columns: 1fr;
+  }
+  .installment-create-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 1200px) {
+  .installment-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .installment-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .installment-page .emp-card-header { align-items: stretch; flex-direction: column; gap: 16px; }
+  .installment-page .emp-card-actions { flex-wrap: wrap; }
+  .installment-toolbar { align-items: stretch; }
+  .installment-toolbar .emp-search-input-group { min-width: 0; flex-basis: 100%; }
+  .installment-form, .installment-detail-grid { grid-template-columns: 1fr; }
+  .installment-page .emp-table-footer { flex-wrap: wrap; gap: 12px; }
+}
+.installment-linked-invoice { position: relative; display: flex; align-items: center; }
+.installment-linked-invoice > svg { position: absolute; left: 12px; color: var(--app-secondary, #09B2FF); pointer-events: none; }
+.installment-linked-invoice > input { padding-left: 38px; background-color: #f8fafc; cursor: default; }
+.installment-invoice-help { font-size: 12px; font-weight: 400; line-height: 1.5; color: #64748b; }
+.installment-create-subtitle { margin: 6px 0 0; color: #64748b; font-size: 12px; line-height: 1.5; }
+.installment-plan-layout { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); }
+.installment-plan-fields { padding: 26px; min-width: 0; }
+.installment-plan-fields .installment-create-section + .installment-create-section { border-top: 1px solid #e2e8f0; margin-top: 24px; padding-top: 24px; }
+.installment-invoice-fields { display: grid; gap: 16px; }
+.installment-plan-fields .form-control, .installment-plan-fields .form-select { min-height: 42px; font-size: 13px; }
+.installment-plan-fields textarea { resize: vertical; }
+.installment-plan-review { padding: 26px; background: #f8fafc; border-left: 1px solid #e2e8f0; min-width: 0; }
+.installment-plan-review h4 { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 6px; }
+.installment-review-intro { font-size: 12px; line-height: 1.5; color: #64748b; margin-bottom: 24px; }
+.installment-review-estimate { padding: 20px 0; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; }
+.installment-review-estimate > span, .installment-review-estimate small { display: block; color: #475569; font-size: 12px; line-height: 1.5; }
+.installment-review-estimate strong { display: block; margin: 10px 0 6px; color: #002b7f; font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.installment-review-facts { margin: 22px 0; display: grid; gap: 16px; }
+.installment-review-facts > div { display: flex; justify-content: space-between; gap: 16px; font-size: 12px; }
+.installment-review-facts dt { font-weight: 400; color: #64748b; }
+.installment-review-facts dd { margin: 0; font-weight: 600; text-align: right; color: #334155; }
+.installment-review-note { color: #64748b; font-size: 11px; line-height: 1.6; margin: 0; }
+.installment-review-approval { margin-top: 24px; padding: 14px 16px; border-radius: 8px; background-color: #15803d; display: flex; align-items: center; justify-content: flex-start; gap: 10px; color: #ffffff; }
+.installment-review-approval svg { flex-shrink: 0; }
+.installment-review-approval strong { font-size: 12px; }
+.installment-review-approval p { margin: 4px 0 0; font-size: 11px; line-height: 1.5; color: #ffffff; }
+@media (max-width: 700px) {
+  .installment-plan-layout { grid-template-columns: 1fr; }
+  .installment-plan-fields, .installment-plan-review { padding: 20px; }
+  .installment-plan-review { border-left: 0; border-top: 1px solid #e2e8f0; }
+  .installment-create-footer { flex-wrap: wrap; }
+}
+.installment-schedule-preview { padding: 24px; border-top: 1px solid #e2e8f0; }
+.installment-preview-header { display: flex; flex-direction: column; gap: 14px; margin-bottom: 16px; }
+.installment-preview-header h4 { display: flex; align-items: center; gap: 8px; margin: 0; color: #002b7f; font-size: 14px; font-weight: 700; }
+.installment-preview-header p, .installment-preview-empty { color: #64748b; font-size: 12px; line-height: 1.5; margin: 6px 0 0; }
+.installment-preview-tools { display: flex; gap: 6px; flex-wrap: wrap; }
+.installment-preview-scroll { overflow: auto; border: 1px solid #e2e8f0; border-radius: 8px; max-height: 320px; }
+.installment-preview-table { width: 100%; min-width: 660px; font-size: 12px; border-collapse: collapse; }
+.installment-preview-table th, .installment-preview-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+.installment-preview-table th { background: #f8fafc; font-weight: 600; color: #475569; }
+.installment-preview-table thead th { position: sticky; top: 0; z-index: 1; }
+.installment-preview-table :is(th,td):last-child { text-align: right; white-space: nowrap; font-weight: 600; }
+.installment-preview-table input { font-size: 12px; min-width: 155px; }
+.installment-preview-table input[readonly] { background: #f1f5f9; color: #475569; }
+.installment-preview-attached { color: #0369a1; line-height: 1.5; }
+.installment-preview-table tfoot { color: #002b7f; background: #f8fafc; }

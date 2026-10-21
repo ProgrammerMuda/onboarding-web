@@ -809,11 +809,11 @@ export default function WorkScheduleView({ presenter }) {
       <div className="ws-hero">
         <div className="ws-hero-left">
           <div className="ws-hero-icon-box">
-            <CalendarCheck size={28} weight="bold" />
+            <CalendarDots size={28} weight="bold" />
           </div>
           <div>
             <div className="ws-hero-tag">ATTENDANCE</div>
-            <h1 className="ws-hero-title">Work Schedules &amp; Shift Roster</h1>
+            <h1 className="ws-hero-title">Work Schedule</h1>
             <p className="ws-hero-desc">
               Manage weekly operational rosters with live synchronization to master Shift Types.
             </p>
