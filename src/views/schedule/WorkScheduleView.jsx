@@ -1563,176 +1563,192 @@ export default function WorkScheduleView({ presenter }) {
                         </td>
                       </tr>
                     ) : (
-                      paginatedSchedules.map((item) => (
-                        <tr key={`${item.emp.id}_${item.dateStr}`}>
-                          <td style={{ fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>
-                            {item.formattedDate}
-                          </td>
-                          <td>
-                            <div className="emp-profile-cell">
-                              <img
-                                src={item.emp.avatar || DEFAULT_AVATAR}
-                                alt={item.emp.name}
-                                className="emp-avatar-img"
-                                onError={(e) => {
-                                  e.target.src = DEFAULT_AVATAR;
-                                }}
-                              />
-                              <div>
-                                <span
-                                  className="ws-emp-name-bold"
-                                  style={{ cursor: 'pointer', display: 'block' }}
-                                  onClick={() => {
-                                    setSelectedEmpId(item.emp.id);
-                                    setActiveTab('individual');
-                                    setIndividualSubTab('detail');
-                                  }}
-                                  title={item.emp.name}
-                                  onMouseEnter={(e) => {
-                                    const rect = e.currentTarget.getBoundingClientRect();
-                                    setHoverTooltip({
-                                      text: item.emp.name,
-                                      x: rect.left + rect.width / 2,
-                                      y: rect.top,
-                                      height: rect.height
-                                    });
-                                  }}
-                                  onMouseLeave={() => setHoverTooltip(null)}
-                                >
-                                  {item.emp.name}
-                                </span>
-                                <span className="ws-emp-email-muted">
-                                  {item.emp.email || `${item.emp.nik || 'emp'}@proapps.co.id`}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="ws-col-dept">
-                            <span
-                              style={{
-                                color: '#334155',
-                                fontWeight: 600,
-                                maxWidth: '180px',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                                display: 'inline-block',
-                                verticalAlign: 'bottom',
-                                cursor: 'default'
-                              }}
-                              title={getEmployeeJabatan(item.emp, item.deptName)}
-                              onMouseEnter={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                setHoverTooltip({
-                                  text: getEmployeeJabatan(item.emp, item.deptName),
-                                  x: rect.left + rect.width / 2,
-                                  y: rect.top,
-                                  height: rect.height
-                                });
-                              }}
-                              onMouseLeave={() => setHoverTooltip(null)}
-                            >
-                              {getEmployeeJabatan(item.emp, item.deptName)}
-                            </span>
-                          </td>
-                          <td className="ws-col-shift-type">
-                            {(() => {
-                              const isHoliday = item.shift.id === 'off-holiday' || item.shift.offType === 'holiday';
-                              const isCutiBersama = item.shift.id === 'off-cuti-bersama' || item.shift.offType === 'cuti_bersama';
-                              const isSpecialHoliday = isHoliday || isCutiBersama;
-                              const isOff = isSpecialHoliday || item.shift.id === 'off';
-                              const periodInfo = getShiftPeriodInfo(item.shift, isOff);
-                              const PeriodIcon = periodInfo.Icon;
+                      paginatedSchedules.map((item) => {
+                        const isHoliday = item.shift.id === 'off-holiday' || item.shift.offType === 'holiday';
+                        const isCutiBersama = item.shift.id === 'off-cuti-bersama' || item.shift.offType === 'cuti_bersama';
+                        const isSpecialHoliday = isHoliday || isCutiBersama;
+                        const isOff = isSpecialHoliday || item.shift.id === 'off';
+                        const periodInfo = getShiftPeriodInfo(item.shift, isOff);
+                        const PeriodIcon = periodInfo.Icon;
 
-                              return (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-                                  <div
+                        return (
+                          <tr key={`${item.emp.id}_${item.dateStr}`}>
+                            <td style={{ fontWeight: 600, color: '#0f172a', whiteSpace: 'nowrap' }}>
+                              {item.formattedDate}
+                            </td>
+                            <td>
+                              <div className="emp-profile-cell">
+                                <img
+                                  src={item.emp.avatar || DEFAULT_AVATAR}
+                                  alt={item.emp.name}
+                                  className="emp-avatar-img"
+                                  onError={(e) => {
+                                    e.target.src = DEFAULT_AVATAR;
+                                  }}
+                                />
+                                <div>
+                                  <span
+                                    className="ws-emp-name-bold"
+                                    style={{ cursor: 'pointer', display: 'block' }}
+                                    onClick={() => {
+                                      setSelectedEmpId(item.emp.id);
+                                      setActiveTab('individual');
+                                      setIndividualSubTab('detail');
+                                    }}
+                                    title={item.emp.name}
+                                    onMouseEnter={(e) => {
+                                      const rect = e.currentTarget.getBoundingClientRect();
+                                      setHoverTooltip({
+                                        text: item.emp.name,
+                                        x: rect.left + rect.width / 2,
+                                        y: rect.top,
+                                        height: rect.height
+                                      });
+                                    }}
+                                    onMouseLeave={() => setHoverTooltip(null)}
+                                  >
+                                    {item.emp.name}
+                                  </span>
+                                  <span className="ws-emp-email-muted">
+                                    {item.emp.email || `${item.emp.nik || 'emp'}@proapps.co.id`}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="ws-col-dept">
+                              <span
+                                style={{
+                                  color: '#334155',
+                                  fontWeight: 600,
+                                  maxWidth: '180px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  display: 'inline-block',
+                                  verticalAlign: 'bottom',
+                                  cursor: 'default'
+                                }}
+                                title={getEmployeeJabatan(item.emp, item.deptName)}
+                                onMouseEnter={(e) => {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setHoverTooltip({
+                                    text: getEmployeeJabatan(item.emp, item.deptName),
+                                    x: rect.left + rect.width / 2,
+                                    y: rect.top,
+                                    height: rect.height
+                                  });
+                                }}
+                                onMouseLeave={() => setHoverTooltip(null)}
+                              >
+                                {getEmployeeJabatan(item.emp, item.deptName)}
+                              </span>
+                            </td>
+                            <td className="ws-col-shift-type">
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                                <div
+                                  style={{
+                                    width: '36px',
+                                    height: '36px',
+                                    borderRadius: '8px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: periodInfo.bg,
+                                    color: periodInfo.color,
+                                    border: `1px solid ${periodInfo.border}`,
+                                    flexShrink: 0
+                                  }}
+                                  title={periodInfo.label}
+                                >
+                                  <PeriodIcon size={19} weight="bold" />
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                  <span
                                     style={{
-                                      width: '36px',
-                                      height: '36px',
-                                      borderRadius: '8px',
+                                      fontWeight: isSpecialHoliday ? 700 : (isOff ? 600 : 700),
+                                      color: (isSpecialHoliday || isOff) ? '#475569' : '#0f172a',
+                                      fontSize: '13px',
+                                      lineHeight: 1.25,
+                                      display: 'block'
+                                    }}
+                                  >
+                                    {isOff && !isSpecialHoliday ? 'Day Off' : item.shift.name}
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: '12px',
+                                      color: isSpecialHoliday ? '#64748b' : (isOff ? '#94a3b8' : '#64748b'),
                                       display: 'flex',
                                       alignItems: 'center',
-                                      justifyContent: 'center',
-                                      backgroundColor: periodInfo.bg,
-                                      color: periodInfo.color,
-                                      border: `1px solid ${periodInfo.border}`,
-                                      flexShrink: 0
+                                      gap: '4px',
+                                      marginTop: '3px',
+                                      lineHeight: 1.25
                                     }}
-                                    title={periodInfo.label}
                                   >
-                                    <PeriodIcon size={19} weight="bold" />
-                                  </div>
-                                  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                                    <span
-                                      style={{
-                                        fontWeight: isSpecialHoliday ? 700 : (isOff ? 600 : 700),
-                                        color: (isSpecialHoliday || isOff) ? '#475569' : '#0f172a',
-                                        fontSize: '13px',
-                                        lineHeight: 1.25,
-                                        display: 'block'
-                                      }}
-                                    >
-                                      {isOff && !isSpecialHoliday ? 'Day Off' : item.shift.name}
-                                    </span>
-                                    <span
-                                      style={{
-                                        fontSize: '12px',
-                                        color: isSpecialHoliday ? '#64748b' : (isOff ? '#94a3b8' : '#64748b'),
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        marginTop: '3px',
-                                        lineHeight: 1.25
-                                      }}
-                                    >
-                                      {isSpecialHoliday || isOff ? (
-                                        'No Time • 0 hours'
-                                      ) : (
-                                        <>
-                                          <Clock size={13} weight="bold" style={{ color: '#0284c7' }} />
-                                          <span>{item.shift.checkIn} – {item.shift.checkOut} • {item.shift.workHours} hours</span>
-                                        </>
-                                      )}
-                                    </span>
-                                  </div>
+                                    {isSpecialHoliday || isOff ? (
+                                      'No Time • 0 hours'
+                                    ) : (
+                                      <>
+                                        <Clock size={13} weight="bold" style={{ color: '#0284c7' }} />
+                                        <span>{item.shift.checkIn} – {item.shift.checkOut} • {item.shift.workHours} hours</span>
+                                      </>
+                                    )}
+                                  </span>
                                 </div>
-                              );
-                            })()}
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            {(() => {
-                              const isOff = item.shift.id === 'off'
-                                || item.shift.id === 'off-cuti-bersama'
-                                || item.shift.offType === 'cuti_bersama';
-                              return (
-                                <span
-                                  className={`ws-shift-code-pill ${isOff ? 'is-off' : ''}`}
-                                  style={{
-                                    backgroundColor: isOff ? '#f1f5f9' : (item.shift.color || '#002B7F'),
-                                    color: isOff ? '#94a3b8' : '#ffffff',
-                                    border: isOff ? '1px solid #e2e8f0' : 'none'
-                                  }}
+                              </div>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span
+                                className={`ws-shift-code-pill ${isOff ? 'is-off' : ''}`}
+                                style={{
+                                  backgroundColor: isOff ? '#f1f5f9' : (item.shift.color || '#002B7F'),
+                                  color: isOff ? '#94a3b8' : '#ffffff',
+                                  border: isOff ? '1px solid #e2e8f0' : 'none'
+                                }}
+                              >
+                                {isOff ? 'OFF' : item.shift.code}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              {isOff ? (
+                                <button
+                                  type="button"
+                                  className="emp-btn-secondary"
+                                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                                  onClick={() => openAssignModal(item.emp, new Date(item.dateStr + 'T00:00:00'))}
+                                  title={`Edit shift for ${item.emp.name}`}
                                 >
-                                  {isOff ? 'OFF' : item.shift.code}
-                                </span>
-                              );
-                            })()}
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <button
-                              type="button"
-                              className="emp-btn-secondary"
-                              style={{ padding: '6px 12px', fontSize: '12px' }}
-                              onClick={() => openAssignModal(item.emp, new Date(item.dateStr + 'T00:00:00'))}
-                              title={`Edit shift for ${item.emp.name}`}
-                            >
-                              <PencilSimple size={14} weight="bold" />
-                              <span>Edit</span>
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                                  <PencilSimple size={14} weight="bold" />
+                                  <span>Edit</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="emp-btn-secondary ws-btn-locked"
+                                  disabled
+                                  aria-disabled="true"
+                                  style={{
+                                    padding: '6px 12px',
+                                    fontSize: '12px',
+                                    backgroundColor: '#f1f5f9',
+                                    color: '#64748b',
+                                    borderColor: '#e2e8f0',
+                                    cursor: 'not-allowed',
+                                    opacity: 0.85,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                  }}
+                                  title={`${item.shift.name}: shift sudah terkunci dan tidak dapat diubah.`}
+                                >
+                                  <LockSimple size={14} weight="bold" />
+                                  <span>Locked</span>
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>

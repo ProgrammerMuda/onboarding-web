@@ -14,6 +14,7 @@ import {
   bulkAssignEmployeeShifts,
   calculateEmployeeWeekStats,
   calculateRosterSummary,
+  getEmployeeShiftForDate,
   OFF_SHIFT,
   HOLIDAY_SHIFT,
   CUTI_BERSAMA_SHIFT
@@ -125,7 +126,17 @@ export function useWorkSchedulePresenter() {
 
   // Single Shift Assignment Dialog
   const openAssignModal = useCallback((employee, dateObj) => {
+    if (!employee || !dateObj) return;
     const dStr = formatDateKey(dateObj);
+    const shift = getEmployeeShiftForDate(schedules, employee, dStr, shiftTypes);
+    const isHoliday = shift.id === 'off-holiday' || shift.offType === 'holiday';
+    const isCutiBersama = shift.id === 'off-cuti-bersama' || shift.offType === 'cuti_bersama';
+    const isSpecialHoliday = isHoliday || isCutiBersama;
+    const isOff = isSpecialHoliday || shift.id === 'off';
+
+    // Shifts already assigned to work are locked and cannot be edited
+    if (!isOff) return;
+
     const key = `${employee.id}_${dStr}`;
     const currentEntry = schedules[key];
 
@@ -136,7 +147,7 @@ export function useWorkSchedulePresenter() {
       currentShiftId: currentEntry?.shiftTypeId || 'off',
       note: currentEntry?.note || ''
     });
-  }, [schedules]);
+  }, [schedules, shiftTypes]);
 
   const closeAssignModal = useCallback(() => {
     setAssignModal((prev) => ({ ...prev, isOpen: false }));
