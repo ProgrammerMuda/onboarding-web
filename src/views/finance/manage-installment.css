@@ -1,7 +1,7 @@
 .manage-plan-summary { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px; margin-bottom: 20px; }
 .manage-installment-page .emp-card-header { border-bottom: 1.5px solid #e2e8f0; }
-.manage-plan-pay-all { background: #15803d; border-color: #15803d; }
-.manage-plan-pay-all:hover:not(:disabled) { background: #166534; }
+.manage-plan-pay-all { background: #002b7f; border-color: #002b7f; }
+.manage-plan-pay-all:hover:not(:disabled) { background: #001f5c; border-color: #001f5c; }
 .manage-plan-table { min-width: 1050px; }
 .manage-plan-table th { white-space: nowrap; }
 .manage-plan-table td { vertical-align: middle; }

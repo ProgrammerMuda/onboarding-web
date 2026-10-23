@@ -1,132 +1,679 @@
-import { useState, useCallback } from 'react';
-import { INITIAL_PERMIT_TYPES, PERMIT_STORAGE_KEY, validatePermitType } from '../models/PermitTypeModel';
+import { useState, useCallback, useMemo } from 'react';
+import {
+  PERMIT_STORAGE_KEY,
+  validatePermitType,
+  readHolidays,
+  persistHolidays,
+  calculateHolidayImpact,
+  readEmployeeBalances,
+  persistEmployeeBalances,
+  readAdjustments,
+  persistAdjustments,
+  ADJUSTMENT_REASON_CATEGORIES
+} from '../models/PermitTypeModel';
+import { EMPLOYEES } from '../models/ApprovalFlowModel';
 
 export function usePermitTypePresenter() {
+  // Navigation: 'policies' | 'holidays' | 'balances'
+  const [activeTab, setActiveTab] = useState('policies');
+
+  // =========================================================================
+  // TAB 1: PERMIT & LEAVE POLICIES
+  // =========================================================================
   const [permits, setPermits] = useState(() => {
-    let existing = INITIAL_PERMIT_TYPES;
+    let existing = [];
     try {
       const raw = JSON.parse(localStorage.getItem(PERMIT_STORAGE_KEY));
-      const saved = Array.isArray(raw) ? raw.map((item) => item && ({ 
-        ...item, 
+      const saved = Array.isArray(raw) ? raw.map((item) => item && ({
+        ...item,
+        category: item.category || (item.name.toLowerCase().includes('annual') ? 'annual' : 'special'),
+        eventDurationDays: item.eventDurationDays ?? null,
         allowedDates: item.allowedDates ?? 'both',
-        isActive: item.isActive !== false
+        isActive: item.isActive !== false,
+        dayCountType: item.dayCountType || 'work_days',
+        allowHalfDay: item.allowHalfDay ?? true,
+        requiresDocument: 'always',
+        documentMinDays: 1,
+        allowNegativeBalance: item.allowNegativeBalance ?? false,
+        maxNegativeDays: item.maxNegativeDays ?? 0,
+        allowCarryOver: item.allowCarryOver ?? false,
+        maxCarryOverDays: item.maxCarryOverDays ?? 0,
+        carryOverExpiryMonths: item.carryOverExpiryMonths ?? 0
       })) : raw;
-      if (Array.isArray(saved) && saved.every((item) => item && typeof item.id === 'string' && typeof item.name === 'string' && typeof item.description === 'string' && typeof item.hasQuota === 'boolean' && !validatePermitType(item, []))) existing = saved;
-      // Seed the demo examples once, preserving saved records and later updates.
-      const seedKey = `${PERMIT_STORAGE_KEY}.demo-v2`;
-      if (localStorage.getItem(seedKey)) return existing;
-      const missing = INITIAL_PERMIT_TYPES.filter((sample) => !existing.some((item) =>
-        item.id === sample.id || item.name.trim().toLowerCase() === sample.name.toLowerCase()));
-      const seeded = [...existing, ...missing];
-      localStorage.setItem(PERMIT_STORAGE_KEY, JSON.stringify(seeded));
-      localStorage.setItem(seedKey, 'true');
-      return seeded;
-    } catch { /* Keep existing data when browser storage is unavailable. */ }
+      if (Array.isArray(saved)) existing = saved;
+    } catch { /* storage fallback */ }
     return existing;
   });
+
   const [page, setPage] = useState(1);
   const [query, setQuery] = useState('');
-  const [frequency, setFrequency] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [draft, setDraft] = useState(null);
+  const [detailPermit, setDetailPermit] = useState(null);
   const [statusTarget, setStatusTarget] = useState(null);
   const [error, setError] = useState('');
   const [notification, setNotification] = useState('');
   const [successModal, setSuccessModal] = useState(null);
 
-  function persist(next, message) {
+  function persistPermits(next, message = '') {
     try {
-      localStorage.setItem(PERMIT_STORAGE_KEY, JSON.stringify(next));
-      setPermits(next);
+      const normalized = next.map((permit) => ({ ...permit, requiresDocument: 'always', documentMinDays: 1 }));
+      localStorage.setItem(PERMIT_STORAGE_KEY, JSON.stringify(normalized));
+      setPermits(normalized);
       setPage(1);
-      setNotification(message);
+      if (message) setNotification(message);
       setError('');
       return true;
     } catch {
-      setError('Changes could not be saved. Browser storage is unavailable. Please try again.');
+      setError('Changes could not be saved. Browser storage is unavailable.');
       return false;
     }
   }
 
-  const filteredPermits = permits.filter((permit) => {
-    const matchesQuery = `${permit.name} ${permit.description}`.toLocaleLowerCase('id').includes(query.trim().toLocaleLowerCase('id'));
-    const matchesFrequency = frequency === 'all' || (frequency === 'unlimited' ? !permit.hasQuota : permit.hasQuota && permit.frequency === frequency);
-    const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? permit.isActive !== false : permit.isActive === false);
-    return matchesQuery && matchesFrequency && matchesStatus;
-  });
+  const filteredPermits = useMemo(() => {
+    return permits.filter((permit) => {
+      const q = query.trim().toLocaleLowerCase('id');
+      const matchesQuery = !q || permit.name.toLocaleLowerCase('id').includes(q);
+      const matchesCategory = categoryFilter === 'all' || permit.category === categoryFilter;
+      const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? permit.isActive !== false : permit.isActive === false);
+      return matchesQuery && matchesCategory && matchesStatus;
+    });
+  }, [permits, query, categoryFilter, statusFilter]);
 
   const pageSize = 8;
   const totalPages = Math.max(1, Math.ceil(filteredPermits.length / pageSize));
   const currentPage = Math.min(page, totalPages);
+
+  const openEditor = (permit) => {
+    setError('');
+    setDraft(permit ? { ...permit, requiresDocument: 'always', documentMinDays: 1 } : {
+      id: `permit-${Date.now()}`,
+      name: '',
+      category: 'annual',
+      description: '',
+      hasQuota: true,
+      quota: '',
+      eventDurationDays: '',
+      isProrated: false,
+      frequency: 'annual',
+      allowedDates: 'both',
+      dayCountType: 'work_days',
+      allowHalfDay: true,
+      requiresDocument: 'always',
+      documentMinDays: 1,
+      allowNegativeBalance: false,
+      maxNegativeDays: 0,
+      allowCarryOver: false,
+      maxCarryOverDays: 0,
+      carryOverExpiryMonths: 0,
+      isActive: true
+    });
+  };
+
+  const closeEditor = () => {
+    setDraft(null);
+    setError('');
+  };
+
+  const saveDraft = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!draft) return;
+    const err = validatePermitType(draft, permits);
+    if (err) {
+      setError(err);
+      return;
+    }
+
+    const isNew = !permits.some((p) => p.id === draft.id);
+    const normalizedDraft = {
+      ...draft,
+      name: draft.name.trim(),
+      isActive: isNew ? true : draft.isActive !== false,
+      requiresDocument: 'always',
+      documentMinDays: 1,
+      hasQuota: draft.category === 'annual',
+      quota: draft.category === 'annual' ? Number(draft.quota) : null,
+      frequency: draft.category === 'annual' ? 'annual' : null,
+      eventDurationDays: draft.category === 'special' ? Number(draft.eventDurationDays) : null,
+      isProrated: draft.category === 'annual' && Boolean(draft.isProrated),
+      allowNegativeBalance: draft.category === 'annual' && Boolean(draft.allowNegativeBalance),
+      maxNegativeDays: draft.category === 'annual' && draft.allowNegativeBalance ? Number(draft.maxNegativeDays) : 0,
+      allowCarryOver: draft.category === 'annual' && Boolean(draft.allowCarryOver),
+      maxCarryOverDays: draft.category === 'annual' && draft.allowCarryOver ? Number(draft.maxCarryOverDays) : 0,
+      carryOverExpiryMonths: draft.category === 'annual' && draft.allowCarryOver ? Number(draft.carryOverExpiryMonths) : 0,
+    };
+    const next = isNew ? [normalizedDraft, ...permits] : permits.map((p) => p.id === draft.id ? normalizedDraft : p);
+
+    if (persistPermits(next, '')) {
+      const savedName = draft.name;
+      closeEditor();
+      setSuccessModal({
+        title: isNew ? 'Leave type created' : 'Leave type updated',
+        subtext: `“${savedName}” has been saved.`
+      });
+    }
+  };
+
+  const requestToggleStatus = (permit) => {
+    setError('');
+    setStatusTarget(permit);
+  };
+
+  const closeStatusModal = () => {
+    setStatusTarget(null);
+    setError('');
+  };
+
+  const confirmToggleStatus = () => {
+    if (!statusTarget) return;
+    const willBeActive = statusTarget.isActive === false;
+    const next = permits.map((p) => p.id === statusTarget.id ? { ...p, isActive: willBeActive } : p);
+    if (persistPermits(next, '')) {
+      const targetName = statusTarget.name;
+      setStatusTarget(null);
+      setSuccessModal({
+        title: willBeActive ? 'Leave type reactivated' : 'Leave type deactivated',
+        subtext: willBeActive
+          ? `“${targetName}” is available for new requests again.`
+          : `“${targetName}” remains in your records and is unavailable for new requests.`
+      });
+    }
+  };
+
+  // =========================================================================
+  // TAB 2: HOLIDAYS & CUTI BERSAMA
+  // =========================================================================
+  const [holidays, setHolidays] = useState(readHolidays);
+  const [holidaySearch, setHolidaySearch] = useState('');
+  const [holidayTypeFilter, setHolidayTypeFilter] = useState('all'); // 'all' | 'national_holiday' | 'cuti_bersama'
+  const [holidayViewMode, setHolidayViewMode] = useState('calendar'); // 'calendar' | 'table'
+  const [holidayCalendarDate, setHolidayCalendarDate] = useState(() => new Date(2026, 0, 1));
+  const [editingHoliday, setEditingHoliday] = useState(null);
+  const [holidayDraft, setHolidayDraft] = useState(null);
+  const [pastAmendmentReason, setPastAmendmentReason] = useState('');
+  const [showImpactModal, setShowImpactModal] = useState(false);
+
+  const filteredHolidays = useMemo(() => {
+    return holidays.filter(h => {
+      const q = holidaySearch.trim().toLowerCase();
+      const matchesSearch = !q || h.name.toLowerCase().includes(q) || h.date.includes(q);
+      const matchesType = holidayTypeFilter === 'all'
+        || (holidayTypeFilter === 'cuti_bersama' ? h.isCutiBersama : !h.isCutiBersama);
+      return matchesSearch && matchesType;
+    }).sort((a, b) => a.date.localeCompare(b.date));
+  }, [holidays, holidaySearch, holidayTypeFilter]);
+
+  const todayIso = useMemo(() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }, []);
+
+  const openNewHoliday = (initialDate = '') => {
+    // Only allow dates from today onwards; if past or omitted, default to todayIso
+    const defaultDate = (initialDate && initialDate >= todayIso) ? initialDate : todayIso;
+    setEditingHoliday(null);
+    setHolidayDraft({
+      id: `hol-${Date.now()}`,
+      date: defaultDate,
+      name: '',
+      isCutiBersama: false,
+      type: 'national_holiday',
+      treatment: 'free_leave',
+      scope: 'all',
+      scopeValue: [],
+      note: ''
+    });
+    setPastAmendmentReason('');
+    setError('');
+  };
+
+  const openHolidayEditor = (holiday) => {
+    setEditingHoliday(holiday);
+    setHolidayDraft({
+      ...holiday,
+      isCutiBersama: Boolean(holiday.isCutiBersama),
+      type: holiday.isCutiBersama ? 'cuti_bersama' : 'national_holiday',
+      treatment: holiday.treatment || (holiday.isCutiBersama ? 'deduct_annual' : 'free_leave'),
+      scope: holiday.scope || 'all',
+      scopeValue: holiday.scopeValue || [],
+      note: holiday.note || ''
+    });
+    setPastAmendmentReason('');
+  };
+
+  const closeHolidayEditor = () => {
+    setEditingHoliday(null);
+    setHolidayDraft(null);
+    setPastAmendmentReason('');
+  };
+
+  const deleteHoliday = (holidayId) => {
+    const target = holidays.find(h => h.id === holidayId);
+    const nextHolidays = holidays.filter(h => h.id !== holidayId);
+    persistHolidays(nextHolidays);
+    setHolidays(nextHolidays);
+    closeHolidayEditor();
+    setSuccessModal({
+      title: 'Hari Libur Dihapus',
+      subtext: target ? `“${target.name}” (${target.date}) telah dihapus dari kalender.` : 'Hari libur berhasil dihapus.'
+    });
+  };
+
+  // Check if holiday is in the past
+  const isHolidayInPast = useMemo(() => {
+    if (!holidayDraft) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const holDate = new Date(holidayDraft.date + 'T00:00:00');
+    return holDate < today;
+  }, [holidayDraft]);
+
+  const currentHolidayImpact = useMemo(() => {
+    if (!holidayDraft) return { affectedEmployeesCount: 0, totalDaysDeducted: 0, sampleAffectedEmployees: [], affectedDeptNames: [] };
+    return calculateHolidayImpact(holidayDraft, EMPLOYEES);
+  }, [holidayDraft]);
+
+  const saveHolidayPolicy = () => {
+    if (!holidayDraft) return;
+
+    if (!holidayDraft.name?.trim()) {
+      setError('Nama hari libur / cuti bersama wajib diisi.');
+      return;
+    }
+    if (!holidayDraft.date?.trim()) {
+      setError('Tanggal hari libur wajib diisi.');
+      return;
+    }
+
+    // Set correct type field matching isCutiBersama
+    const sanitizedDraft = {
+      ...holidayDraft,
+      name: holidayDraft.name.trim(),
+      isCutiBersama: Boolean(holidayDraft.isCutiBersama),
+      type: holidayDraft.isCutiBersama ? 'cuti_bersama' : 'national_holiday',
+      treatment: holidayDraft.isCutiBersama ? (holidayDraft.treatment || 'deduct_annual') : 'free_leave',
+      scope: 'all',
+      scopeValue: []
+    };
+
+    const isNew = !editingHoliday || !holidays.some(h => h.id === sanitizedDraft.id);
+
+    // Cannot add a holiday on a past date relative to today
+    if (isNew && sanitizedDraft.date < todayIso) {
+      setError(`Hari libur baru tidak dapat ditambahkan pada tanggal lampau (${sanitizedDraft.date}). Silakan pilih tanggal hari ini atau yang akan datang.`);
+      return;
+    }
+
+    if (!isNew && isHolidayInPast && sanitizedDraft.isCutiBersama) {
+      if (!pastAmendmentReason.trim()) {
+        setError('Alasan revisi tanggal lampau wajib diisi untuk persetujuan audit.');
+        return;
+      }
+
+      // Create a pending past amendment
+      const nextHolidays = holidays.map(h => {
+        if (h.id === sanitizedDraft.id) {
+          return {
+            ...h,
+            ...sanitizedDraft,
+            pendingAmendment: {
+              proposedTreatment: sanitizedDraft.treatment,
+              proposedScope: 'all',
+              proposedScopeValue: [],
+              reason: pastAmendmentReason,
+              requestedAt: new Date().toLocaleString('id-ID'),
+              requestedBy: 'HR Operation Admin',
+              approverRole: 'HR Director'
+            }
+          };
+        }
+        return h;
+      }).sort((a, b) => a.date.localeCompare(b.date));
+
+      persistHolidays(nextHolidays);
+      setHolidays(nextHolidays);
+      closeHolidayEditor();
+      setSuccessModal({
+        title: 'Pengajuan Revisi Tanggal Lampau Dikirim',
+        subtext: `Revisi kebijakan Cuti Bersama “${sanitizedDraft.name}” telah diajukan ke HR Director untuk persetujuan audit sebelum rekonsiliasi saldo.`
+      });
+      return;
+    }
+
+    let nextHolidays;
+    if (isNew) {
+      nextHolidays = [...holidays, sanitizedDraft].sort((a, b) => a.date.localeCompare(b.date));
+    } else {
+      nextHolidays = holidays.map(h => h.id === sanitizedDraft.id ? sanitizedDraft : h).sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    persistHolidays(nextHolidays);
+    setHolidays(nextHolidays);
+    closeHolidayEditor();
+    setSuccessModal({
+      title: isNew
+        ? (sanitizedDraft.isCutiBersama ? 'Cuti Bersama Berhasil Ditambahkan' : 'Libur Nasional Berhasil Ditambahkan')
+        : (sanitizedDraft.isCutiBersama ? 'Cuti Bersama Berhasil Diperbarui' : 'Libur Nasional Berhasil Diperbarui'),
+      subtext: `Tanggal ${sanitizedDraft.date} (“${sanitizedDraft.name}”) tersimpan dalam kalender kerja.`
+    });
+  };
+
+  const approvePastAmendment = (holidayId) => {
+    const nextHolidays = holidays.map(h => {
+      if (h.id === holidayId && h.pendingAmendment) {
+        return {
+          ...h,
+          treatment: h.pendingAmendment.proposedTreatment,
+          scope: h.pendingAmendment.proposedScope,
+          scopeValue: h.pendingAmendment.proposedScopeValue,
+          pendingAmendment: null,
+          lastAmendedNote: `Disetujui oleh HR Director: ${h.pendingAmendment.reason}`
+        };
+      }
+      return h;
+    });
+    persistHolidays(nextHolidays);
+    setHolidays(nextHolidays);
+    setSuccessModal({
+      title: 'Revisi Tanggal Lampau Disetujui',
+      subtext: 'Perubahan cuti bersama tanggal lampau telah disetujui dan saldo karyawan telah direkonsiliasi.'
+    });
+  };
+
+  const rejectPastAmendment = (holidayId) => {
+    const nextHolidays = holidays.map(h => {
+      if (h.id === holidayId) {
+        return { ...h, pendingAmendment: null };
+      }
+      return h;
+    });
+    persistHolidays(nextHolidays);
+    setHolidays(nextHolidays);
+    setSuccessModal({
+      title: 'Revisi Ditolak',
+      subtext: 'Pengajuan revisi cuti bersama tanggal lampau telah dibatalkan.'
+    });
+  };
+
+  // =========================================================================
+  // TAB 3: EMPLOYEE BALANCES, LEDGER & ADJUSTMENTS
+  // =========================================================================
+  const [balances, setBalances] = useState(readEmployeeBalances);
+  const [balanceSearch, setBalanceSearch] = useState('');
+  const [balanceDeptFilter, setBalanceDeptFilter] = useState('all');
+  const [selectedLedgerEmp, setSelectedLedgerEmp] = useState(null); // When viewing transaction ledger modal
+  const [adjustmentTarget, setAdjustmentTarget] = useState(null); // When opening adjustment modal
+  const [adjustments, setAdjustments] = useState(readAdjustments);
+  const [adjustmentFilter, setAdjustmentFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'rejected'
+
+  // Adjustment Form Draft
+  const [adjDraft, setAdjDraft] = useState({
+    type: 'add',
+    amount: 1,
+    reasonCategory: 'system_error',
+    reasonNote: ''
+  });
+
+  const filteredBalances = useMemo(() => {
+    return balances.filter(b => {
+      const q = balanceSearch.trim().toLowerCase();
+      const matchesSearch = !q || b.employeeName.toLowerCase().includes(q) || b.nik.includes(q);
+      const matchesDept = balanceDeptFilter === 'all' || b.departmentId === balanceDeptFilter;
+      return matchesSearch && matchesDept;
+    });
+  }, [balances, balanceSearch, balanceDeptFilter]);
+
+  const openLedgerModal = (employeeBalance) => {
+    setSelectedLedgerEmp(employeeBalance);
+  };
+
+  const closeLedgerModal = () => {
+    setSelectedLedgerEmp(null);
+  };
+
+  const openAdjustmentModal = (employeeBalance) => {
+    setAdjustmentTarget(employeeBalance);
+    setAdjDraft({
+      type: 'add',
+      amount: 1,
+      reasonCategory: 'system_error',
+      reasonNote: ''
+    });
+    setError('');
+  };
+
+  const closeAdjustmentModal = () => {
+    setAdjustmentTarget(null);
+    setError('');
+  };
+
+  // Live simulation of Before vs After balance
+  const simulatedBalance = useMemo(() => {
+    if (!adjustmentTarget) return 0;
+    const delta = adjDraft.type === 'add' ? Number(adjDraft.amount || 0) : -Number(adjDraft.amount || 0);
+    return adjustmentTarget.available + delta;
+  }, [adjustmentTarget, adjDraft]);
+
+  const submitAdjustmentRequest = () => {
+    if (!adjustmentTarget) return;
+    if (!adjDraft.amount || Number(adjDraft.amount) < 1) {
+      setError('Jumlah koreksi hari harus minimal 1 hari.');
+      return;
+    }
+    if (!adjDraft.reasonNote.trim()) {
+      setError('Catatan alasan koreksi wajib diisi untuk audit internal.');
+      return;
+    }
+
+    const catObj = ADJUSTMENT_REASON_CATEGORIES.find(c => c.value === adjDraft.reasonCategory);
+    const needsDirector = Number(adjDraft.amount) > 2 || simulatedBalance < 0;
+
+    const newTicket = {
+      id: `adj-${Date.now()}`,
+      employeeId: adjustmentTarget.employeeId,
+      employeeName: adjustmentTarget.employeeName,
+      permitTypeId: 'permit-annual',
+      permitName: 'Cuti Tahunan (Annual Leave)',
+      type: adjDraft.type,
+      amount: Number(adjDraft.amount),
+      reasonCategory: adjDraft.reasonCategory,
+      reasonCategoryLabel: catObj ? catObj.label : 'Koreksi Lainnya',
+      reasonNote: adjDraft.reasonNote,
+      beforeBalance: adjustmentTarget.available,
+      afterBalance: simulatedBalance,
+      status: 'pending',
+      requestedAt: new Date().toLocaleString('id-ID'),
+      requestedBy: 'HR Specialist',
+      approverRole: needsDirector ? 'HR Director' : 'HR Manager',
+      approverName: needsDirector ? 'Budi Hartono (Director)' : 'Sarah Jenkins (Manager)',
+      reviewedAt: null,
+      reviewNote: ''
+    };
+
+    const nextAdjustments = [newTicket, ...adjustments];
+    persistAdjustments(nextAdjustments);
+    setAdjustments(nextAdjustments);
+    closeAdjustmentModal();
+
+    setSuccessModal({
+      title: 'Tiket Koreksi Saldo Berhasil Dibuat',
+      subtext: `Pengajuan koreksi saldo untuk ${adjustmentTarget.employeeName} (${adjDraft.type === 'add' ? '+' : '-'}${adjDraft.amount} hari) telah diteruskan ke ${newTicket.approverRole} untuk persetujuan.`
+    });
+  };
+
+  const approveAdjustmentTicket = (ticketId) => {
+    const ticket = adjustments.find(t => t.id === ticketId);
+    if (!ticket) return;
+
+    // 1. Update balances & append to ledger
+    const nextBalances = balances.map(b => {
+      if (b.employeeId === ticket.employeeId) {
+        const delta = ticket.type === 'add' ? ticket.amount : -ticket.amount;
+        const newAvail = b.available + delta;
+        const newLedgerEntry = {
+          id: `tx-${Date.now()}`,
+          date: new Date().toISOString().split('T')[0],
+          type: 'adjustment',
+          amount: delta,
+          balanceAfter: newAvail,
+          description: `Koreksi Saldo Manual: ${ticket.reasonCategoryLabel} (${ticket.reasonNote})`,
+          refNo: ticket.id.toUpperCase(),
+          approvedBy: `${ticket.approverRole} (Approved)`
+        };
+        return {
+          ...b,
+          available: newAvail,
+          ledger: [newLedgerEntry, ...(b.ledger || [])]
+        };
+      }
+      return b;
+    });
+
+    persistEmployeeBalances(nextBalances);
+    setBalances(nextBalances);
+
+    // 2. Mark ticket as approved
+    const nextAdjustments = adjustments.map(t => {
+      if (t.id === ticketId) {
+        return {
+          ...t,
+          status: 'approved',
+          reviewedAt: new Date().toLocaleString('id-ID'),
+          reviewNote: 'Disetujui sesuai regulasi dan memo pendukung.'
+        };
+      }
+      return t;
+    });
+
+    persistAdjustments(nextAdjustments);
+    setAdjustments(nextAdjustments);
+
+    setSuccessModal({
+      title: 'Koreksi Saldo Disetujui',
+      subtext: `Koreksi untuk ${ticket.employeeName} telah disetujui. Saldo efektif kini diperbarui di direktori dan riwayat mutasi.`
+    });
+  };
+
+  const rejectAdjustmentTicket = (ticketId) => {
+    const nextAdjustments = adjustments.map(t => {
+      if (t.id === ticketId) {
+        return {
+          ...t,
+          status: 'rejected',
+          reviewedAt: new Date().toLocaleString('id-ID'),
+          reviewNote: 'Ditolak: Dokumen pendukung atau verifikasi tidak mencukupi.'
+        };
+      }
+      return t;
+    });
+    persistAdjustments(nextAdjustments);
+    setAdjustments(nextAdjustments);
+
+    setSuccessModal({
+      title: 'Koreksi Saldo Ditolak',
+      subtext: 'Tiket pengajuan koreksi telah ditolak dan tidak mengubah saldo karyawan.'
+    });
+  };
 
   const closeSuccessModal = useCallback(() => {
     setSuccessModal(null);
   }, []);
 
   return {
-    permits, query, frequency, statusFilter, draft, setDraft, statusTarget,
-    setQuery(value) { setQuery(value); setPage(1); },
-    setFrequency(value) { setFrequency(value); setPage(1); },
-    setStatusFilter(value) { setStatusFilter(value); setPage(1); },
-    error, notification, setNotification, filteredPermits,
-    successModal,
-    closeSuccessModal,
-    currentPage, totalPages, pageSize,
+    // Navigation
+    activeTab,
+    setActiveTab,
+
+    // Tab 1: Policies
+    permits,
+    filteredPermits,
+    paginatedPermits: filteredPermits.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    currentPage,
+    totalPages,
+    pageSize,
     setCurrentPage(value) {
       if (Number.isInteger(value)) setPage(Math.max(1, Math.min(value, totalPages)));
     },
-    paginatedPermits: filteredPermits.slice((currentPage - 1) * pageSize, currentPage * pageSize),
-    openEditor(permit) {
-      setError('');
-      setDraft(permit ? { ...permit } : { name: '', description: '', hasQuota: true, quota: '', frequency: 'annual', allowedDates: 'both', isActive: true });
-    },
-    closeEditor() { setDraft(null); setError(''); },
-    requestToggleStatus(permit) { setError(''); setStatusTarget(permit); },
-    closeStatusModal() { setStatusTarget(null); setError(''); },
-    confirmToggleStatus() {
-      if (!statusTarget) return;
-      const willBeActive = statusTarget.isActive === false;
-      const next = permits.map((p) => p.id === statusTarget.id ? { ...p, isActive: willBeActive } : p);
-      if (persist(next, '')) {
-        const targetName = statusTarget.name;
-        setStatusTarget(null);
-        setSuccessModal({
-          title: willBeActive ? 'Permit Type Activated' : 'Permit Type Deactivated',
-          subtext: willBeActive 
-            ? `“${targetName}” is now active. Employees can immediately select and apply for this permit.`
-            : `“${targetName}” has been deactivated. Employees will no longer see this permit for new requests.`
-        });
-      }
-    },
-    toggleStatusDirect(permit) {
-      const willBeActive = permit.isActive === false;
-      const next = permits.map((p) => p.id === permit.id ? { ...p, isActive: willBeActive } : p);
-      persist(next, '');
-    },
-    save() {
-      const validation = validatePermitType(draft, permits);
-      if (validation) { setError(validation); return; }
-      const isEdit = Boolean(draft.id);
-      const item = { 
-        ...draft, 
-        id: draft.id || crypto.randomUUID(), 
-        name: draft.name.trim(), 
-        description: draft.description.trim(), 
-        quota: draft.hasQuota ? Number(draft.quota) : null, 
-        frequency: draft.hasQuota ? draft.frequency : null,
-        isActive: draft.isActive !== false
-      };
-      const next = draft.id ? permits.map((permit) => permit.id === draft.id ? item : permit) : [...permits, item];
-      if (persist(next, '')) {
-        setDraft(null);
-        setSuccessModal({
-          title: isEdit ? 'Permit Type Updated Successfully!' : 'Permit Type Added Successfully!',
-          subtext: isEdit 
-            ? `Changes to “${item.name}” have been saved. The updated policy rules and quota settings are now live.`
-            : `“${item.name}” has been successfully registered. Employees can now view and submit requests for this permit type.`
-        });
-      }
-    },
+    query,
+    setQuery(val) { setQuery(val); setPage(1); },
+    categoryFilter,
+    setCategoryFilter(val) { setCategoryFilter(val); setPage(1); },
+    statusFilter,
+    setStatusFilter(val) { setStatusFilter(val); setPage(1); },
+    draft,
+    setDraft,
+    detailPermit,
+    setDetailPermit,
+    openEditor,
+    closeEditor,
+    saveDraft,
+    statusTarget,
+    requestToggleStatus,
+    closeStatusModal,
+    confirmToggleStatus,
+
+    // Tab 2: Holidays & Cuti Bersama
+    holidays,
+    filteredHolidays,
+    holidaySearch,
+    setHolidaySearch,
+    holidayTypeFilter,
+    setHolidayTypeFilter,
+    holidayViewMode,
+    setHolidayViewMode,
+    todayIso,
+    holidayCalendarDate,
+    setHolidayCalendarDate,
+    editingHoliday,
+    holidayDraft,
+    setHolidayDraft,
+    openNewHoliday,
+    openHolidayEditor,
+    closeHolidayEditor,
+    saveHolidayPolicy,
+    deleteHoliday,
+    isHolidayInPast,
+    pastAmendmentReason,
+    setPastAmendmentReason,
+    currentHolidayImpact,
+    showImpactModal,
+    setShowImpactModal,
+    approvePastAmendment,
+    rejectPastAmendment,
+
+    // Tab 3: Balances & Adjustments
+    balances,
+    filteredBalances,
+    balanceSearch,
+    setBalanceSearch,
+    balanceDeptFilter,
+    setBalanceDeptFilter,
+    selectedLedgerEmp,
+    openLedgerModal,
+    closeLedgerModal,
+    adjustmentTarget,
+    openAdjustmentModal,
+    closeAdjustmentModal,
+    adjDraft,
+    setAdjDraft,
+    simulatedBalance,
+    submitAdjustmentRequest,
+    adjustments,
+    adjustmentFilter,
+    setAdjustmentFilter,
+    approveAdjustmentTicket,
+    rejectAdjustmentTicket,
+
+    // Shared feedback
+    error,
+    setError,
+    notification,
+    setNotification,
+    successModal,
+    closeSuccessModal
   };
 }
-

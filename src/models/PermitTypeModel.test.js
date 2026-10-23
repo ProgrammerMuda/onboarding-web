@@ -29,3 +29,28 @@ describe('Allowed permit dates', () => {
     expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], allowedDates: 'invalid' }, [])).toBeTruthy();
   });
 });
+
+describe('Supporting document policy', () => {
+  it('requires documents for every leave type', () => {
+    expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], requiresDocument: 'none' }, [])).toBeTruthy();
+    expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], requiresDocument: 'duration_exceeded' }, [])).toBeTruthy();
+    expect(validatePermitType(INITIAL_PERMIT_TYPES[0], [])).toBe('');
+  });
+});
+
+describe('Leave category entitlements', () => {
+  it('accepts only the three supported categories', () => {
+    expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], category: 'other' }, [])).toBeTruthy();
+  });
+  it('requires a positive annual allowance', () => {
+    expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], quota: '' }, [])).toBeTruthy();
+  });
+  it('requires a per-event duration for special leave', () => {
+    const special = { ...INITIAL_PERMIT_TYPES[1], eventDurationDays: '' };
+    expect(validatePermitType(special, [])).toBeTruthy();
+    expect(validatePermitType({ ...special, eventDurationDays: 3 }, [])).toBe('');
+  });
+  it('does not require a quota for unpaid leave', () => {
+    expect(validatePermitType(INITIAL_PERMIT_TYPES.find((item) => item.category === 'unpaid'), [])).toBe('');
+  });
+});
