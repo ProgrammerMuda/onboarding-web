@@ -604,6 +604,7 @@
   overflow-x: auto;
   border-radius: 10px;
   border: 1px solid #e2e8f0;
+  min-height: 290px;
 }
 
 .add-installment-preview-table {
@@ -642,6 +643,247 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+/* Custom Month Picker for Installment Schedule */
+.installment-month-picker-wrap {
+  position: relative;
+  display: inline-block;
+  width: 220px;
+}
+
+.installment-month-picker-btn {
+  width: 100%;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.installment-month-picker-btn:hover:not(:disabled) {
+  border-color: #09B2FF;
+  background-color: #fbfcfe;
+}
+
+.installment-month-picker-btn.is-active,
+.installment-month-picker-btn:focus:not(:disabled) {
+  outline: none;
+  border-color: #09B2FF;
+  box-shadow: 0 0 0 3px rgba(9, 178, 255, 0.18);
+  background-color: #ffffff;
+}
+
+.installment-month-picker-btn.is-empty {
+  color: #94a3b8;
+  font-weight: 500;
+  font-style: italic;
+  border-color: #e2e8f0;
+  background-color: #f8fafc;
+}
+
+.installment-month-picker-btn:disabled {
+  background-color: #f1f5f9;
+  color: #64748b;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+  opacity: 0.9;
+}
+
+.installment-month-picker-icon {
+  color: #0088cc;
+  flex-shrink: 0;
+}
+
+.installment-month-picker-btn:disabled .installment-month-picker-icon {
+  color: #94a3b8;
+}
+
+.installment-month-picker-label {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.installment-month-picker-caret {
+  color: #64748b;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.installment-month-picker-caret.is-open {
+  transform: rotate(180deg);
+  color: #0088cc;
+}
+
+/* Popover container */
+.installment-month-picker-popover {
+  position: absolute;
+  left: 0;
+  z-index: 120;
+  width: 250px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 14px 34px -4px rgba(15, 23, 42, 0.18), 0 4px 12px -2px rgba(15, 23, 42, 0.08);
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.installment-month-picker-popover.drop-down {
+  top: calc(100% + 5px);
+}
+
+.installment-month-picker-popover.drop-up {
+  bottom: calc(100% + 5px);
+}
+
+/* Header with Year selector */
+.installment-mp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.installment-mp-year-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.installment-mp-nav-btn {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background-color: #f8fafc;
+  color: #334155;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.installment-mp-nav-btn:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Grid of 12 Months (4 rows x 3 columns) */
+.installment-mp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.installment-mp-month-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background-color: transparent;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  font-family: inherit;
+}
+
+.installment-mp-month-btn:hover:not(:disabled):not(.is-selected) {
+  background-color: #f1f5f9;
+  color: #002B7F;
+  border-color: #cbd5e1;
+}
+
+.installment-mp-month-btn.is-selected {
+  background-color: #002B7F !important;
+  color: #ffffff !important;
+  border-color: #002B7F !important;
+  font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0, 43, 127, 0.25);
+}
+
+.installment-mp-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  background-color: #f8fafc;
+  color: #cbd5e1;
+  border-color: #f1f5f9;
+}
+
+/* Disabled Months (Past & Already Picked) */
+.installment-mp-month-btn:disabled {
+  background-color: #f8fafc !important;
+  color: #cbd5e1 !important;
+  cursor: not-allowed !important;
+  border-color: transparent !important;
+  opacity: 0.5;
+  text-decoration: none !important;
+}
+
+/* Footer in Popover */
+.installment-mp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.installment-mp-clear-btn {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #dc2626;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+  margin-right: auto;
+}
+
+.installment-mp-clear-btn:hover {
+  background-color: #fee2e2;
+}
+
+.installment-mp-close-btn {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 5px;
+  transition: all 0.12s ease;
+}
+
+.installment-mp-close-btn:hover {
+  background-color: #e2e8f0;
+  color: #0f172a;
 }
 
 .add-installment-schedule-date-input {
@@ -732,4 +974,159 @@
   text-align: center;
   font-size: 13.5px;
   color: #94a3b8;
+}
+
+/* Mode Switcher Tabs for Schedule (Auto vs Blank Draft) */
+.add-installment-mode-tabs {
+  display: inline-flex;
+  background: #f1f5f9;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+  border: 1px solid #e2e8f0;
+}
+
+.add-installment-mode-tab {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  padding: 6px 13px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.add-installment-mode-tab:hover:not(.active):not(:disabled) {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.add-installment-mode-tab.active {
+  background: #ffffff;
+  color: #002B7F;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}
+
+.add-installment-mode-tab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Amount Input in Schedule Table */
+.add-installment-amount-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 175px;
+}
+
+.add-installment-amount-input-wrap:focus-within {
+  border-color: #09B2FF;
+  box-shadow: 0 0 0 2px rgba(9, 178, 255, 0.2);
+}
+
+.add-installment-amount-prefix {
+  padding: 5px 8px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  border-right: 1px solid #e2e8f0;
+  user-select: none;
+}
+
+.add-installment-amount-input {
+  border: none;
+  outline: none;
+  padding: 5px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  width: 100%;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+  font-family: inherit;
+}
+
+.add-installment-amount-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+/* Schedule Date Input Empty State */
+.add-installment-schedule-date-input.is-empty {
+  border-color: #cbd5e1;
+  color: #64748b;
+  background: #fffdf5;
+}
+
+.add-installment-badge-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f8fafc;
+  color: #94a3b8;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-style: italic;
+}
+
+/* Balance Status Badges in Footer */
+.add-installment-balance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.add-installment-balance-badge.success {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.add-installment-balance-badge.warning {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.add-installment-balance-badge.danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.add-installment-quick-btn {
+  margin-left: 6px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid #b45309;
+  background: #ffffff;
+  color: #b45309;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.add-installment-quick-btn:hover {
+  background: #b45309;
+  color: #ffffff;
 }

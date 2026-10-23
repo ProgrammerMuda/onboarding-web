@@ -9,19 +9,31 @@ import './installments.css';
 import AddInstallmentView from './AddInstallmentView';
 import InstallmentDetailView from './InstallmentDetailView';
 
+const getCurrentInvoiceHelper = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  return {
+    period: `${y}-${m}`,
+    tag: `${m}${y}`
+  };
+};
+
+const curPeriodInfo = getCurrentInvoiceHelper();
+
 const availableOutstandingInvoices = [
-  { unit: 'AG0103', invoice: 'PRO/INV/032026/031487', start: '2026-03', outstanding: 84328926 },
-  { unit: 'AG0103', invoice: 'PRO/INV/022026/030999', start: '2026-02', outstanding: 32500000 },
-  { unit: 'AA1803', invoice: 'PRO/INV/032026/031502', start: '2026-03', outstanding: 54120000 },
-  { unit: 'AG2503', invoice: 'PRO/INV/032026/031610', start: '2026-03', outstanding: 42800000 },
-  { unit: 'AA2602', invoice: 'PRO/INV/032026/031744', start: '2026-03', outstanding: 19850000 },
-  { unit: 'AC0810', invoice: 'PRO/INV/032026/031821', start: '2026-03', outstanding: 67200000 },
-  { unit: 'BB1204', invoice: 'PRO/INV/032026/031950', start: '2026-03', outstanding: 28900000 },
-  { unit: 'TH0501', invoice: 'PRO/INV/032026/032001', start: '2026-03', outstanding: 156000000 },
-  { unit: 'CC0305', invoice: 'PRO/INV/032026/032115', start: '2026-03', outstanding: 15400000 },
-  { unit: 'AB1402', invoice: 'PRO/INV/032026/032230', start: '2026-03', outstanding: 38750000 },
-  { unit: 'DD0911', invoice: 'PRO/INV/032026/032345', start: '2026-03', outstanding: 22100000 },
-  { unit: 'GA0108', invoice: 'PRO/INV/032026/032480', start: '2026-03', outstanding: 45000000 }
+  { unit: 'AG0103', invoice: `PRO/INV/${curPeriodInfo.tag}/041022`, start: curPeriodInfo.period, outstanding: 84328926 },
+  { unit: 'AA1803', invoice: `PRO/INV/${curPeriodInfo.tag}/041023`, start: curPeriodInfo.period, outstanding: 54120000 },
+  { unit: 'AG2503', invoice: `PRO/INV/${curPeriodInfo.tag}/041024`, start: curPeriodInfo.period, outstanding: 42800000 },
+  { unit: 'AA2602', invoice: `PRO/INV/${curPeriodInfo.tag}/041025`, start: curPeriodInfo.period, outstanding: 19850000 },
+  { unit: 'AC0810', invoice: `PRO/INV/${curPeriodInfo.tag}/041026`, start: curPeriodInfo.period, outstanding: 67200000 },
+  { unit: 'BB1204', invoice: `PRO/INV/${curPeriodInfo.tag}/041027`, start: curPeriodInfo.period, outstanding: 28900000 },
+  { unit: 'TH0501', invoice: `PRO/INV/${curPeriodInfo.tag}/041028`, start: curPeriodInfo.period, outstanding: 156000000 },
+  { unit: 'CC0305', invoice: `PRO/INV/${curPeriodInfo.tag}/041029`, start: curPeriodInfo.period, outstanding: 15400000 },
+  { unit: 'AB1402', invoice: `PRO/INV/${curPeriodInfo.tag}/041030`, start: curPeriodInfo.period, outstanding: 38750000 },
+  { unit: 'DD0911', invoice: `PRO/INV/${curPeriodInfo.tag}/041031`, start: curPeriodInfo.period, outstanding: 22100000 },
+  { unit: 'GA0108', invoice: `PRO/INV/${curPeriodInfo.tag}/041032`, start: curPeriodInfo.period, outstanding: 45000000 },
+  { unit: 'AG0103', invoice: `PRO/INV/${curPeriodInfo.tag}/041033`, start: curPeriodInfo.period, outstanding: 32500000 }
 ];
 
 const availableUnits = Array.from(new Set(availableOutstandingInvoices.map((inv) => inv.unit)));
