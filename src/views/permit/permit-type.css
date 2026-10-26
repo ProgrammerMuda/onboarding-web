@@ -1566,6 +1566,27 @@
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
 }
+.permit-confirm-btn {
+  padding: 8px 18px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.permit-confirm-btn:focus-visible { outline: 2px solid #002B7F; outline-offset: 2px; }
+.permit-confirm-btn.is-cancel {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+.permit-confirm-btn.is-cancel:hover { background: #f8fafc; border-color: #94a3b8; }
+.permit-confirm-btn.is-danger { background: #dc2626; border-color: #dc2626; color: #ffffff; }
+.permit-confirm-btn.is-danger:hover { background: #b91c1c; border-color: #b91c1c; }
+.permit-confirm-btn.is-success { background: #059669; border-color: #059669; color: #ffffff; }
+.permit-confirm-btn.is-success:hover { background: #047857; border-color: #047857; }
 .permit-policy-editor-dialog {
   display: flex;
   flex-direction: column;

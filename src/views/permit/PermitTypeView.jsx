@@ -305,7 +305,7 @@ function SuccessDialog({ title, subtext, onClose }) {
         style={{ width: '450px', maxWidth: '92vw', borderRadius: '16px' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="position-relative text-center bg-white" style={{ padding: '38px 28px 28px', borderRadius: '16px' }}>
+        <div className="position-relative text-center bg-white" style={{ padding: '38px 28px 34px', borderRadius: '16px' }}>
           <button
             type="button"
             className="btn btn-link p-1 text-muted text-decoration-none position-absolute top-0 end-0 m-3 border-0 shadow-none"
@@ -318,19 +318,11 @@ function SuccessDialog({ title, subtext, onClose }) {
             <CheckCircle size={60} weight="fill" style={{ color: '#10B981' }} />
           </div>
           <h3 id="permit-success-title" className="fw-bold text-dark mb-2" style={{ fontSize: '19px' }}>
-            {title || 'Berhasil Diproses!'}
+            {title || 'Done!'}
           </h3>
-          <p className="text-muted mx-auto mb-4" style={{ fontSize: '14px', lineHeight: 1.5, maxWidth: '360px' }}>
-            {subtext || 'Operasi berhasil disimpan dan diperbarui dalam sistem.'}
+          <p className="text-muted mx-auto mb-0" style={{ fontSize: '14px', lineHeight: 1.5, maxWidth: '360px' }}>
+            {subtext || 'The change was saved.'}
           </p>
-          <button
-            type="button"
-            className="btn btn-primary w-100"
-            style={{ backgroundColor: '#002B7F', borderColor: '#002B7F', height: '42px', fontWeight: 600 }}
-            onClick={onClose}
-          >
-            Selesai & Tutup
-          </button>
         </div>
       </div>
     </div>
@@ -579,7 +571,7 @@ export function PermitTypeView({ presenter: p }) {
                                 type="button"
                                 className={`permit-btn-dots ${activeActionId === permit.id ? 'active' : ''}`}
                                 aria-label={`Actions for ${permit.name}`}
-                                title="Opsi tindakan"
+                                title="More actions"
                                 onClick={(e) => handleToggleActionMenu(e, permit)}
                               >
                                 <DotsThreeVertical size={18} weight="bold" />
@@ -2472,12 +2464,12 @@ export function PermitTypeView({ presenter: p }) {
             </p>
           </div>
           <div className="permit-dialog-footer">
-            <button type="button" className="btn btn-outline-secondary" onClick={p.closeStatusModal}>
+            <button type="button" className="permit-confirm-btn is-cancel" onClick={p.closeStatusModal}>
               Cancel
             </button>
             <button
               type="button"
-              className={`btn ${p.statusTarget.isActive !== false ? 'btn-danger' : 'btn-success'}`}
+              className={`permit-confirm-btn ${p.statusTarget.isActive !== false ? 'is-danger' : 'is-success'}`}
               onClick={p.confirmToggleStatus}
             >
               {p.statusTarget.isActive !== false ? 'Deactivate' : 'Reactivate'}
@@ -2529,7 +2521,7 @@ export function PermitTypeView({ presenter: p }) {
             }}
           >
             <Info size={16} weight="bold" />
-            <span>Detail Kebijakan</span>
+            <span>View details</span>
           </button>
           <button
             type="button"
@@ -2542,7 +2534,7 @@ export function PermitTypeView({ presenter: p }) {
             }}
           >
             <PencilSimple size={16} weight="bold" />
-            <span>Ubah Kebijakan</span>
+            <span>Edit leave type</span>
           </button>
           <div className="permit-action-dropdown-divider" />
           <button
@@ -2558,12 +2550,12 @@ export function PermitTypeView({ presenter: p }) {
             {actionAnchor.permit.isActive !== false ? (
               <>
                 <Power size={16} weight="bold" />
-                <span>Nonaktifkan</span>
+                <span>Deactivate</span>
               </>
             ) : (
               <>
                 <CheckCircle size={16} weight="bold" />
-                <span>Aktifkan</span>
+                <span>Activate</span>
               </>
             )}
           </button>
