@@ -1320,3 +1320,60 @@ export async function parseEmployeeImportFile(file, departments = [], divisions 
 
   return parsedRecords;
 }
+
+/**
+ * Exports the holiday and collective leave calendar to a single-sheet Excel file (.xlsx).
+ * Rows are written in the order given, so callers decide filtering and sorting.
+ */
+export async function exportHolidaysToExcel({ holidays, treatmentOptions = [], departments = [] }) {
+  if (!holidays || holidays.length === 0) return;
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'PROAPPS';
+  workbook.created = new Date();
+
+  const worksheet = workbook.addWorksheet('Holiday Calendar', {
+    views: [{ state: 'frozen', ySplit: 1 }]
+  });
+
+  worksheet.columns = [
+    { header: 'No.', key: 'no', width: 6 },
+    { header: 'Date', key: 'date', width: 14 },
+    { header: 'Day', key: 'day', width: 14 },
+    { header: 'Holiday Name', key: 'name', width: 38 },
+    { header: 'Type', key: 'type', width: 18 },
+    { header: 'Leave Treatment', key: 'treatment', width: 38 },
+    { header: 'Departments', key: 'departments', width: 44 },
+    { header: 'Note', key: 'note', width: 44 }
+  ];
+
+  holidays.forEach((holiday, index) => {
+    const treatment = treatmentOptions.find((option) => option.value === holiday.treatment);
+    worksheet.addRow({
+      no: index + 1,
+      date: holiday.date,
+      day: new Date(`${holiday.date}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long' }),
+      name: holiday.name,
+      type: holiday.isCutiBersama ? 'Collective Leave' : 'National Holiday',
+      treatment: holiday.isCutiBersama
+        ? (treatment?.badge || holiday.treatment || '')
+        : 'Official Holiday (No Leave Deduction)',
+      departments: holiday.isCutiBersama && holiday.scope === 'departments'
+        ? (holiday.scopeValue || []).map((id) => departments.find((d) => d.id === id)?.name || id).join(', ')
+        : 'All departments',
+      note: holiday.note || ''
+    });
+  });
+
+  const header = worksheet.getRow(1);
+  header.height = 22;
+  header.eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF002B7F' } };
+    cell.alignment = { vertical: 'middle', horizontal: 'left' };
+  });
+  worksheet.getColumn('no').alignment = { horizontal: 'center' };
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  await downloadWorkbook(workbook, `holidays_${todayStr}.xlsx`);
+}

@@ -3,6 +3,7 @@ import {
   formatDateKey,
   getWeekDates,
   resolveShift,
+  getEmployeeShiftForDate,
   OFF_SHIFT,
   setEmployeeShift,
   bulkAssignEmployeeShifts,
@@ -124,5 +125,28 @@ describe('WorkScheduleModel', () => {
 
     const loaded = readWorkSchedules();
     expect(loaded['emp-1_2026-10-14'].shiftTypeId).toBe('s-1');
+  });
+
+  describe('holidays from the Leave Calendar', () => {
+    const emp = { id: 'emp-x', departmentId: 'dept-eng' };
+
+    it('shows a national holiday on its date even when no shift was stored', () => {
+      const shift = getEmployeeShiftForDate({}, emp, '2026-12-25', MOCK_SHIFTS);
+      expect(shift.id).toBe('off-holiday');
+      expect(shift.name).toBe('Christmas Day');
+    });
+
+    it('shows collective leave that deducts annual leave', () => {
+      const shift = getEmployeeShiftForDate({}, emp, '2026-12-26', MOCK_SHIFTS);
+      expect(shift.id === 'off-cuti-bersama' || shift.id === 'off-holiday').toBe(true);
+    });
+
+    it('overrides a stored plain day off but not an assigned work shift', () => {
+      const dayOff = { 'emp-x_2026-12-25': { shiftTypeId: 'off' } };
+      expect(getEmployeeShiftForDate(dayOff, emp, '2026-12-25', MOCK_SHIFTS).id).toBe('off-holiday');
+
+      const worked = { 'emp-x_2026-12-25': { shiftTypeId: 's-1' } };
+      expect(getEmployeeShiftForDate(worked, emp, '2026-12-25', MOCK_SHIFTS).id).toBe('s-1');
+    });
   });
 });

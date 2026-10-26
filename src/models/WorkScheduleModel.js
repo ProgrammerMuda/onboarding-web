@@ -5,6 +5,7 @@
 
 import { readShiftTypes, INITIAL_SHIFT_TYPES } from './ShiftTypeModel';
 import { EMPLOYEES } from './ApprovalFlowModel';
+import { HOLIDAY_STORAGE_KEY, INITIAL_HOLIDAYS_2026, getHolidayDepartmentIds } from './PermitTypeModel';
 
 export const WORK_SCHEDULE_STORAGE_KEY = 'proapps.hr.work_schedules.v2';
 
@@ -24,7 +25,7 @@ export const OFF_SHIFT = {
 export const HOLIDAY_SHIFT = {
   id: 'off-holiday',
   code: 'LBR',
-  name: 'Hari Raya Idhul Adha',
+  name: 'National Holiday',
   offType: 'holiday',
   period: 'holiday',
   quotaNote: 'Hari libur • Mengurangi kuota',
@@ -38,7 +39,7 @@ export const HOLIDAY_SHIFT = {
 export const CUTI_BERSAMA_SHIFT = {
   id: 'off-cuti-bersama',
   code: 'CUTI',
-  name: 'Cuti Bersama Idul Adha',
+  name: 'Collective Leave',
   offType: 'cuti_bersama',
   period: 'cuti_bersama',
   quotaNote: 'Cuti bersama • Mengurangi kuota',
@@ -102,6 +103,42 @@ export function resolveShift(shiftTypeId, shiftTypes = []) {
   return found || OFF_SHIFT;
 }
 
+let holidayCache = { raw: undefined, byDate: new Map() };
+
+/**
+ * Holidays come from the Leave Calendar (Permit Type module), so the roster
+ * always reflects what HR configured there. Parsed lazily and re-parsed only
+ * when the stored value changes.
+ */
+function getHolidayShiftMap() {
+  let raw = null;
+  try {
+    raw = typeof localStorage !== 'undefined' ? localStorage.getItem(HOLIDAY_STORAGE_KEY) : null;
+  } catch {
+    raw = null;
+  }
+  if (raw === holidayCache.raw) return holidayCache.byDate;
+
+  let list = INITIAL_HOLIDAYS_2026;
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) list = parsed;
+    } catch { /* keep defaults */ }
+  }
+
+  const byDate = new Map();
+  list.forEach((holiday) => {
+    if (!holiday?.date) return;
+    const shift = holiday.isCutiBersama
+      ? { ...CUTI_BERSAMA_SHIFT, name: holiday.name }
+      : { ...HOLIDAY_SHIFT, name: holiday.name };
+    byDate.set(holiday.date, { shift, deptIds: getHolidayDepartmentIds(holiday) });
+  });
+  holidayCache = { raw, byDate };
+  return byDate;
+}
+
 /**
  * Resolves the assigned shift for a specific employee on a date.
  * If not already explicitly set in schedules, calculates default based on rotational/regular pattern.
@@ -109,9 +146,16 @@ export function resolveShift(shiftTypeId, shiftTypes = []) {
 export function getEmployeeShiftForDate(schedules, employee, dateStr, shiftTypes = INITIAL_SHIFT_TYPES) {
   if (!employee) return OFF_SHIFT;
   const key = `${employee.id}_${dateStr}`;
+  const holiday = getHolidayShiftMap().get(dateStr);
+  const holidayShift = holiday && (!holiday.deptIds || holiday.deptIds.includes(employee.departmentId))
+    ? holiday.shift
+    : null;
   if (schedules && schedules[key]?.shiftTypeId) {
-    return resolveShift(schedules[key].shiftTypeId, shiftTypes);
+    const assigned = resolveShift(schedules[key].shiftTypeId, shiftTypes);
+    // A holiday overrides a plain day off, but never a shift someone was assigned to work.
+    return holidayShift && assigned.id === 'off' ? holidayShift : assigned;
   }
+  if (holidayShift) return holidayShift;
 
   // Deterministic fallback based on department and date
   const d = new Date(dateStr);
@@ -151,11 +195,6 @@ export function generateInitialScheduleRoster(employees = EMPLOYEES, shiftTypes 
     dates.push(formatDateKey(d));
   }
 
-  // Active week sample holiday dates
-  const weekDates = getWeekDates(today);
-  const sampleHolidayStr = formatDateKey(weekDates[3]); // Thursday
-  const sampleCutiStr = formatDateKey(weekDates[4]); // Friday
-
   // Engineering & Security shifts (rotational: P1, S1, M1, OFF)
   const rotationalShifts = ['s-1', 's-3', 's-9', 'off'];
   // Office / Admin shifts (R1, R2 on Mon-Fri, OFF on Sat-Sun)
@@ -169,13 +208,7 @@ export function generateInitialScheduleRoster(employees = EMPLOYEES, shiftTypes 
       const isWeekend = d.getDay() === 0 || d.getDay() === 6;
       let shiftId = 'off';
 
-      if (dateStr === sampleHolidayStr) {
-        // Sample Hari Raya Idhul Adha (Tanggal Merah)
-        shiftId = 'off-holiday';
-      } else if (dateStr === sampleCutiStr) {
-        // Sample Cuti Bersama
-        shiftId = 'off-cuti-bersama';
-      } else if (isShiftWorker) {
+      if (isShiftWorker) {
         // Deterministic rotational pattern based on employee index and date index
         const patternIdx = (empIdx * 2 + dateIdx) % rotationalShifts.length;
         shiftId = rotationalShifts[patternIdx];
@@ -190,7 +223,7 @@ export function generateInitialScheduleRoster(employees = EMPLOYEES, shiftTypes 
         employeeId: emp.id,
         date: dateStr,
         shiftTypeId: shiftId,
-        note: shiftId === 'off-holiday' ? 'Hari Raya Idhul Adha' : (shiftId === 'off-cuti-bersama' ? 'Cuti Bersama' : '')
+        note: ''
       };
     });
   });
@@ -214,27 +247,13 @@ export function readWorkSchedules() {
     }
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-      const hasHoliday = Object.values(parsed).some((item) => item?.shiftTypeId === 'off-holiday');
-      if (!hasHoliday) {
-        const weekDates = getWeekDates(new Date());
-        const sampleHolidayStr = formatDateKey(weekDates[3]);
-        const sampleCutiStr = formatDateKey(weekDates[4]);
-        EMPLOYEES.forEach((emp) => {
-          parsed[`${emp.id}_${sampleHolidayStr}`] = {
-            id: `${emp.id}_${sampleHolidayStr}`,
-            employeeId: emp.id,
-            date: sampleHolidayStr,
-            shiftTypeId: 'off-holiday',
-            note: 'Hari Raya Idhul Adha'
-          };
-          parsed[`${emp.id}_${sampleCutiStr}`] = {
-            id: `${emp.id}_${sampleCutiStr}`,
-            employeeId: emp.id,
-            date: sampleCutiStr,
-            shiftTypeId: 'off-cuti-bersama',
-            note: 'Cuti Bersama'
-          };
-        });
+      // Holidays are derived from the Leave Calendar; drop copies stored by older builds.
+      const staleKeys = Object.keys(parsed).filter((k) => {
+        const id = parsed[k]?.shiftTypeId;
+        return id === 'off-holiday' || id === 'off-cuti-bersama';
+      });
+      if (staleKeys.length > 0) {
+        staleKeys.forEach((k) => { delete parsed[k]; });
         window.localStorage.setItem(WORK_SCHEDULE_STORAGE_KEY, JSON.stringify(parsed));
       }
       return parsed;

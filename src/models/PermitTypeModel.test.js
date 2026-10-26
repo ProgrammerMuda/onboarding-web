@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getNextPermitReset, validatePermitType, INITIAL_PERMIT_TYPES } from './PermitTypeModel';
+import { getNextPermitReset, validatePermitType, INITIAL_PERMIT_TYPES, calculateHolidayImpact } from './PermitTypeModel';
 
 describe('Permit reset calendar in Jakarta', () => {
   it.each([
@@ -52,5 +52,37 @@ describe('Leave category entitlements', () => {
   });
   it('does not require a quota for unpaid leave', () => {
     expect(validatePermitType(INITIAL_PERMIT_TYPES.find((item) => item.category === 'unpaid'), [])).toBe('');
+  });
+});
+
+describe('Collective leave department scope', () => {
+  const employees = [
+    { id: 'e1', departmentId: 'dept-eng' },
+    { id: 'e2', departmentId: 'dept-eng' },
+    { id: 'e3', departmentId: 'dept-fin' }
+  ];
+
+  it('covers every employee when scope is all departments', () => {
+    const impact = calculateHolidayImpact({ isCutiBersama: true, treatment: 'deduct_annual', scope: 'all' }, employees);
+    expect(impact.affectedEmployeesCount).toBe(3);
+    expect(impact.totalDaysDeducted).toBe(3);
+  });
+
+  it('only counts employees in the selected departments', () => {
+    const impact = calculateHolidayImpact(
+      { isCutiBersama: true, treatment: 'deduct_annual', scope: 'departments', scopeValue: ['dept-eng'] },
+      employees
+    );
+    expect(impact.affectedEmployeesCount).toBe(2);
+    expect(impact.totalDaysDeducted).toBe(2);
+  });
+
+  it('does not deduct balances for a company holiday', () => {
+    const impact = calculateHolidayImpact(
+      { isCutiBersama: true, treatment: 'free_leave', scope: 'departments', scopeValue: ['dept-fin'] },
+      employees
+    );
+    expect(impact.affectedEmployeesCount).toBe(1);
+    expect(impact.totalDaysDeducted).toBe(0);
   });
 });

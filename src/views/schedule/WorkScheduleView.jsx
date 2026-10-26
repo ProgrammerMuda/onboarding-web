@@ -46,9 +46,20 @@ import { downloadWorkbook } from '../../utils/excelExport';
  * Determine period badge metadata (icon, label, colors) based on shift clock-in time and period.
  */
 function getShiftPeriodInfo(shift, isOff) {
-  if (shift?.id === 'off-holiday' || shift?.offType === 'holiday' || shift?.id === 'off-cuti-bersama' || shift?.offType === 'cuti_bersama') {
+  if (shift?.id === 'off-cuti-bersama' || shift?.offType === 'cuti_bersama') {
     return {
-      label: 'Public Holiday',
+      label: 'Collective Leave',
+      Icon: CalendarStar,
+      bg: '#EFF6FF',
+      color: '#1E40AF',
+      border: '#BFDBFE',
+      isHoliday: true
+    };
+  }
+
+  if (shift?.id === 'off-holiday' || shift?.offType === 'holiday') {
+    return {
+      label: 'National Holiday',
       Icon: CalendarStar,
       bg: '#FEE2E2',
       color: '#B91C1C',
@@ -471,7 +482,7 @@ export default function WorkScheduleView({ presenter }) {
     monthDays.forEach((day) => {
       if (!day.isCurrentMonth) return;
       const shift = getEmployeeShiftForDate(schedules, selectedEmp, day.dateKey, shiftTypes);
-      if (shift.id === 'off') {
+      if (!Number(shift.workHours)) {
         offDays += 1;
       } else {
         workDays += 1;
@@ -493,7 +504,7 @@ export default function WorkScheduleView({ presenter }) {
     for (let d = 1; d <= totalDaysInMonth; d++) {
       const dStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
       const s = getEmployeeShiftForDate(schedules, emp, dStr, shiftTypes);
-      if (s.id === 'off') {
+      if (!Number(s.workHours)) {
         offDays += 1;
       } else {
         workDays += 1;
@@ -2696,8 +2707,7 @@ export default function WorkScheduleView({ presenter }) {
             <div className="ws-calendar-grid-body">
               {monthDays.map((cell) => {
                 const isToday = cell.dateKey === todayStr;
-                const entry = schedules[`${selectedEmp.id}_${cell.dateKey}`];
-                const shift = resolveShift(entry?.shiftTypeId);
+                const shift = getEmployeeShiftForDate(schedules, selectedEmp, cell.dateKey, shiftTypes);
                 const isHoliday = shift.id === 'off-holiday' || shift.offType === 'holiday';
                 const isCutiBersama = shift.id === 'off-cuti-bersama' || shift.offType === 'cuti_bersama';
                 const isSpecialHoliday = isHoliday || isCutiBersama;

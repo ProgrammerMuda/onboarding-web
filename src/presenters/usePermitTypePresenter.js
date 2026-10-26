@@ -188,7 +188,10 @@ export function usePermitTypePresenter() {
   const [holidaySearch, setHolidaySearch] = useState('');
   const [holidayTypeFilter, setHolidayTypeFilter] = useState('all'); // 'all' | 'national_holiday' | 'cuti_bersama'
   const [holidayViewMode, setHolidayViewMode] = useState('calendar'); // 'calendar' | 'table'
-  const [holidayCalendarDate, setHolidayCalendarDate] = useState(() => new Date(2026, 0, 1));
+  const [holidayCalendarDate, setHolidayCalendarDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
   const [editingHoliday, setEditingHoliday] = useState(null);
   const [holidayDraft, setHolidayDraft] = useState(null);
   const [pastAmendmentReason, setPastAmendmentReason] = useState('');
@@ -258,8 +261,8 @@ export function usePermitTypePresenter() {
     setHolidays(nextHolidays);
     closeHolidayEditor();
     setSuccessModal({
-      title: 'Hari Libur Dihapus',
-      subtext: target ? `“${target.name}” (${target.date}) telah dihapus dari kalender.` : 'Hari libur berhasil dihapus.'
+      title: 'Holiday Deleted',
+      subtext: target ? `“${target.name}” (${target.date}) has been removed from the calendar.` : 'Holiday deleted successfully.'
     });
   };
 
@@ -281,11 +284,24 @@ export function usePermitTypePresenter() {
     if (!holidayDraft) return;
 
     if (!holidayDraft.name?.trim()) {
-      setError('Nama hari libur / cuti bersama wajib diisi.');
+      setError('Holiday or collective leave name is required.');
       return;
     }
     if (!holidayDraft.date?.trim()) {
-      setError('Tanggal hari libur wajib diisi.');
+      setError('Holiday date is required.');
+      return;
+    }
+
+    const dateTaken = holidays.find(h => h.date === holidayDraft.date && h.id !== holidayDraft.id);
+    if (dateTaken) {
+      setError(`${holidayDraft.date} already has “${dateTaken.name}”. Only one holiday is allowed per date.`);
+      return;
+    }
+
+    const isDeptScoped = Boolean(holidayDraft.isCutiBersama) && holidayDraft.scope === 'departments';
+    const selectedDeptIds = isDeptScoped ? (holidayDraft.scopeValue || []) : [];
+    if (isDeptScoped && selectedDeptIds.length === 0) {
+      setError('Select at least one department that gets this collective leave.');
       return;
     }
 
@@ -296,21 +312,21 @@ export function usePermitTypePresenter() {
       isCutiBersama: Boolean(holidayDraft.isCutiBersama),
       type: holidayDraft.isCutiBersama ? 'cuti_bersama' : 'national_holiday',
       treatment: holidayDraft.isCutiBersama ? (holidayDraft.treatment || 'deduct_annual') : 'free_leave',
-      scope: 'all',
-      scopeValue: []
+      scope: isDeptScoped ? 'departments' : 'all',
+      scopeValue: selectedDeptIds
     };
 
     const isNew = !editingHoliday || !holidays.some(h => h.id === sanitizedDraft.id);
 
     // Cannot add a holiday on a past date relative to today
     if (isNew && sanitizedDraft.date < todayIso) {
-      setError(`Hari libur baru tidak dapat ditambahkan pada tanggal lampau (${sanitizedDraft.date}). Silakan pilih tanggal hari ini atau yang akan datang.`);
+      setError(`New holidays cannot be added on a past date (${sanitizedDraft.date}). Please choose today or a future date.`);
       return;
     }
 
     if (!isNew && isHolidayInPast && sanitizedDraft.isCutiBersama) {
       if (!pastAmendmentReason.trim()) {
-        setError('Alasan revisi tanggal lampau wajib diisi untuk persetujuan audit.');
+        setError('A past-date revision reason is required for audit approval.');
         return;
       }
 
@@ -322,10 +338,10 @@ export function usePermitTypePresenter() {
             ...sanitizedDraft,
             pendingAmendment: {
               proposedTreatment: sanitizedDraft.treatment,
-              proposedScope: 'all',
-              proposedScopeValue: [],
+              proposedScope: sanitizedDraft.scope,
+              proposedScopeValue: sanitizedDraft.scopeValue,
               reason: pastAmendmentReason,
-              requestedAt: new Date().toLocaleString('id-ID'),
+              requestedAt: new Date().toLocaleString('en-US'),
               requestedBy: 'HR Operation Admin',
               approverRole: 'HR Director'
             }
@@ -338,8 +354,8 @@ export function usePermitTypePresenter() {
       setHolidays(nextHolidays);
       closeHolidayEditor();
       setSuccessModal({
-        title: 'Pengajuan Revisi Tanggal Lampau Dikirim',
-        subtext: `Revisi kebijakan Cuti Bersama “${sanitizedDraft.name}” telah diajukan ke HR Director untuk persetujuan audit sebelum rekonsiliasi saldo.`
+        title: 'Past-Date Revision Submitted',
+        subtext: `The collective leave revision for “${sanitizedDraft.name}” was sent to the HR Director for audit approval before balances are reconciled.`
       });
       return;
     }
@@ -356,9 +372,9 @@ export function usePermitTypePresenter() {
     closeHolidayEditor();
     setSuccessModal({
       title: isNew
-        ? (sanitizedDraft.isCutiBersama ? 'Cuti Bersama Berhasil Ditambahkan' : 'Libur Nasional Berhasil Ditambahkan')
-        : (sanitizedDraft.isCutiBersama ? 'Cuti Bersama Berhasil Diperbarui' : 'Libur Nasional Berhasil Diperbarui'),
-      subtext: `Tanggal ${sanitizedDraft.date} (“${sanitizedDraft.name}”) tersimpan dalam kalender kerja.`
+        ? (sanitizedDraft.isCutiBersama ? 'Collective Leave Added' : 'National Holiday Added')
+        : (sanitizedDraft.isCutiBersama ? 'Collective Leave Updated' : 'National Holiday Updated'),
+      subtext: `${sanitizedDraft.date} (“${sanitizedDraft.name}”) was saved to the work calendar.`
     });
   };
 
@@ -371,7 +387,7 @@ export function usePermitTypePresenter() {
           scope: h.pendingAmendment.proposedScope,
           scopeValue: h.pendingAmendment.proposedScopeValue,
           pendingAmendment: null,
-          lastAmendedNote: `Disetujui oleh HR Director: ${h.pendingAmendment.reason}`
+          lastAmendedNote: `Approved by HR Director: ${h.pendingAmendment.reason}`
         };
       }
       return h;
@@ -379,8 +395,8 @@ export function usePermitTypePresenter() {
     persistHolidays(nextHolidays);
     setHolidays(nextHolidays);
     setSuccessModal({
-      title: 'Revisi Tanggal Lampau Disetujui',
-      subtext: 'Perubahan cuti bersama tanggal lampau telah disetujui dan saldo karyawan telah direkonsiliasi.'
+      title: 'Past-Date Revision Approved',
+      subtext: 'The past-date collective leave change was approved and employee balances have been reconciled.'
     });
   };
 
@@ -394,8 +410,8 @@ export function usePermitTypePresenter() {
     persistHolidays(nextHolidays);
     setHolidays(nextHolidays);
     setSuccessModal({
-      title: 'Revisi Ditolak',
-      subtext: 'Pengajuan revisi cuti bersama tanggal lampau telah dibatalkan.'
+      title: 'Revision Rejected',
+      subtext: 'The past-date collective leave revision request was cancelled.'
     });
   };
 

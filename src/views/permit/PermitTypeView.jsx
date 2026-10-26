@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ArrowsClockwise,
@@ -6,6 +6,7 @@ import {
   CalendarBlank,
   CalendarCheck,
   CalendarStar,
+  CaretDown,
   CaretLeft,
   CaretRight,
   Check,
@@ -14,6 +15,7 @@ import {
   Clock,
   DotsThreeVertical,
   FileText,
+  FileXls,
   Info,
   MagnifyingGlass,
   PencilSimple,
@@ -28,6 +30,7 @@ import {
   TrendDown,
   TrendUp,
   UserCheck,
+  Warning,
   WarningCircle,
   X
 } from '@phosphor-icons/react';
@@ -40,7 +43,181 @@ import {
 } from '../../models/PermitTypeModel';
 import { DEPARTMENTS } from '../../models/ApprovalFlowModel';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { exportHolidaysToExcel } from '../../utils/excelExport';
 import './permit-type.css';
+
+const PICKER_POPOVER_WIDTH = 280;
+
+const PICKER_MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
+// Single button showing "Month Year"; opens a 12-month grid with year stepper.
+function HolidayMonthPicker({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [pickerYear, setPickerYear] = useState(value.getFullYear());
+  const [alignRight, setAlignRight] = useState(false);
+  const wrapRef = useRef(null);
+
+  const selectedMonth = value.getMonth();
+  const selectedYear = value.getFullYear();
+  const now = new Date();
+  const nowMonth = now.getMonth();
+  const nowYear = now.getFullYear();
+  const isPastMonth = (year, monthIndex) => year < nowYear || (year === nowYear && monthIndex < nowMonth);
+
+  // The card clips overflow, so flip the popover to the right edge when it would not fit.
+  useLayoutEffect(() => {
+    if (!isOpen || !wrapRef.current) return;
+    const card = wrapRef.current.closest('.permit-calendar-card');
+    const boundaryRight = card ? card.getBoundingClientRect().right : window.innerWidth;
+    const boundaryLeft = card ? card.getBoundingClientRect().left : 0;
+    const wrapRect = wrapRef.current.getBoundingClientRect();
+    const fitsRight = wrapRect.left + PICKER_POPOVER_WIDTH <= boundaryRight - 8;
+    const fitsLeft = wrapRect.right - PICKER_POPOVER_WIDTH >= boundaryLeft + 8;
+    setAlignRight(!fitsRight && fitsLeft);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handlePointerDown = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setIsOpen(false);
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsOpen(false);
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
+  const select = (year, monthIndex) => {
+    onChange(new Date(year, monthIndex, 1));
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="permit-month-picker" ref={wrapRef}>
+      <button
+        type="button"
+        className={`permit-month-picker-btn ${isOpen ? 'is-open' : ''}`}
+        onClick={() => {
+          setPickerYear(selectedYear);
+          setIsOpen((prev) => !prev);
+        }}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        title="Select month and year"
+      >
+        <CalendarBlank size={16} weight="bold" className="permit-month-picker-icon" aria-hidden="true" />
+        <span>{PICKER_MONTHS[selectedMonth]} {selectedYear}</span>
+        <CaretDown size={13} weight="bold" className="permit-month-picker-caret" aria-hidden="true" />
+      </button>
+
+      {isOpen && (
+        <div className={`permit-month-picker-popover ${alignRight ? 'align-right' : ''}`} role="dialog" aria-label="Select month and year">
+          <div className="permit-month-picker-year">
+            <button
+              type="button"
+              onClick={() => setPickerYear((y) => y - 1)}
+              disabled={pickerYear <= nowYear}
+              aria-label="Previous year"
+              title={pickerYear <= nowYear ? 'Past years cannot be selected' : 'Previous year'}
+            >
+              <CaretLeft size={13} weight="bold" />
+            </button>
+            <strong>{pickerYear}</strong>
+            <button type="button" onClick={() => setPickerYear((y) => y + 1)} aria-label="Next year">
+              <CaretRight size={13} weight="bold" />
+            </button>
+          </div>
+
+          <div className="permit-month-picker-grid">
+            {PICKER_MONTHS.map((name, idx) => {
+              const isSelected = idx === selectedMonth && pickerYear === selectedYear;
+              const isThisMonth = idx === nowMonth && pickerYear === nowYear;
+              const isPast = isPastMonth(pickerYear, idx);
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  className={`permit-month-picker-month ${isSelected ? 'is-selected' : ''} ${isThisMonth ? 'is-now' : ''}`}
+                  aria-pressed={isSelected}
+                  disabled={isPast}
+                  title={isPast ? `${name} ${pickerYear} is in the past` : `${name} ${pickerYear}`}
+                  onClick={() => select(pickerYear, idx)}
+                >
+                  {name.slice(0, 3)}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            className="permit-month-picker-today"
+            onClick={() => select(nowYear, nowMonth)}
+          >
+            This Month
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Matches the employee delete confirmation; portalled so it sits above PermitDialog.
+function HolidayDeleteModal({ holiday, onCancel, onConfirm }) {
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        // Capture phase: close only this modal, not the editor underneath.
+        e.stopPropagation();
+        onCancel();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [onCancel]);
+
+  return createPortal(
+    <div className="emp-modal-backdrop" style={{ zIndex: 10000 }} onClick={onCancel}>
+      <div
+        className="emp-modal-card text-center p-4"
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="holiday-delete-title"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: '440px' }}
+      >
+        <div className="d-flex justify-content-center mb-3">
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', backgroundColor: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Warning size={32} color="#dc2626" weight="bold" />
+          </div>
+        </div>
+        <h4 id="holiday-delete-title" style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', marginBottom: '8px' }}>
+          Delete Holiday?
+        </h4>
+        <p style={{ fontSize: '13.5px', color: '#64748b', marginBottom: '20px' }}>
+          Are you sure you want to delete <strong>&ldquo;{holiday.name}&rdquo;</strong> ({holiday.date})? This date will be removed from the calendar and the work schedule.
+        </p>
+        <div className="d-flex justify-content-center gap-2">
+          <button type="button" className="emp-btn-cancel" onClick={onCancel} autoFocus>
+            Cancel
+          </button>
+          <button type="button" className="emp-btn-danger" onClick={onConfirm}>
+            Yes, Delete Holiday
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 // Reusable Base Dialog with Guaranteed Overlay Backdrop
 function PermitDialog({ title, description, onClose, maxWidthClass = '', children }) {
@@ -162,6 +339,7 @@ function SuccessDialog({ title, subtext, onClose }) {
 
 export function PermitTypeView({ presenter: p }) {
   const [balanceSubView, setBalanceSubView] = useState('directory'); // 'directory' | 'adjustments'
+  const [holidayToDelete, setHolidayToDelete] = useState(null);
   const [activeActionId, setActiveActionId] = useState(null);
   const [actionAnchor, setActionAnchor] = useState(null);
 
@@ -210,6 +388,9 @@ export function PermitTypeView({ presenter: p }) {
 
   const pendingAdjustmentsCount = p.adjustments.filter(a => a.status === 'pending').length;
   const pendingHolidayAmendments = p.holidays.filter(h => Boolean(h.pendingAmendment));
+  const dateConflict = p.holidayDraft?.date
+    ? p.holidays.find(h => h.date === p.holidayDraft.date && h.id !== p.holidayDraft.id)
+    : null;
   const policyCount = p.filteredPermits.length;
   const policyStart = policyCount === 0 ? 0 : (p.currentPage - 1) * p.pageSize + 1;
   const policyEnd = Math.min(p.currentPage * p.pageSize, policyCount);
@@ -291,7 +472,7 @@ export function PermitTypeView({ presenter: p }) {
           {/* STATISTIK SPESIFIK TAB 1 (BUKAN GLOBAL) */}
           <div className="permit-stats-overview mb-4">
             <div className="permit-stat-box">
-              <div className="permit-stat-icon-wrap navy">
+              <div className="permit-stat-icon-wrap slate">
                 <FileText size={22} weight="bold" />
               </div>
               <div className="permit-stat-meta">
@@ -301,7 +482,7 @@ export function PermitTypeView({ presenter: p }) {
             </div>
 
             <div className="permit-stat-box">
-              <div className="permit-stat-icon-wrap teal">
+              <div className="permit-stat-icon-wrap navy">
                 <CalendarStar size={22} weight="bold" />
               </div>
               <div className="permit-stat-meta">
@@ -311,7 +492,7 @@ export function PermitTypeView({ presenter: p }) {
             </div>
 
             <div className="permit-stat-box">
-              <div className="permit-stat-icon-wrap emerald">
+              <div className="permit-stat-icon-wrap teal">
                 <Briefcase size={22} weight="bold" />
               </div>
               <div className="permit-stat-meta">
@@ -467,25 +648,21 @@ export function PermitTypeView({ presenter: p }) {
       )}
 
       {/* =========================================================================
-          TAB 2: HOLIDAYS & CUTI BERSAMA (CALENDAR & TABLE VIEW)
+          TAB 2: HOLIDAYS & COLLECTIVE LEAVE (CALENDAR & TABLE VIEW)
          ========================================================================= */}
       {p.activeTab === 'holidays' && (() => {
-        const calDate = p.holidayCalendarDate || new Date(2026, 0, 1);
+        const calDate = p.holidayCalendarDate || new Date();
         const calYear = calDate.getFullYear();
         const calMonth = calDate.getMonth();
 
-        const MONTH_NAMES = [
-          'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-          'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-        ];
         const WEEKDAYS = [
-          { key: 'sen', label: 'Senin', isWeekend: false },
-          { key: 'sel', label: 'Selasa', isWeekend: false },
-          { key: 'rab', label: 'Rabu', isWeekend: false },
-          { key: 'kam', label: 'Kamis', isWeekend: false },
-          { key: 'jum', label: 'Jumat', isWeekend: false },
-          { key: 'sab', label: 'Sabtu', isWeekend: true },
-          { key: 'min', label: 'Minggu', isWeekend: true }
+          { key: 'sen', label: 'Monday', isWeekend: false },
+          { key: 'sel', label: 'Tuesday', isWeekend: false },
+          { key: 'rab', label: 'Wednesday', isWeekend: false },
+          { key: 'kam', label: 'Thursday', isWeekend: false },
+          { key: 'jum', label: 'Friday', isWeekend: false },
+          { key: 'sab', label: 'Saturday', isWeekend: true },
+          { key: 'min', label: 'Sunday', isWeekend: true }
         ];
 
         // First day of current month (Mon = 0, Sun = 6)
@@ -538,8 +715,13 @@ export function PermitTypeView({ presenter: p }) {
           p.setHolidayCalendarDate(new Date(calYear, calMonth + 1, 1));
         };
 
+        const searchQuery = p.holidaySearch.trim().toLowerCase();
+        const calendarHolidays = p.holidays.filter((h) => !searchQuery || h.name.toLowerCase().includes(searchQuery) || h.date.includes(searchQuery));
+        const isTypeFiltered = p.holidayTypeFilter !== 'all';
+
         const todayObj = new Date();
         const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
+        const isPrevMonthDisabled = calYear * 12 + calMonth <= todayObj.getFullYear() * 12 + todayObj.getMonth();
 
         return (
           <div className="permit-calendar-card">
@@ -548,53 +730,45 @@ export function PermitTypeView({ presenter: p }) {
               <div>
                 <h2 className="emp-card-title">Leave &amp; Holiday Calendar</h2>
                 <p className="emp-card-desc">
-                  Kelola jadwal libur nasional dan cuti bersama resmi pemerintah serta konfigurasi perlakuan cuti perusahaan.
+                  Manage national holidays and government collective leave dates, and configure how the company treats each one.
                 </p>
               </div>
-              <div className="d-flex align-items-center gap-2 flex-wrap">
-                {/* View Switcher: Calendar vs Table */}
-                <div className="btn-group" role="group" aria-label="Tampilan kalender atau tabel">
+              <div className="emp-card-actions">
+                <div className="ws-toolbar-tabs" role="group" aria-label="Calendar or table view" style={{ marginRight: '4px' }}>
                   <button
                     type="button"
-                    className={`btn btn-sm d-inline-flex align-items-center gap-1.5 ${p.holidayViewMode === 'calendar' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                    style={{
-                      backgroundColor: p.holidayViewMode === 'calendar' ? '#002B7F' : 'transparent',
-                      borderColor: p.holidayViewMode === 'calendar' ? '#002B7F' : '#cbd5e1',
-                      color: p.holidayViewMode === 'calendar' ? '#ffffff' : '#475569',
-                      fontWeight: 600,
-                      padding: '7px 14px'
-                    }}
+                    className={`ws-toolbar-tab ${p.holidayViewMode === 'calendar' ? 'is-active' : ''}`}
+                    aria-pressed={p.holidayViewMode === 'calendar'}
                     onClick={() => p.setHolidayViewMode('calendar')}
                   >
-                    <CalendarBlank size={16} weight="bold" />
+                    <CalendarBlank size={15} weight={p.holidayViewMode === 'calendar' ? 'bold' : 'regular'} aria-hidden="true" />
                     <span>Calendar View</span>
                   </button>
                   <button
                     type="button"
-                    className={`btn btn-sm d-inline-flex align-items-center gap-1.5 ${p.holidayViewMode === 'table' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                    style={{
-                      backgroundColor: p.holidayViewMode === 'table' ? '#002B7F' : 'transparent',
-                      borderColor: p.holidayViewMode === 'table' ? '#002B7F' : '#cbd5e1',
-                      color: p.holidayViewMode === 'table' ? '#ffffff' : '#475569',
-                      fontWeight: 600,
-                      padding: '7px 14px'
-                    }}
+                    className={`ws-toolbar-tab ${p.holidayViewMode === 'table' ? 'is-active' : ''}`}
+                    aria-pressed={p.holidayViewMode === 'table'}
                     onClick={() => p.setHolidayViewMode('table')}
                   >
-                    <Table size={16} weight="bold" />
+                    <Table size={15} weight={p.holidayViewMode === 'table' ? 'bold' : 'regular'} aria-hidden="true" />
                     <span>Table View</span>
                   </button>
                 </div>
 
-                {/* Add Holiday Button */}
                 <button
                   type="button"
-                  className="btn btn-sm btn-primary d-inline-flex align-items-center gap-1.5 shadow-sm"
-                  style={{ backgroundColor: '#002B7F', borderColor: '#002B7F', fontWeight: 600, padding: '7px 14px' }}
-                  onClick={() => p.openNewHoliday()}
+                  className="emp-btn-secondary"
+                  onClick={() => exportHolidaysToExcel({ holidays: p.filteredHolidays, treatmentOptions: TREATMENT_OPTIONS, departments: DEPARTMENTS })}
+                  disabled={p.filteredHolidays.length === 0}
+                  title="Export the holidays currently shown, including search and type filters"
                 >
-                  <Plus size={16} weight="bold" />
-                  <span>Tambah Hari Libur</span>
+                  <FileXls size={16} weight="bold" aria-hidden="true" />
+                  <span>Export Holiday</span>
+                </button>
+
+                <button type="button" className="emp-btn-primary" onClick={() => p.openNewHoliday()}>
+                  <Plus size={16} weight="bold" aria-hidden="true" />
+                  <span>Add Holiday</span>
                 </button>
               </div>
             </div>
@@ -605,9 +779,9 @@ export function PermitTypeView({ presenter: p }) {
                 <div className="pending-amendment-meta">
                   <WarningCircle size={24} weight="fill" color="#d97706" />
                   <div>
-                    <strong>{pendingHolidayAmendments.length} Pengajuan Perubahan Tanggal Lampau Menunggu Persetujuan</strong>
+                    <strong>{pendingHolidayAmendments.length} Past-Date Change Requests Awaiting Approval</strong>
                     <p>
-                      Revisi cuti bersama pada tanggal yang telah lewat memerlukan otorisasi HR Director sebelum saldo karyawan direkonsiliasi.
+                      Revising collective leave on a date that has passed needs HR Director authorization before employee balances are reconciled.
                     </p>
                   </div>
                 </div>
@@ -629,7 +803,7 @@ export function PermitTypeView({ presenter: p }) {
                         style={{ fontSize: '11px', fontWeight: 600 }}
                         onClick={() => p.rejectPastAmendment(h.id)}
                       >
-                        Tolak
+                        Reject
                       </button>
                     </div>
                   ))}
@@ -638,13 +812,13 @@ export function PermitTypeView({ presenter: p }) {
             )}
 
             {/* Search, Filter & Calendar Controls Toolbar */}
-            <div className="permit-toolbar">
+            <div className="permit-toolbar permit-filter-bar">
               <div className="permit-search">
-                <MagnifyingGlass size={17} className="text-secondary flex-shrink-0" weight="bold" />
+                <MagnifyingGlass size={17} className="permit-search-icon flex-shrink-0" weight="bold" />
                 <input
                   type="search"
-                  aria-label="Cari hari libur atau cuti bersama"
-                  placeholder="Cari tanggal atau nama hari libur..."
+                  aria-label="Search holidays or collective leave"
+                  placeholder="Search by date or holiday name..."
                   value={p.holidaySearch}
                   onChange={(e) => p.setHolidaySearch(e.target.value)}
                 />
@@ -653,14 +827,14 @@ export function PermitTypeView({ presenter: p }) {
               <div className="d-flex align-items-center gap-2 flex-wrap">
                 <select
                   className="form-select"
-                  aria-label="Filter tipe hari libur"
+                  aria-label="Filter by holiday type"
                   value={p.holidayTypeFilter}
                   onChange={(e) => p.setHolidayTypeFilter(e.target.value)}
                   style={{ width: '210px' }}
                 >
-                  <option value="all">Semua Jenis Libur</option>
-                  <option value="national_holiday">Libur Nasional Resmi</option>
-                  <option value="cuti_bersama">Cuti Bersama Pemerintah</option>
+                  <option value="all">All Holiday Types</option>
+                  <option value="national_holiday">Official National Holiday</option>
+                  <option value="cuti_bersama">Government Collective Leave</option>
                 </select>
 
                 {/* Calendar Navigation Controls (Active in Calendar View) */}
@@ -670,55 +844,26 @@ export function PermitTypeView({ presenter: p }) {
                       type="button"
                       className="permit-cal-btn-nav"
                       onClick={handlePrevMonth}
-                      title="Bulan sebelumnya"
-                      aria-label="Bulan sebelumnya"
+                      disabled={isPrevMonthDisabled}
+                      title={isPrevMonthDisabled ? 'Past months cannot be selected' : 'Previous month'}
+                      aria-label="Previous month"
                     >
                       <CaretLeft size={16} weight="bold" />
                     </button>
 
-                    <div className="d-flex align-items-center gap-1">
-                      <select
-                        className="form-select form-select-sm"
-                        style={{ width: '120px', fontWeight: 600 }}
-                        value={calMonth}
-                        onChange={(e) => p.setHolidayCalendarDate(new Date(calYear, Number(e.target.value), 1))}
-                        aria-label="Pilih Bulan"
-                      >
-                        {MONTH_NAMES.map((mName, idx) => (
-                          <option key={mName} value={idx}>{mName}</option>
-                        ))}
-                      </select>
-                      <select
-                        className="form-select form-select-sm"
-                        style={{ width: '85px', fontWeight: 600 }}
-                        value={calYear}
-                        onChange={(e) => p.setHolidayCalendarDate(new Date(Number(e.target.value), calMonth, 1))}
-                        aria-label="Pilih Tahun"
-                      >
-                        {[2025, 2026, 2027].map((y) => (
-                          <option key={y} value={y}>{y}</option>
-                        ))}
-                      </select>
-                    </div>
+                    <HolidayMonthPicker
+                      value={new Date(calYear, calMonth, 1)}
+                      onChange={p.setHolidayCalendarDate}
+                    />
 
                     <button
                       type="button"
                       className="permit-cal-btn-nav"
                       onClick={handleNextMonth}
-                      title="Bulan berikutnya"
-                      aria-label="Bulan berikutnya"
+                      title="Next month"
+                      aria-label="Next month"
                     >
                       <CaretRight size={16} weight="bold" />
-                    </button>
-
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-secondary px-2 py-1"
-                      style={{ fontSize: '12px', fontWeight: 600 }}
-                      onClick={() => p.setHolidayCalendarDate(new Date(2026, 0, 1))}
-                      title="Kembali ke Januari 2026"
-                    >
-                      Jan 2026
                     </button>
                   </div>
                 )}
@@ -729,7 +874,7 @@ export function PermitTypeView({ presenter: p }) {
             {p.holidayViewMode === 'calendar' && (
               <div className="permit-cal-body">
                 <div className="permit-cal-grid-frame">
-                  {/* Weekday Row Header (Sen - Min) */}
+                  {/* Weekday Row Header (Mon - Sun) */}
                   <div className="permit-cal-weekdays-row">
                     {WEEKDAYS.map((wd) => (
                       <div key={wd.key} className={`permit-cal-weekday-header ${wd.isWeekend ? 'weekend' : ''}`}>
@@ -741,10 +886,13 @@ export function PermitTypeView({ presenter: p }) {
                   {/* Day Cells Grid */}
                   <div className="permit-cal-days-grid">
                     {cells.map((cell) => {
-                      const dayHolidays = p.filteredHolidays.filter((h) => h.date === cell.dateStr);
+                      // Type filter highlights instead of hiding (like the Work Schedule shift filter); search still hides.
+                      const dayHolidays = calendarHolidays.filter((h) => h.date === cell.dateStr);
                       const isToday = cell.dateStr === todayStr;
                       const isPast = cell.dateStr < todayStr;
                       const hasHoliday = dayHolidays.length > 0;
+                      // One holiday per date: a filtered-out holiday still occupies its date.
+                      const isDateTaken = p.holidays.some((h) => h.date === cell.dateStr);
 
                       return (
                         <div
@@ -752,69 +900,83 @@ export function PermitTypeView({ presenter: p }) {
                           className={`permit-cal-day-cell ${!cell.isCurrentMonth ? 'other-month' : ''} ${cell.isWeekend ? 'weekend' : ''} ${isToday ? 'is-today' : ''} ${isPast ? 'is-past-day' : ''} ${hasHoliday ? 'has-holiday' : ''}`}
                           onClick={() => {
                             // Only allow adding on today or future dates when empty
-                            if (!hasHoliday && !isPast) {
+                            if (!isDateTaken && !isPast) {
                               p.openNewHoliday(cell.dateStr);
                             }
                           }}
                         >
                           <div className="permit-cal-day-top">
                             <span className="permit-cal-day-num">{cell.day}</span>
-                            {cell.isCurrentMonth && !isPast && (
+                          </div>
+
+                          {/* Events in this day */}
+                          <div className="permit-cal-events-list">
+                            {!isDateTaken && cell.isCurrentMonth && !isPast && (
                               <button
                                 type="button"
-                                className="permit-cal-cell-add-btn"
-                                title={`Tambah libur pada ${cell.dateStr}`}
+                                className="permit-cal-empty-add"
+                                aria-label={`Add holiday on ${cell.dateStr}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   p.openNewHoliday(cell.dateStr);
                                 }}
                               >
-                                <Plus size={11} weight="bold" />
-                                <span>Tambah</span>
+                                <Plus size={13} weight="bold" aria-hidden="true" />
+                                <span>Add holiday</span>
                               </button>
                             )}
-                          </div>
-
-                          {/* Events in this day */}
-                          <div className="permit-cal-events-list">
                             {dayHolidays.map((holiday) => {
                               const isCuti = Boolean(holiday.isCutiBersama);
-                              const isDeduct = holiday.treatment === 'deduct_annual';
-                              const chipClass = isCuti
-                                ? (isDeduct ? 'cuti-deduct' : 'cuti-free')
-                                : 'national';
+                              const isTypeMatch = !isTypeFiltered || (p.holidayTypeFilter === 'cuti_bersama') === isCuti;
+                              const openEditor = () => p.openHolidayEditor(holiday);
 
                               return (
                                 <div
                                   key={holiday.id}
-                                  className={`permit-cal-event-chip ${chipClass}`}
-                                  title={`Klik untuk ubah: ${holiday.name} (${holiday.date})`}
-                                  onClick={(e) => {
+                                  className={`permit-cal-event-chip ${isPast ? 'is-past' : ''} ${isTypeFiltered ? (isTypeMatch ? `is-match ${isCuti ? 'collective' : 'national'}` : 'is-dimmed') : ''}`}
+                                  title={isPast
+                                    ? `${holiday.name} (${holiday.date}) has passed and cannot be edited`
+                                    : `Click to edit: ${holiday.name} (${holiday.date})`}
+                                  onClick={isPast ? undefined : (e) => {
                                     e.stopPropagation();
-                                    p.openHolidayEditor(holiday);
+                                    openEditor();
                                   }}
                                 >
-                                  <div className="permit-cal-event-chip-header">
-                                    {isCuti ? (
-                                      <>
-                                        <CalendarStar size={12} weight="fill" />
-                                        <span>Cuti Bersama</span>
-                                      </>
-                                    ) : (
-                                      <>
-                                        <CalendarBlank size={12} weight="fill" />
-                                        <span>Libur Nasional</span>
-                                      </>
+                                  <div className="permit-cal-event-chip-top">
+                                    <span className={`permit-cal-chip-badge ${isCuti ? 'collective' : 'national'}`}>
+                                      <CalendarStar size={11} weight="bold" aria-hidden="true" />
+                                      <span>{isCuti ? 'Collective' : 'National'}</span>
+                                    </span>
+                                    {!isPast && (
+                                      <div className="permit-cal-chip-actions">
+                                        <button
+                                          type="button"
+                                          className="permit-cal-chip-btn"
+                                          aria-label={`Edit ${holiday.name}`}
+                                          title="Edit holiday"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            openEditor();
+                                          }}
+                                        >
+                                          <PencilSimple size={12} weight="bold" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="permit-cal-chip-btn is-danger"
+                                          aria-label={`Delete ${holiday.name}`}
+                                          title="Delete holiday"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setHolidayToDelete(holiday);
+                                          }}
+                                        >
+                                          <Trash size={12} weight="bold" />
+                                        </button>
+                                      </div>
                                     )}
                                   </div>
-                                  <div className="permit-cal-event-chip-title">
-                                    {holiday.name}
-                                  </div>
-                                  {isCuti && (
-                                    <div className="permit-cal-event-chip-sub">
-                                      {isDeduct ? '• Potong Cuti Tahunan' : '• Tidak Potong Cuti (Free)'}
-                                    </div>
-                                  )}
+                                  <div className="permit-cal-event-chip-title">{holiday.name}</div>
                                 </div>
                               );
                             })}
@@ -822,29 +984,6 @@ export function PermitTypeView({ presenter: p }) {
                         </div>
                       );
                     })}
-                  </div>
-                </div>
-
-                {/* Calendar Legend Bar */}
-                <div className="permit-cal-legend-bar">
-                  <div className="permit-cal-legend-items">
-                    <span className="fw-bold text-dark">Legenda:</span>
-                    <div className="permit-cal-legend-item">
-                      <span className="permit-cal-legend-dot national" />
-                      <span>Libur Nasional Resmi</span>
-                    </div>
-                    <div className="permit-cal-legend-item">
-                      <span className="permit-cal-legend-dot cuti-deduct" />
-                      <span>Cuti Bersama (Potong Cuti Tahunan)</span>
-                    </div>
-                    <div className="permit-cal-legend-item">
-                      <span className="permit-cal-legend-dot cuti-free" />
-                      <span>Cuti Bersama (Tidak Potong Cuti / Bebas)</span>
-                    </div>
-                  </div>
-                  <div className="text-muted small">
-                    <Info size={14} className="me-1 text-primary" weight="bold" />
-                    Klik tanggal kalender untuk menambah atau mengubah hari libur / cuti bersama.
                   </div>
                 </div>
               </div>
@@ -856,11 +995,11 @@ export function PermitTypeView({ presenter: p }) {
                 <table className="permit-table">
                   <thead>
                     <tr>
-                      <th scope="col" style={{ width: '18%' }}>Tanggal (2026)</th>
-                      <th scope="col" style={{ width: '38%' }}>Keterangan Libur Resmi</th>
-                      <th scope="col" style={{ width: '18%' }}>Klasifikasi SKB</th>
-                      <th scope="col" style={{ width: '16%' }}>Perlakuan Perusahaan</th>
-                      <th scope="col" className="text-end" style={{ width: '10%' }}>Aksi</th>
+                      <th scope="col" style={{ width: '18%' }}>Date (2026)</th>
+                      <th scope="col" style={{ width: '38%' }}>Holiday Name</th>
+                      <th scope="col" style={{ width: '18%' }}>Classification</th>
+                      <th scope="col" style={{ width: '16%' }}>Company Treatment</th>
+                      <th scope="col" className="text-end" style={{ width: '10%' }}>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -868,7 +1007,7 @@ export function PermitTypeView({ presenter: p }) {
                       <tr>
                         <td colSpan={5} className="text-center py-5 text-muted">
                           <CalendarBlank size={32} className="mb-2 text-secondary" />
-                          <p className="mb-0">Tidak ada hari libur yang cocok dengan pencarian.</p>
+                          <p className="mb-0">No holidays match your search.</p>
                         </td>
                       </tr>
                     ) : (
@@ -882,7 +1021,7 @@ export function PermitTypeView({ presenter: p }) {
                                 {holiday.date}
                               </strong>
                               <div className="permit-cell-note">
-                                {new Date(holiday.date + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long' })}
+                                {new Date(holiday.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })}
                               </div>
                             </td>
 
@@ -899,30 +1038,37 @@ export function PermitTypeView({ presenter: p }) {
                               {holiday.isCutiBersama ? (
                                 <span className="holiday-type-badge cuti">
                                   <CalendarStar size={14} weight="bold" />
-                                  <span>Cuti Bersama</span>
+                                  <span>Collective Leave</span>
                                 </span>
                               ) : (
                                 <span className="holiday-type-badge national">
                                   <CalendarBlank size={14} weight="bold" />
-                                  <span>Libur Nasional</span>
+                                  <span>National Holiday</span>
                                 </span>
                               )}
                             </td>
 
                             <td>
                               {holiday.isCutiBersama ? (
-                                <span
-                                  className="treatment-pill"
-                                  style={{ backgroundColor: treatmentObj.bg, color: treatmentObj.color, border: `1px solid ${treatmentObj.color}33` }}
-                                >
-                                  {treatmentObj.badge}
-                                </span>
+                                <>
+                                  <span
+                                    className="treatment-pill"
+                                    style={{ backgroundColor: treatmentObj.bg, color: treatmentObj.color, border: `1px solid ${treatmentObj.color}33` }}
+                                  >
+                                    {treatmentObj.badge}
+                                  </span>
+                                  <div className="permit-cell-note">
+                                    {holiday.scope === 'departments'
+                                      ? `${(holiday.scopeValue || []).length} of ${DEPARTMENTS.length} departments`
+                                      : 'All departments'}
+                                  </div>
+                                </>
                               ) : (
-                                <span className="text-muted small">Libur Resmi (Tanpa Potong Cuti)</span>
+                                <span className="text-muted small">Official Holiday (No Leave Deduction)</span>
                               )}
                               {holiday.pendingAmendment && (
                                 <span className="badge bg-warning text-dark ms-2" style={{ fontSize: '10px' }}>
-                                  Revisi Lampau Pending
+                                  Past Revision Pending
                                 </span>
                               )}
                             </td>
@@ -934,22 +1080,20 @@ export function PermitTypeView({ presenter: p }) {
                                   className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
                                   style={{ fontSize: '12px', padding: '4px 9px', borderColor: '#002B7F', color: '#002B7F', fontWeight: 600 }}
                                   onClick={() => p.openHolidayEditor(holiday)}
-                                  title="Ubah hari libur atau cuti bersama ini"
+                                  title="Edit this holiday or collective leave"
                                 >
                                   <PencilSimple size={13} weight="bold" />
-                                  <span>Ubah</span>
+                                  <span>Edit</span>
                                 </button>
                                 <button
                                   type="button"
                                   className="btn btn-sm btn-outline-danger d-inline-flex align-items-center p-1 px-1.5"
                                   style={{ fontSize: '12px' }}
                                   onClick={() => {
-                                    if (window.confirm(`Hapus “${holiday.name}” (${holiday.date}) dari kalender?`)) {
-                                      p.deleteHoliday(holiday.id);
-                                    }
+                                    setHolidayToDelete(holiday);
                                   }}
-                                  title="Hapus tanggal libur ini"
-                                  aria-label={`Hapus ${holiday.name}`}
+                                  title="Delete this holiday"
+                                  aria-label={`Delete ${holiday.name}`}
                                 >
                                   <Trash size={14} weight="bold" />
                                 </button>
@@ -1626,62 +1770,93 @@ export function PermitTypeView({ presenter: p }) {
                 const draft = p.draft;
                 const catInfo = PERMIT_CATEGORIES.find((item) => item.value === draft.category);
                 const isAnnualDraft = draft.category === 'annual';
-                const entitlement = isAnnualDraft
-                  ? draft.quota ? `${draft.quota} days / year` : null
-                  : draft.category === 'special'
-                    ? draft.eventDurationDays ? `${draft.eventDurationDays} days / event` : null
-                    : draft.category === 'unpaid' ? 'No annual balance' : null;
+                const entitlementValue = isAnnualDraft ? draft.quota : draft.category === 'special' ? draft.eventDurationDays : null;
+                const entitlementUnit = isAnnualDraft ? 'days / year' : 'days / event';
                 const requestDates = draft.allowedDates === 'past' ? 'Past dates only'
                   : draft.allowedDates === 'future' ? 'Future dates only' : 'Past & future dates';
-                const facts = [
-                  { label: 'Entitlement', value: entitlement || 'Not set yet', muted: !entitlement },
-                  { label: 'Request dates', value: requestDates }
-                ];
-                if (isAnnualDraft) {
-                  facts.push(
-                    { label: 'New-hire prorata', value: draft.isProrated ? 'On' : 'Off' },
-                    { label: 'Negative balance', value: draft.allowNegativeBalance ? `Up to ${draft.maxNegativeDays || '—'} days` : 'Not allowed' },
-                    {
-                      label: 'Carry-over',
-                      value: draft.allowCarryOver
-                        ? `Up to ${draft.maxCarryOverDays || '—'} days, ${draft.carryOverExpiryMonths || '—'} ${Number(draft.carryOverExpiryMonths) === 1 ? 'month' : 'months'}`
-                        : 'None'
-                    }
-                  );
-                } else if (catInfo) {
-                  facts.push({ label: 'Annual balance', value: 'Not deducted' });
-                }
+
+                // tone: 'on' = rule active, 'off' = rule disabled, 'neutral' = informational
+                const rules = isAnnualDraft
+                  ? [
+                      { label: 'New-hire prorata', Icon: UserCheck, value: draft.isProrated ? 'On' : 'Off', tone: draft.isProrated ? 'on' : 'off' },
+                      {
+                        label: 'Negative balance',
+                        Icon: TrendDown,
+                        value: draft.allowNegativeBalance ? `Up to ${draft.maxNegativeDays || '—'} days` : 'Not allowed',
+                        tone: draft.allowNegativeBalance ? 'on' : 'off'
+                      },
+                      {
+                        label: 'Carry-over',
+                        Icon: ArrowsClockwise,
+                        value: draft.allowCarryOver
+                          ? `Up to ${draft.maxCarryOverDays || '—'} ${Number(draft.maxCarryOverDays) === 1 ? 'day' : 'days'} · Max ${draft.carryOverExpiryMonths || '—'} ${Number(draft.carryOverExpiryMonths) === 1 ? 'month' : 'months'}`
+                          : 'None',
+                        tone: draft.allowCarryOver ? 'on' : 'off'
+                      }
+                    ]
+                  : catInfo
+                    ? [{ label: 'Annual balance', Icon: Scales, value: 'Not deducted', tone: 'neutral' }]
+                    : [];
+
                 return (
-                  <section className="permit-summary-panel" aria-label="Leave type summary" aria-live="polite">
+                  <section
+                    className="permit-summary-panel"
+                    aria-label="Leave type summary"
+                    aria-live="polite"
+                    style={catInfo ? { '--summary-accent': catInfo.badgeColor, '--summary-accent-bg': catInfo.bg } : undefined}
+                  >
                     <header className="permit-summary-head">
-                      <span className="permit-summary-eyebrow">Summary</span>
-                      <div className="permit-summary-title-row">
-                        <span
-                          className="permit-summary-icon"
-                          style={catInfo ? { color: catInfo.badgeColor, backgroundColor: catInfo.bg } : undefined}
-                        >
-                          <CalendarBlank size={20} weight="bold" aria-hidden="true" />
-                        </span>
+                      <span className="permit-summary-icon">
+                        <CalendarBlank size={20} weight="bold" aria-hidden="true" />
+                      </span>
+                      <div className="permit-summary-heading">
+                        <span className="permit-summary-eyebrow">Preview</span>
                         <h3 className={draft.name.trim() ? '' : 'is-placeholder'}>
                           {draft.name.trim() || 'Leave type name'}
                         </h3>
-                        {catInfo ? (
-                          <span className="permit-category-pill" style={{ color: catInfo.badgeColor, backgroundColor: catInfo.bg }}>
-                            {catInfo.label}
-                          </span>
+                      </div>
+                      {catInfo ? (
+                        <span className="permit-category-pill" style={{ color: catInfo.badgeColor, backgroundColor: catInfo.bg }}>
+                          {catInfo.label}
+                        </span>
+                      ) : (
+                        <span className="permit-summary-pending">Choose a category</span>
+                      )}
+                    </header>
+
+                    <div className="permit-summary-hero">
+                      <div className="permit-summary-hero-item">
+                        <span className="permit-summary-label">Entitlement</span>
+                        {draft.category === 'unpaid' ? (
+                          <strong className="permit-summary-big is-text">No annual balance</strong>
+                        ) : entitlementValue ? (
+                          <strong className="permit-summary-big">
+                            {entitlementValue}<small>{entitlementUnit}</small>
+                          </strong>
                         ) : (
-                          <span className="permit-summary-pending">Choose a category</span>
+                          <strong className="permit-summary-big is-muted">Not set yet</strong>
                         )}
                       </div>
-                    </header>
-                    <dl className="permit-summary-facts">
-                      {facts.map((fact) => (
-                        <div key={fact.label} className="permit-summary-fact">
-                          <dt>{fact.label}</dt>
-                          <dd className={fact.muted ? 'is-muted' : ''}>{fact.value}</dd>
-                        </div>
-                      ))}
-                    </dl>
+                      <div className="permit-summary-hero-item">
+                        <span className="permit-summary-label">Request dates</span>
+                        <span className="permit-summary-dates">
+                          <Clock size={14} weight="bold" aria-hidden="true" />
+                          {requestDates}
+                        </span>
+                      </div>
+                    </div>
+
+                    {rules.length > 0 && (
+                      <ul className="permit-summary-rules">
+                        {rules.map(({ label, Icon, value, tone }) => (
+                          <li key={label}>
+                            <span className="permit-summary-rule-icon"><Icon size={15} weight="bold" aria-hidden="true" /></span>
+                            <span className="permit-summary-rule-label">{label}</span>
+                            <span className={`permit-summary-rule-value is-${tone}`}>{value}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </section>
                 );
               })()}
@@ -1705,14 +1880,14 @@ export function PermitTypeView({ presenter: p }) {
           title={
             p.editingHoliday
               ? (p.holidayDraft.isCutiBersama
-                ? `Ubah Cuti Bersama: ${p.holidayDraft.name || 'Agenda Cuti'}`
-                : `Ubah Libur Nasional: ${p.holidayDraft.name || 'Libur Nasional'}`)
-              : 'Tambah Libur Nasional / Cuti Bersama'
+                ? `Edit Collective Leave: ${p.holidayDraft.name || 'Leave Event'}`
+                : `Edit National Holiday: ${p.holidayDraft.name || 'National Holiday'}`)
+              : 'Add National Holiday / Collective Leave'
           }
           description={
             p.editingHoliday
-              ? `Konfigurasi tanggal ${p.holidayDraft.date || ''}, jenis libur, dan perlakuan cuti perusahaan.`
-              : 'Daftarkan tanggal libur nasional atau cuti bersama baru ke dalam kalender kerja.'
+              ? `Configure the date ${p.holidayDraft.date || ''}, holiday type, and company leave treatment.`
+              : 'Register a new national holiday or collective leave date in the work calendar.'
           }
           onClose={p.closeHolidayEditor}
           maxWidthClass="modal-wide"
@@ -1725,15 +1900,15 @@ export function PermitTypeView({ presenter: p }) {
               </div>
             )}
 
-            {/* Row 1: Tanggal & Nama Agenda */}
+            {/* Row 1: Date & Holiday Name */}
             <div className="row g-3 mb-3">
               <div className="col-md-5">
                 <label className="form-label small fw-bold">
-                  Tanggal Libur <span className="text-danger">*</span>
+                  Holiday Date <span className="text-danger">*</span>
                 </label>
                 <input
                   type="date"
-                  className={`form-control ${!p.editingHoliday && p.holidayDraft.date && p.holidayDraft.date < p.todayIso ? 'is-invalid' : ''}`}
+                  className={`form-control ${(!p.editingHoliday && p.holidayDraft.date && p.holidayDraft.date < p.todayIso) || dateConflict ? 'is-invalid' : ''}`}
                   value={p.holidayDraft.date}
                   onChange={(e) => p.setHolidayDraft({ ...p.holidayDraft, date: e.target.value })}
                   min={!p.editingHoliday ? p.todayIso : undefined}
@@ -1741,7 +1916,7 @@ export function PermitTypeView({ presenter: p }) {
                 />
                 {p.holidayDraft.date && (
                   <div className="text-muted mt-1" style={{ fontSize: '11.5px' }}>
-                    {new Date(p.holidayDraft.date + 'T00:00:00').toLocaleDateString('id-ID', {
+                    {new Date(p.holidayDraft.date + 'T00:00:00').toLocaleDateString('en-US', {
                       weekday: 'long',
                       day: 'numeric',
                       month: 'long',
@@ -1752,19 +1927,25 @@ export function PermitTypeView({ presenter: p }) {
                 {!p.editingHoliday && p.holidayDraft.date && p.holidayDraft.date < p.todayIso && (
                   <div className="text-danger mt-1 fw-semibold" style={{ fontSize: '11.5px' }}>
                     <WarningCircle size={13} className="me-1 inline-icon" weight="bold" />
-                    Hari libur baru hanya bisa ditambahkan untuk tanggal hari ini atau ke depan ({p.todayIso}).
+                    New holidays can only be added for today or a future date ({p.todayIso}).
+                  </div>
+                )}
+                {dateConflict && (
+                  <div className="text-danger mt-1 fw-semibold" style={{ fontSize: '11.5px' }}>
+                    <WarningCircle size={13} className="me-1 inline-icon" weight="bold" />
+                    This date already has “{dateConflict.name}”. Only one holiday is allowed per date.
                   </div>
                 )}
               </div>
 
               <div className="col-md-7">
                 <label className="form-label small fw-bold">
-                  Keterangan / Nama Hari Libur <span className="text-danger">*</span>
+                  Holiday Name <span className="text-danger">*</span>
                 </label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Contoh: Tahun Baru Imlek 2577 Kongzili"
+                  placeholder="Example: Chinese New Year 2577"
                   value={p.holidayDraft.name}
                   onChange={(e) => p.setHolidayDraft({ ...p.holidayDraft, name: e.target.value })}
                   required
@@ -1772,13 +1953,13 @@ export function PermitTypeView({ presenter: p }) {
               </div>
             </div>
 
-            {/* Row 2: Klasifikasi Libur (Radio Cards) */}
+            {/* Row 2: Holiday Classification (Radio Cards) */}
             <div className="mb-3">
               <label className="form-label small fw-bold d-block mb-2">
-                Klasifikasi Hari Libur <span className="text-danger">*</span>
+                Holiday Classification <span className="text-danger">*</span>
               </label>
               <div className="permit-class-cards-grid">
-                {/* Option 1: Libur Nasional Resmi */}
+                {/* Option 1: Official National Holiday */}
                 <div
                   className={`permit-class-card national ${!p.holidayDraft.isCutiBersama ? 'selected' : ''}`}
                   onClick={() =>
@@ -1796,14 +1977,14 @@ export function PermitTypeView({ presenter: p }) {
                     <CalendarBlank size={20} weight="bold" />
                   </div>
                   <div className="permit-class-card-body">
-                    <h4>Libur Nasional Resmi</h4>
+                    <h4>Official National Holiday</h4>
                     <p>
-                      Hari libur resmi SKB 3 Menteri. Seluruh karyawan libur resmi tanpa memotong saldo cuti tahunan.
+                      Official holiday under the Joint Ministerial Decree. All employees are off without deducting annual leave balance.
                     </p>
                   </div>
                 </div>
 
-                {/* Option 2: Cuti Bersama Pemerintah */}
+                {/* Option 2: Government Collective Leave */}
                 <div
                   className={`permit-class-card cuti ${p.holidayDraft.isCutiBersama ? 'selected' : ''}`}
                   onClick={() =>
@@ -1821,80 +2002,173 @@ export function PermitTypeView({ presenter: p }) {
                     <CalendarStar size={20} weight="bold" />
                   </div>
                   <div className="permit-class-card-body">
-                    <h4>Cuti Bersama Pemerintah</h4>
+                    <h4>Government Collective Leave</h4>
                     <p>
-                      Cuti bersama yang dapat disesuaikan perlakuan pemotongan saldo cuti tahunan dan unit kerja yang berlaku.
+                      Collective leave where the annual leave deduction and applicable work units can be adjusted.
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Conditional Section: Cuti Bersama Policies */}
-            {p.holidayDraft.isCutiBersama && (
-              <div className="p-3 bg-light rounded border mb-3">
-                <div className="mb-3">
-                  <label className="form-label small fw-bold">Penerapan Kebijakan Perusahaan</label>
-                  <select
-                    className="form-select"
-                    value={p.holidayDraft.treatment || 'deduct_annual'}
-                    onChange={(e) => p.setHolidayDraft({ ...p.holidayDraft, treatment: e.target.value })}
-                  >
-                    {TREATMENT_OPTIONS.map((t) => (
-                      <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                  </select>
-                  <div className="form-text small text-muted mt-1.5 d-flex align-items-center gap-1">
-                    <Info size={14} className="text-primary flex-shrink-0" weight="bold" />
-                    <span>Otomatis berlaku untuk seluruh divisi &amp; karyawan. Pengaturan operasional shift/on-duty spesifik dapat diatur di modul <strong>Work Schedule</strong>.</span>
+            {/* Conditional Section: Collective Leave Policies */}
+            {p.holidayDraft.isCutiBersama && (() => {
+              const treatment = p.holidayDraft.treatment || 'deduct_annual';
+              const impact = p.currentHolidayImpact;
+              const deptNames = impact.affectedDeptNames;
+              const scope = p.holidayDraft.scope === 'departments' ? 'departments' : 'all';
+              const selectedDeptIds = p.holidayDraft.scopeValue || [];
+
+              return (
+                <div className="permit-treatment-section">
+                  <fieldset className="permit-treatment-fieldset">
+                    <legend className="form-label small fw-bold mb-1">
+                      Company Policy Treatment <span className="text-danger">*</span>
+                    </legend>
+                    <p className="permit-treatment-hint">
+                      Assign on-duty staff in <strong>Work Schedule</strong>.
+                    </p>
+
+                    <div className="permit-treatment-options">
+                      {TREATMENT_OPTIONS.map((t) => (
+                        <label
+                          key={t.value}
+                          className={`permit-treatment-option ${treatment === t.value ? 'is-selected' : ''}`}
+                        >
+                          <input
+                            type="radio"
+                            name="holiday-treatment"
+                            value={t.value}
+                            checked={treatment === t.value}
+                            onChange={() => p.setHolidayDraft({ ...p.holidayDraft, treatment: t.value })}
+                          />
+                          <span className="permit-treatment-text">
+                            <span className="permit-treatment-title">{t.title}</span>
+                            <span className="permit-treatment-desc">{t.description}</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+
+                  <fieldset className="permit-treatment-fieldset permit-scope-fieldset">
+                    <legend className="form-label small fw-bold mb-2">
+                      Who gets this leave <span className="text-danger">*</span>
+                    </legend>
+                    <div className="permit-scope-toggle" role="radiogroup">
+                      {[
+                        { value: 'all', label: 'All departments' },
+                        { value: 'departments', label: 'Selected departments' }
+                      ].map((opt) => (
+                        <label key={opt.value} className={`permit-scope-toggle-item ${scope === opt.value ? 'is-active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="holiday-scope"
+                            value={opt.value}
+                            checked={scope === opt.value}
+                            onChange={() => p.setHolidayDraft({
+                              ...p.holidayDraft,
+                              scope: opt.value,
+                              scopeValue: opt.value === 'all' ? [] : selectedDeptIds
+                            })}
+                          />
+                          <span>{opt.label}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    {scope === 'departments' && (
+                      <div className="permit-scope-depts">
+                        <div className="permit-scope-depts-head">
+                          <span>{selectedDeptIds.length} of {DEPARTMENTS.length} selected</span>
+                          <button
+                            type="button"
+                            onClick={() => p.setHolidayDraft({
+                              ...p.holidayDraft,
+                              scopeValue: selectedDeptIds.length === DEPARTMENTS.length ? [] : DEPARTMENTS.map((d) => d.id)
+                            })}
+                          >
+                            {selectedDeptIds.length === DEPARTMENTS.length ? 'Clear all' : 'Select all'}
+                          </button>
+                        </div>
+                        <div className="permit-scope-dept-grid">
+                          {DEPARTMENTS.map((dept) => {
+                            const checked = selectedDeptIds.includes(dept.id);
+                            return (
+                              <label key={dept.id} className={`permit-scope-dept ${checked ? 'is-checked' : ''}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => p.setHolidayDraft({
+                                    ...p.holidayDraft,
+                                    scopeValue: checked
+                                      ? selectedDeptIds.filter((id) => id !== dept.id)
+                                      : [...selectedDeptIds, dept.id]
+                                  })}
+                                />
+                                <span>{dept.name}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        {selectedDeptIds.length === 0 && (
+                          <p className="permit-scope-empty">Select at least one department.</p>
+                        )}
+                      </div>
+                    )}
+                  </fieldset>
+
+                  <div className="permit-impact" aria-live="polite">
+                    <span className="permit-impact-label">Impact preview</span>
+                    <div className="permit-impact-card">
+                        <div className="permit-impact-stats">
+                          <div className="permit-impact-stat">
+                            <span className="permit-impact-stat-label">Employees off</span>
+                            <strong className="permit-impact-stat-value">{impact.affectedEmployeesCount}</strong>
+                            <span className="permit-impact-stat-sub">
+                              {scope === 'all' ? `All ${deptNames.length} departments` : `Across ${deptNames.length} of ${DEPARTMENTS.length} departments`}
+                            </span>
+                          </div>
+                          <div className={`permit-impact-stat ${impact.totalDaysDeducted > 0 ? 'is-cost' : 'is-free'}`}>
+                            <span className="permit-impact-stat-label">Annual leave deducted</span>
+                            <strong className="permit-impact-stat-value">
+                              {impact.totalDaysDeducted} <small>days</small>
+                            </strong>
+                            <span className="permit-impact-stat-sub">
+                              {impact.totalDaysDeducted > 0 ? '1 day per employee' : 'Balances stay the same'}
+                            </span>
+                          </div>
+                        </div>
+                        {deptNames.length > 0 && (
+                          <ul className="permit-impact-depts" aria-label="Affected departments">
+                            {deptNames.map((name) => (
+                              <li key={name}>{name}</li>
+                            ))}
+                          </ul>
+                        )}
+                    </div>
                   </div>
                 </div>
-
-                {/* Live Impact Preview Box */}
-                <div className="impact-preview-box">
-                  <div className="d-flex align-items-center gap-2 mb-2">
-                    <Info size={18} weight="bold" color="#166534" />
-                    <strong className="text-success small text-uppercase">Pratinjau Dampak Langsung (Live Impact Preview)</strong>
-                  </div>
-
-                  <div className="impact-stat-row">
-                    <div className="impact-stat-item">
-                      <strong>{p.currentHolidayImpact.affectedEmployeesCount} Staf</strong>
-                      <small>Seluruh Karyawan Terdampak</small>
-                    </div>
-                    <div className="impact-stat-item">
-                      <strong>{p.currentHolidayImpact.totalDaysDeducted} Hari</strong>
-                      <small>Total Saldo Tahunan Dipotong</small>
-                    </div>
-                  </div>
-
-                  {p.currentHolidayImpact.affectedDeptNames.length > 0 && (
-                    <div className="small text-muted mt-2">
-                      <span>Divisi yang terdampak: </span>
-                      <strong className="text-dark">Seluruh Departemen ({p.currentHolidayImpact.affectedDeptNames.join(', ')})</strong>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Past Amendment Warning & Reason */}
             {p.isHolidayInPast && p.holidayDraft.isCutiBersama && (
               <div className="alert alert-warning py-2 px-3 small mb-3">
                 <div className="d-flex align-items-center gap-2 mb-1 text-warning-emphasis fw-bold">
                   <WarningCircle size={18} weight="fill" color="#d97706" />
-                  <span>Peringatan Tanggal Lampau</span>
+                  <span>Past Date Warning</span>
                 </div>
                 <p className="mb-2">
-                  Tanggal cuti bersama ini telah berlalu. Revisi akan dikirim ke HR Director untuk persetujuan audit sebelum rekonsiliasi saldo.
+                  This collective leave date has already passed. The revision will be sent to the HR Director for audit approval before balances are reconciled.
                 </p>
                 <label className="form-label small fw-bold text-danger">
-                  Alasan Revisi Tanggal Lampau (Wajib untuk Otorisasi Audit) <span className="text-danger">*</span>
+                  Past Date Revision Reason (Required for Audit Authorization) <span className="text-danger">*</span>
                 </label>
                 <textarea
                   className="form-control"
                   rows={2}
-                  placeholder="Jelaskan dasar pertimbangan perubahan kebijakan cuti bersama tanggal lampau..."
+                  placeholder="Explain why the collective leave policy for this past date is being changed..."
                   value={p.pastAmendmentReason}
                   onChange={(e) => p.setPastAmendmentReason(e.target.value)}
                   required
@@ -1905,12 +2179,12 @@ export function PermitTypeView({ presenter: p }) {
             {/* Row 4: Catatan Opsional */}
             <div>
               <label className="form-label small fw-bold">
-                Catatan / Keterangan Dokumen <span className="permit-optional">Opsional</span>
+                Notes / Document Reference <span className="permit-optional">Optional</span>
               </label>
               <textarea
                 className="form-control"
                 rows={2}
-                placeholder="Contoh: SKB 3 Menteri No. 1017/2025, Surat Edaran Direksi, dll."
+                placeholder="Example: Joint Ministerial Decree No. 1017/2025, Board circular, etc."
                 value={p.holidayDraft.note || ''}
                 onChange={(e) => p.setHolidayDraft({ ...p.holidayDraft, note: e.target.value })}
               />
@@ -1924,13 +2198,11 @@ export function PermitTypeView({ presenter: p }) {
                   type="button"
                   className="btn btn-outline-danger d-inline-flex align-items-center gap-1.5 px-3 py-1.5"
                   onClick={() => {
-                    if (window.confirm(`Hapus “${p.holidayDraft.name}” (${p.holidayDraft.date}) dari kalender?`)) {
-                      p.deleteHoliday(p.holidayDraft.id);
-                    }
+                    setHolidayToDelete(p.holidayDraft);
                   }}
                 >
                   <Trash size={15} weight="bold" />
-                  <span>Hapus Tanggal</span>
+                  <span>Delete Date</span>
                 </button>
               )}
             </div>
@@ -1941,7 +2213,7 @@ export function PermitTypeView({ presenter: p }) {
                 className="btn btn-outline-secondary px-3 py-1.5"
                 onClick={p.closeHolidayEditor}
               >
-                Batal
+                Cancel
               </button>
               <button
                 type="button"
@@ -1951,8 +2223,8 @@ export function PermitTypeView({ presenter: p }) {
                 disabled={!p.editingHoliday && Boolean(p.holidayDraft?.date && p.holidayDraft.date < p.todayIso)}
               >
                 {p.isHolidayInPast && p.holidayDraft.isCutiBersama
-                  ? 'Kirim untuk Persetujuan HR Director'
-                  : 'Simpan Hari Libur'}
+                  ? 'Submit for HR Director Approval'
+                  : 'Save Holiday'}
               </button>
             </div>
           </div>
@@ -2224,6 +2496,17 @@ export function PermitTypeView({ presenter: p }) {
       )}
 
       {/* Action Dropdown Portal */}
+      {holidayToDelete && typeof document !== 'undefined' && (
+        <HolidayDeleteModal
+          holiday={holidayToDelete}
+          onCancel={() => setHolidayToDelete(null)}
+          onConfirm={() => {
+            p.deleteHoliday(holidayToDelete.id);
+            setHolidayToDelete(null);
+          }}
+        />
+      )}
+
       {activeActionId && actionAnchor && typeof document !== 'undefined' && createPortal(
         <div
           className="permit-action-dropdown-menu"

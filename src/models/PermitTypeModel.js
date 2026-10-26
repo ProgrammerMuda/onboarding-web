@@ -7,7 +7,7 @@
 import { EMPLOYEES, DEPARTMENTS } from './ApprovalFlowModel';
 
 export const PERMIT_STORAGE_KEY = 'proapps.permit-types.v2';
-export const HOLIDAY_STORAGE_KEY = 'proapps.leave-holidays.v1';
+export const HOLIDAY_STORAGE_KEY = 'proapps.leave-holidays.v5';
 export const BALANCE_STORAGE_KEY = 'proapps.leave-balances.v1';
 export const ADJUSTMENT_STORAGE_KEY = 'proapps.leave-adjustments.v1';
 
@@ -265,194 +265,256 @@ export function validatePermitType(draft, permits) {
 // =========================================================================
 
 export const TREATMENT_OPTIONS = [
-  { value: 'deduct_annual', label: 'Libur & Potong Saldo Cuti Tahunan', badge: 'Deduct Annual', color: '#002B7F', bg: '#EFF6FF' },
-  { value: 'free_leave', label: 'Libur Perusahaan (Free / Tidak Potong Saldo)', badge: 'Free Company Leave', color: '#10B981', bg: '#ECFDF5' },
-  { value: 'not_applied', label: 'Tidak Diterapkan (Hari Kerja Normal)', badge: 'Normal Work Day', color: '#64748B', bg: '#F8FAFC' },
+  { value: 'deduct_annual', label: 'Holiday & Deduct Annual Leave Balance', title: 'Deduct annual leave', description: 'Employees are off. One day is taken from each annual leave balance.', badge: 'Deduct Annual', color: '#002B7F', bg: '#EFF6FF' },
+  { value: 'free_leave', label: 'Company Holiday (Free / No Balance Deduction)', title: 'Company holiday', description: 'Employees are off. Annual leave balances stay the same.', badge: 'Free Company Leave', color: '#10B981', bg: '#ECFDF5' },
 ];
 
 export const SCOPE_OPTIONS = [
-  { value: 'all', label: 'Semua Karyawan (Seluruh Divisi & Lokasi)' },
-  { value: 'head_office', label: 'Head Office Only (Non-Shift Staff)' },
-  { value: 'site_operations', label: 'Site Operations & Building Management' },
-  { value: 'custom_dept', label: 'Departemen Tertentu (Pilih Divisi)' }
+  { value: 'all', label: 'All departments' },
+  { value: 'departments', label: 'Selected departments' }
 ];
+
+/**
+ * Department ids a holiday applies to, or null when it covers everyone.
+ * Only collective leave can be limited; national holidays always apply to all.
+ */
+export function getHolidayDepartmentIds(holiday) {
+  if (!holiday?.isCutiBersama || holiday.scope !== 'departments') return null;
+  return Array.isArray(holiday.scopeValue) ? holiday.scopeValue : [];
+}
 
 export const INITIAL_HOLIDAYS_2026 = [
   {
     id: 'hol-01',
     date: '2026-01-01',
-    name: 'Tahun Baru 2026 Masehi',
+    name: 'New Year 2026',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'SKB 3 Menteri No. 1017/2025'
+    note: 'Joint Ministerial Decree No. 1017/2025'
   },
   {
     id: 'hol-02',
     date: '2026-01-16',
-    name: 'Isra Mi\'raj Nabi Muhammad SAW',
+    name: 'Isra Mi\'raj of the Prophet Muhammad',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'SKB 3 Menteri No. 1017/2025'
+    note: 'Joint Ministerial Decree No. 1017/2025'
   },
   {
     id: 'hol-03',
     date: '2026-02-17',
-    name: 'Tahun Baru Imlek 2577 Kongzili',
+    name: 'Chinese New Year 2577',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'SKB 3 Menteri No. 1017/2025'
+    note: 'Joint Ministerial Decree No. 1017/2025'
   },
   {
     id: 'hol-04',
     date: '2026-02-18',
-    name: 'Cuti Bersama Tahun Baru Imlek',
+    name: 'Collective Leave: Chinese New Year',
     type: 'cuti_bersama',
     isCutiBersama: true,
     treatment: 'deduct_annual',
     scope: 'all',
     scopeValue: [],
-    note: 'Cuti bersama otomatis berlaku untuk seluruh departemen.'
+    note: 'Collective leave applies automatically to all departments.'
   },
   {
     id: 'hol-05',
     date: '2026-03-03',
-    name: 'Hari Suci Nyepi (Tahun Baru Saka 1948)',
+    name: 'Nyepi Day (Saka New Year 1948)',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'SKB 3 Menteri No. 1017/2025'
+    note: 'Joint Ministerial Decree No. 1017/2025'
   },
   {
     id: 'hol-06',
     date: '2026-03-04',
-    name: 'Cuti Bersama Hari Suci Nyepi',
+    name: 'Collective Leave: Nyepi Day',
     type: 'cuti_bersama',
     isCutiBersama: true,
     treatment: 'deduct_annual',
     scope: 'all',
     scopeValue: [],
-    note: 'Cuti bersama otomatis berlaku untuk seluruh departemen.'
+    note: 'Collective leave applies automatically to all departments.'
   },
   {
     id: 'hol-07',
     date: '2026-03-20',
-    name: 'Hari Raya Idul Fitri 1447 H (Hari ke-1)',
+    name: 'Eid al-Fitr 1447 H (Day 1)',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'SKB 3 Menteri No. 1017/2025'
+    note: 'Joint Ministerial Decree No. 1017/2025'
   },
   {
     id: 'hol-08',
     date: '2026-03-21',
-    name: 'Hari Raya Idul Fitri 1447 H (Hari ke-2)',
+    name: 'Eid al-Fitr 1447 H (Day 2)',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'SKB 3 Menteri No. 1017/2025'
+    note: 'Joint Ministerial Decree No. 1017/2025'
   },
   {
     id: 'hol-09',
     date: '2026-03-23',
-    name: 'Cuti Bersama Hari Raya Idul Fitri 1447 H',
+    name: 'Collective Leave: Eid al-Fitr 1447 H',
     type: 'cuti_bersama',
     isCutiBersama: true,
     treatment: 'deduct_annual',
     scope: 'all',
     scopeValue: [],
-    note: 'Seluruh unit menerapkan cuti bersama memotong jatah tahunan.'
+    note: 'All units apply collective leave and deduct annual allowance.'
   },
   {
     id: 'hol-10',
     date: '2026-03-24',
-    name: 'Cuti Bersama Hari Raya Idul Fitri 1447 H',
+    name: 'Collective Leave: Eid al-Fitr 1447 H',
     type: 'cuti_bersama',
     isCutiBersama: true,
     treatment: 'deduct_annual',
     scope: 'all',
     scopeValue: [],
-    note: 'Seluruh unit menerapkan cuti bersama memotong jatah tahunan.'
+    note: 'All units apply collective leave and deduct annual allowance.'
   },
   {
     id: 'hol-11',
     date: '2026-05-01',
-    name: 'Hari Buruh Internasional',
+    name: 'International Labour Day',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'SKB 3 Menteri No. 1017/2025'
+    note: 'Joint Ministerial Decree No. 1017/2025'
   },
   {
     id: 'hol-12',
     date: '2026-05-14',
-    name: 'Kenaikan Yesus Kristus',
+    name: 'Ascension of Jesus Christ',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'SKB 3 Menteri No. 1017/2025'
+    note: 'Joint Ministerial Decree No. 1017/2025'
   },
   {
     id: 'hol-13',
     date: '2026-05-15',
-    name: 'Cuti Bersama Kenaikan Yesus Kristus',
+    name: 'Collective Leave: Ascension of Jesus Christ',
     type: 'cuti_bersama',
     isCutiBersama: true,
-    treatment: 'not_applied',
+    treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'Perusahaan beroperasi normal, staf operasional & kantor tetap masuk.'
+    note: 'Company holiday; no annual leave deduction.'
   },
   {
     id: 'hol-14',
     date: '2026-08-17',
-    name: 'Hari Kemerdekaan Republik Indonesia Ke-81',
+    name: 'Indonesian Independence Day (81st)',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'Hari Nasional Republik Indonesia'
+    note: 'Indonesian National Day'
   },
+  // Oct 29-30 sit in the current week so the roster shows holidays during testing; the real Maulid date is 25 Aug. Move before launch.
   {
-    id: 'hol-15',
-    date: '2026-12-25',
-    name: 'Hari Raya Natal',
+    id: 'hol-17',
+    date: '2026-10-29',
+    name: 'Prophet Muhammad\'s Birthday',
     type: 'national_holiday',
     isCutiBersama: false,
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'SKB 3 Menteri No. 1017/2025'
+    note: 'Joint Ministerial Decree No. 1017/2025'
   },
   {
-    id: 'hol-16',
-    date: '2026-12-26',
-    name: 'Cuti Bersama Hari Raya Natal',
+    id: 'hol-18',
+    date: '2026-10-30',
+    name: 'Collective Leave: Prophet Muhammad\'s Birthday',
     type: 'cuti_bersama',
     isCutiBersama: true,
     treatment: 'deduct_annual',
     scope: 'all',
     scopeValue: [],
-    note: 'Cuti bersama otomatis berlaku untuk seluruh departemen.'
+    note: 'Collective leave applies automatically to all departments.'
+  },
+  {
+    id: 'hol-19',
+    date: '2026-11-10',
+    name: 'National Heroes\' Day',
+    type: 'national_holiday',
+    isCutiBersama: false,
+    treatment: 'free_leave',
+    scope: 'all',
+    scopeValue: [],
+    note: 'Indonesian National Day'
+  },
+  {
+    id: 'hol-15',
+    date: '2026-12-25',
+    name: 'Christmas Day',
+    type: 'national_holiday',
+    isCutiBersama: false,
+    treatment: 'free_leave',
+    scope: 'all',
+    scopeValue: [],
+    note: 'Joint Ministerial Decree No. 1017/2025'
+  },
+  {
+    id: 'hol-16',
+    date: '2026-12-26',
+    name: 'Collective Leave: Christmas Day',
+    type: 'cuti_bersama',
+    isCutiBersama: true,
+    treatment: 'deduct_annual',
+    scope: 'all',
+    scopeValue: [],
+    note: 'Collective leave applies automatically to all departments.'
+  },
+  {
+    id: 'hol-20',
+    date: '2026-12-31',
+    name: 'Collective Leave: New Year\'s Eve',
+    type: 'cuti_bersama',
+    isCutiBersama: true,
+    treatment: 'free_leave',
+    scope: 'all',
+    scopeValue: [],
+    note: 'Company holiday; no annual leave deduction.'
+  },
+  {
+    id: 'hol-21',
+    date: '2027-01-01',
+    name: 'New Year 2027',
+    type: 'national_holiday',
+    isCutiBersama: false,
+    treatment: 'free_leave',
+    scope: 'all',
+    scopeValue: [],
+    note: 'Joint Ministerial Decree No. 1017/2025'
   }
 ];
 
@@ -462,7 +524,10 @@ export function readHolidays() {
       const raw = localStorage.getItem(HOLIDAY_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // "Normal work day" was retired; keep those dates as a free company holiday.
+          return parsed.map((h) => (h.treatment === 'not_applied' ? { ...h, treatment: 'free_leave' } : h));
+        }
       }
       localStorage.setItem(HOLIDAY_STORAGE_KEY, JSON.stringify(INITIAL_HOLIDAYS_2026));
     }
@@ -488,7 +553,7 @@ export function persistHolidays(holidays) {
  * Shift-specific work schedules can be configured separately in the Work Schedule module.
  */
 export function calculateHolidayImpact(holiday, employees = EMPLOYEES) {
-  if (!holiday.isCutiBersama || holiday.treatment === 'not_applied') {
+  if (!holiday.isCutiBersama) {
     return {
       affectedEmployeesCount: 0,
       totalDaysDeducted: 0,
@@ -497,8 +562,8 @@ export function calculateHolidayImpact(holiday, employees = EMPLOYEES) {
     };
   }
 
-  // Automatically applies to all employees and all departments
-  const matchedEmployees = employees;
+  const deptIds = getHolidayDepartmentIds(holiday);
+  const matchedEmployees = deptIds ? employees.filter(emp => deptIds.includes(emp.departmentId)) : employees;
 
   const deptSet = new Set();
   matchedEmployees.forEach(emp => {
