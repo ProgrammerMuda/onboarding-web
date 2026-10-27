@@ -20,6 +20,8 @@ import WorkScheduleView from './views/schedule/WorkScheduleView';
 import { useWorkSchedulePresenter } from './presenters/useWorkSchedulePresenter';
 import EmployeeView from './views/employee/EmployeeView';
 import InstallmentView from './views/finance/InstallmentView';
+import { UnitView } from './views/unit/UnitView';
+import { useUnitPresenter } from './presenters/useUnitPresenter';
 import { useEmployeePresenter } from './presenters/useEmployeePresenter';
 
 // MVP Presenters
@@ -44,7 +46,8 @@ export default function App() {
   const divisionPresenter = useDivisionPresenter();
   const workSchedulePresenter = useWorkSchedulePresenter();
   const employeePresenter = useEmployeePresenter();
-  
+  const unitPresenter = useUnitPresenter();
+
   const activeMenu = sidebarPresenter.sections
     .flatMap((section) => section.items.flatMap((item) => [item, ...(item.children || [])]))
     .find((item) => item.id === sidebarPresenter.activeItem);
@@ -109,6 +112,8 @@ export default function App() {
               <WorkScheduleView presenter={workSchedulePresenter} />
             ) : sidebarPresenter.activeItem === 'hr-data-karyawan' ? (
               <EmployeeView presenter={employeePresenter} />
+            ) : sidebarPresenter.activeItem === 'unit' ? (
+              <UnitView presenter={unitPresenter} />
             ) : sidebarPresenter.activeItem === 'finance-installments' ? (
               <InstallmentView />
             ) : (

@@ -1,0 +1,849 @@
+/*
+ * Units reuse the Work Schedule / Data Karyawan shell (ws-hero, emp-card-*, emp-table, emp-page-btn).
+ * Only what those do not cover lives here: tab counts, filter selects, status badges, cards, dialogs.
+ */
+
+.unit-muted { color: #64748b; }
+
+/* Fixed title block so the header does not reflow when the tab text changes */
+.unit-page .emp-card-header > div:first-child {
+  flex: 0 0 auto;
+}
+
+.unit-page .emp-card-title,
+.unit-page .emp-card-desc { white-space: nowrap; }
+
+.unit-page .emp-card-actions { flex: 1 1 auto; justify-content: flex-end; }
+
+/* Count inside a segmented tab */
+.unit-tab-count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.ws-toolbar-tab.is-active .unit-tab-count {
+  background: #dbe5ff;
+  color: #002b7f;
+}
+
+/* Filter row: keeps the emp-search-row look, wraps instead of overflowing */
+.unit-filter-row { flex-wrap: wrap; }
+.unit-search-group { flex: 0 1 280px; min-width: 200px; }
+.unit-view-toggle { margin-left: auto; }
+
+.unit-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.unit-select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.unit-select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 150px;
+  padding: 0 34px 0 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.unit-select-caret {
+  position: absolute;
+  right: 12px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+/* Status badge: the label carries the meaning, color only reinforces it */
+.unit-status {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.unit-status--occupied { background: #eff6ff; border-color: #bfdbfe; color: #1e3a8a; }
+.unit-status--rented { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+.unit-status--vacant { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+
+/* Table */
+.unit-owner { color: #002b7f; font-weight: 600; }
+.unit-table .ws-emp-name-bold,
+.unit-table .ws-emp-email-muted { display: block; }
+.unit-col-action { width: 72px; text-align: right; }
+
+/* Three-dot action button, same shape as the other row actions in the app */
+.unit-btn-dots {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0284c7;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.unit-btn-dots:hover,
+.unit-btn-dots.is-open {
+  background: #f0f9ff;
+  border-color: #09b2ff;
+  box-shadow: 0 1px 4px rgba(9, 178, 255, 0.2);
+}
+
+.unit-btn-dots:focus-visible {
+  outline: 3px solid #0284c7;
+  outline-offset: 2px;
+}
+
+/* The menu is portaled to the body, so it is styled on its own */
+.unit-action-menu {
+  display: flex;
+  min-width: 170px;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+}
+
+.unit-action-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.unit-action-menu__item svg { flex: none; color: #0088cc; }
+.unit-action-menu__item:hover { background: #f1f5f9; color: #002b7f; }
+.unit-action-menu__item:focus-visible { outline: 3px solid #0284c7; outline-offset: -2px; background: #f1f5f9; }
+
+/* Cards: the person in the unit leads, the owner is a quiet footer line.
+   The eye button is stretched over the card so the whole card opens the detail,
+   which is what the hover state promises. Keyboard users still get one focusable button. */
+.unit-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  padding: 16px;
+  background: #f8fafc;
+}
+
+.unit-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.unit-card:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 6px 18px rgba(0, 43, 127, 0.08);
+}
+
+.unit-card:focus-within { border-color: #0284c7; }
+
+.unit-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.unit-card__id { min-width: 0; }
+
+.unit-card__head-actions { display: flex; align-items: center; gap: 8px; }
+.unit-card__head-actions .unit-btn-dots { position: relative; z-index: 2; }
+
+.unit-card__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #002b7f;
+  overflow-wrap: anywhere;
+}
+
+.unit-card__loc {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: #475569;
+}
+
+.unit-card__loc svg { flex: none; color: #0284c7; }
+
+.unit-card__persons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unit-card__person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.unit-card__avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.unit-card--occupied .unit-card__person--second .unit-card__avatar { background: #dbe5ff; color: #1e3a8a; }
+.unit-card--rented .unit-card__person--second .unit-card__avatar { background: #dcfce7; color: #166534; }
+.unit-card--vacant .unit-card__person--second .unit-card__avatar { background: #fff; border: 1.5px dashed #94a3b8; color: #64748b; }
+.unit-card--vacant .unit-card__person--second .unit-card__person-name { color: #64748b; font-weight: 600; }
+
+.unit-card__person-text { display: flex; flex-direction: column; min-width: 0; }
+
+.unit-card__person-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.unit-card__person-name { font-size: 14px; font-weight: 700; color: #0f172a; overflow-wrap: anywhere; }
+.unit-card__person-role { font-size: 12px; color: #64748b; }
+
+.unit-card__foot {
+  margin-top: auto;
+  border-top: 1px solid #f1f5f9;
+}
+
+.unit-card__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 2px 0;
+  border: 0;
+  background: transparent;
+  color: #002b7f;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.unit-card__link svg { transition: transform 0.15s ease; }
+.unit-card:hover .unit-card__link svg { transform: translateX(3px); }
+
+.unit-card__link:focus-visible {
+  outline: 3px solid #0284c7;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.unit-card__open::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+}
+
+
+.unit-occupant {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+}
+
+.unit-occupant legend {
+  float: none;
+  width: auto;
+  margin: 0;
+  padding: 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+/* Empty state */
+.unit-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.unit-empty h3 { margin: 6px 0 0; font-size: 14px; font-weight: 600; color: #0f172a; }
+.unit-empty p { margin: 0; font-size: 13px; color: #64748b; }
+
+/* Focus rings for controls the shared classes leave bare */
+.unit-page .ws-toolbar-tab:focus-visible,
+.unit-page .emp-btn-secondary:focus-visible,
+.unit-page .emp-btn-primary:focus-visible,
+.unit-page .emp-page-btn:focus-visible,
+.unit-search-clear:focus-visible,
+.unit-select:focus-visible {
+  outline: 3px solid #0284c7;
+  outline-offset: 2px;
+}
+
+/* Dialog */
+
+
+
+
+
+
+
+
+
+
+
+/* Tablet and phone */
+@media (max-width: 991.98px) {
+  .unit-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .unit-view-toggle { margin-left: 0; }
+}
+
+@media (max-width: 767.98px) {
+  .unit-page .emp-search-row,
+  .unit-page .emp-card-header { padding-left: 16px; padding-right: 16px; }
+  .unit-page .emp-card-body { padding: 12px; }
+  .unit-page .emp-card-title,
+  .unit-page .emp-card-desc { white-space: normal; }
+  .unit-page .emp-card-header > div:first-child { flex: 1 1 100%; }
+  .unit-page .ws-toolbar-tabs { max-width: 100%; overflow-x: auto; }
+  .unit-page .ws-toolbar-tab,
+  .unit-page .emp-btn-secondary,
+  .unit-page .emp-btn-primary,
+  .unit-page .emp-page-btn,
+  .unit-page .emp-search-input,
+  .unit-btn-dots { min-width: 44px; min-height: 44px; }
+  .unit-action-menu__item { min-height: 44px; }
+  .unit-page .emp-page-btn { min-width: 44px; }
+  .unit-search-group,
+  .unit-select-wrap { flex: 1 1 100%; }
+  .unit-select { width: 100%; }
+  .unit-cards { grid-template-columns: minmax(0, 1fr); }
+
+  /* Rows become stacked records so nothing scrolls sideways */
+  .emp-table.unit-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .emp-table.unit-table,
+  .emp-table.unit-table tbody,
+  .emp-table.unit-table tr,
+  .emp-table.unit-table td { display: block; width: 100%; }
+
+  .emp-table.unit-table tr { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; }
+  .emp-table.unit-table tr:last-child { border-bottom: none; }
+
+  .emp-table.unit-table td,
+  .emp-table.unit-table td:first-child,
+  .emp-table.unit-table td:last-child {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 6px 0;
+    border: 0;
+    text-align: right;
+  }
+
+  .emp-table.unit-table td::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #64748b;
+    text-align: left;
+  }
+
+  .emp-table.unit-table td.unit-col-action::before { content: none; }
+  .emp-table.unit-table td.unit-col-action { justify-content: flex-end; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unit-page * { transition: none !important; }
+  .unit-card:hover .unit-card__link svg { transform: none; }
+}
+
+/* Add Unit page: reuses the Add Employee shell, plus a few resets for the step buttons */
+.unit-step-btn {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+
+.unit-step-btn:disabled { cursor: default; }
+
+.unit-step-btn:focus-visible,
+.unit-add .add-emp-btn-next:focus-visible,
+.unit-add .add-emp-btn-prev:focus-visible,
+.unit-add .add-emp-btn-submit:focus-visible,
+.unit-add .add-emp-btn-cancel:focus-visible {
+  outline: 3px solid #0284c7;
+  outline-offset: 2px;
+}
+
+
+
+
+@media (max-width: 767.98px) {
+  .unit-add .add-emp-footer { flex-wrap: wrap; padding: 16px; }
+  .unit-add .add-emp-footer-actions { width: 100%; justify-content: flex-end; }
+}
+
+/* Overview step */
+.unit-overview__section {
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.unit-overview__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.unit-overview__head h4 { margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; }
+
+.unit-overview__edit {
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: #002b7f;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.unit-overview__edit:focus-visible { outline: 3px solid #0284c7; outline-offset: 2px; border-radius: 6px; }
+
+.unit-overview__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 32px;
+  margin: 0;
+  padding: 4px 18px;
+}
+
+.unit-overview__list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.unit-overview__list dt { font-size: 13px; font-weight: 600; color: #64748b; }
+.unit-overview__list dd { margin: 0; font-size: 13px; font-weight: 600; color: #0f172a; text-align: right; overflow-wrap: anywhere; }
+
+@media (max-width: 767.98px) {
+  .unit-overview__list { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Unit tag at the end of a number field */
+.unit-add .unit-input-group { flex-wrap: nowrap; }
+
+.unit-add .unit-input-group > .add-emp-input {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
+
+.unit-add .unit-addon {
+  min-width: 58px;
+  justify-content: center;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* A disabled field reads as switched off, and its placeholder stays legible */
+.unit-add .add-emp-input:disabled {
+  background-color: #f1f5f9 !important;
+  cursor: not-allowed;
+}
+
+.unit-add .add-emp-input:disabled::placeholder { color: #475569 !important; }
+
+/* Success modal after Save Unit: same look as the Add Employee one */
+.unit-success {
+  position: relative;
+  max-width: 440px;
+  padding: 40px 32px 32px;
+}
+
+.unit-success__close { position: absolute; top: 16px; right: 16px; color: #64748b; }
+.unit-success__close:focus-visible { outline: 3px solid #0284c7; outline-offset: 2px; border-radius: 6px; }
+.unit-success__icon { margin-bottom: 16px; }
+.unit-success__title { margin: 0 0 8px; font-size: 20px; font-weight: 700; line-height: 1.3; color: #0f172a; }
+.unit-success__text { margin: 0; font-size: 15px; line-height: 1.55; color: #64748b; }
+
+/* Detail Unit page: header is shared, the body follows a main column plus a meters column */
+.unit-detail-page__status {
+  position: relative;
+  z-index: 1;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+
+.unit-d-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.unit-d-main,
+.unit-d-side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+
+.unit-detail-page .unit-d-card { margin-bottom: 0; }
+.unit-d-body { padding: 4px 4px 8px; }
+
+/* Owner and occupant tiles */
+.unit-d-people {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  padding-top: 16px;
+}
+
+.unit-d-person {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.unit-d-person__avatar {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.unit-d-person--occupied .unit-d-person__avatar { background: #dbe5ff; color: #1e3a8a; }
+.unit-d-person--rented .unit-d-person__avatar { background: #dcfce7; color: #166534; }
+.unit-d-person--vacant .unit-d-person__avatar { background: #fff; border: 1.5px dashed #94a3b8; color: #64748b; }
+.unit-d-person--owner .unit-d-person__avatar { background: #e2e8f0; color: #334155; }
+
+.unit-d-person__text { display: flex; flex-direction: column; min-width: 0; }
+.unit-d-person__label { font-size: 12px; font-weight: 600; color: #64748b; }
+.unit-d-person__name { font-size: 16px; font-weight: 700; color: #0f172a; overflow-wrap: anywhere; }
+.unit-d-person--vacant .unit-d-person__name { color: #64748b; font-weight: 600; }
+.unit-d-person__caption { font-size: 12.5px; color: #475569; }
+
+/* Bill settings: a settings list, one bill per row with a read-only switch */
+.unit-d-settings {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.unit-d-setting {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #fff;
+}
+
+.unit-d-setting + .unit-d-setting { border-top: 1px solid #f1f5f9; }
+
+.unit-d-setting__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.unit-d-setting__icon--electric { background: #fef3c7; color: #92400e; }
+.unit-d-setting__icon--water { background: #e0f2fe; color: #075985; }
+.unit-d-setting__icon--ipl { background: #e0e7ff; color: #1e3a8a; }
+.unit-d-setting__icon--interval { background: #eff6ff; color: #0369a1; }
+
+.unit-d-setting__text { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.unit-d-setting__label { font-size: 14px; font-weight: 600; color: #0f172a; }
+.unit-d-setting__hint { font-size: 12.5px; color: #64748b; }
+.unit-d-setting__control { flex: none; }
+.unit-d-setting__value { font-size: 15px; font-weight: 600; color: #0f172a; }
+
+.unit-d-switchwrap { display: inline-flex; align-items: center; gap: 10px; }
+
+.unit-d-switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+.unit-d-switch > span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.25);
+}
+
+.unit-d-switch--active { background: #16a34a; }
+.unit-d-switch--active > span { left: 21px; }
+.unit-d-switch--unset { background: #fff; border: 1.5px dashed #94a3b8; }
+.unit-d-switch--unset > span { top: 1.5px; left: 1.5px; background: #94a3b8; box-shadow: none; }
+
+.unit-d-switchtext { min-width: 56px; font-size: 13px; font-weight: 600; }
+.unit-d-switchtext--active { color: #166534; }
+.unit-d-switchtext--inactive { color: #475569; }
+.unit-d-switchtext--unset { color: #64748b; }
+
+/* Meters */
+.unit-d-meters { display: flex; flex-direction: column; gap: 14px; padding-top: 16px; }
+
+.unit-d-meter {
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.unit-d-meter__head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.unit-d-meter__title { margin: 0; font-size: 14px; font-weight: 600; color: #0f172a; }
+
+.unit-d-meter__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.unit-d-meter--electric .unit-d-meter__icon { background: #fef3c7; color: #92400e; }
+.unit-d-meter--water .unit-d-meter__icon { background: #e0f2fe; color: #075985; }
+
+/* The meter number gets its own tinted panel in the color of the meter */
+.unit-d-meter__no {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+
+.unit-d-meter--electric .unit-d-meter__no { background: #fffbeb; border: 1px solid #fde68a; }
+.unit-d-meter--water .unit-d-meter__no { background: #f0f9ff; border: 1px solid #bae6fd; }
+
+.unit-d-meter__nolabel { font-size: 12px; font-weight: 500; color: #64748b; }
+.unit-d-meter__noval {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  color: #0f172a;
+  overflow-wrap: anywhere;
+}
+
+.unit-d-meter__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+}
+
+.unit-d-meter__stat { min-width: 0; }
+
+.unit-d-meter__stat dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.unit-d-meter__stat dt svg { flex: none; color: #0284c7; }
+.unit-d-meter__stat dd { margin: 0; font-size: 15px; font-weight: 600; color: #0f172a; overflow-wrap: anywhere; }
+
+@media (max-width: 1199.98px) {
+  .unit-d-layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 767.98px) {
+  .unit-d-people { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Unit Info: identity tiles and spec tiles share one tile style */
+.unit-specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding-top: 12px;
+}
+
+/* Unit type gets the widest tile because its value is the longest text */
+.unit-specs--identity {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  padding-top: 18px;
+}
+
+@media (max-width: 767.98px) {
+  .unit-specs--identity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.unit-spec {
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+.unit-spec dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.unit-spec dt svg { color: #0284c7; }
+.unit-spec dd { display: flex; align-items: baseline; gap: 6px; margin: 0; }
+.unit-spec strong { font-size: 16px; font-weight: 600; line-height: 1.3; color: #0f172a; overflow-wrap: anywhere; }
+.unit-spec small { font-size: 13px; font-weight: 500; color: #64748b; }
+
+
+/* Note under Unit Type while editing */
+.unit-type-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.unit-type-note svg { flex: none; margin-top: 2px; color: #0284c7; }
+
+.unit-type-note.is-changed {
+  padding: 8px 10px;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.unit-type-note.is-changed svg { color: #b45309; }
+.add-emp-step-pane > .unit-type-note { margin: 0 0 16px; }
