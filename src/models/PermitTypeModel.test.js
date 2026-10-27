@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getNextPermitReset, validatePermitType, INITIAL_PERMIT_TYPES, calculateHolidayImpact } from './PermitTypeModel';
+import { getNextPermitReset, validatePermitType, INITIAL_PERMIT_TYPES, calculateHolidayImpact, buildApprovalChain, getCurrentApprovalStep, INITIAL_ADJUSTMENTS, createInitialBalances } from './PermitTypeModel';
 
 describe('Permit reset calendar in Jakarta', () => {
   it.each([
@@ -84,5 +84,135 @@ describe('Collective leave department scope', () => {
     );
     expect(impact.affectedEmployeesCount).toBe(1);
     expect(impact.totalDaysDeducted).toBe(0);
+  });
+});
+
+describe('Balance adjustment approval chain', () => {
+  it('needs only the Building Manager when HR files the request', () => {
+    expect(buildApprovalChain('hr').map((step) => step.role)).toEqual(['bm']);
+  });
+
+  it('needs only the Building Manager when Building Service files the request', () => {
+    expect(buildApprovalChain('bs').map((step) => step.role)).toEqual(['bm']);
+  });
+
+  it('needs HR first, then the Building Manager, when the employee files it', () => {
+    expect(buildApprovalChain('employee').map((step) => step.role)).toEqual(['hr', 'bm']);
+  });
+
+  it('points at the first step that is still pending', () => {
+    const ticket = { status: 'pending', approvalChain: buildApprovalChain('employee') };
+    expect(getCurrentApprovalStep(ticket).role).toBe('hr');
+
+    ticket.approvalChain[0].status = 'approved';
+    expect(getCurrentApprovalStep(ticket).role).toBe('bm');
+  });
+
+  it('has no current step once the ticket is closed', () => {
+    expect(getCurrentApprovalStep({ status: 'approved', approvalChain: [{ role: 'bm', status: 'approved' }] })).toBeNull();
+  });
+
+  it('seeds a ticket waiting on the Building Manager after HR approved', () => {
+    const seeded = INITIAL_ADJUSTMENTS.find((ticket) => ticket.id === 'adj-001');
+    expect(getCurrentApprovalStep(seeded).role).toBe('bm');
+  });
+});
+
+describe('Sample balances', () => {
+  it('includes employees with a negative available balance', () => {
+    const balances = createInitialBalances();
+    const negative = balances.filter((item) => item.available < 0).map((item) => [item.employeeId, item.available]);
+    expect(negative).toEqual([['emp-004', -3], ['emp-007', -1]]);
+  });
+
+  it('keeps the ledger running balance in line with available', () => {
+    const overdrawn = createInitialBalances().find((item) => item.employeeId === 'emp-004');
+    expect(overdrawn.ledger[0].balanceAfter).toBeLessThanOrEqual(overdrawn.baseEntitlement);
+    expect(overdrawn.ledger.at(-1).balanceAfter).toBe(overdrawn.available);
+  });
+});
+
+describe('Sample adjustment tickets', () => {
+  it('has enough tickets to fill more than one page, covering every status and requester', () => {
+    expect(INITIAL_ADJUSTMENTS.length).toBeGreaterThan(8);
+    expect(new Set(INITIAL_ADJUSTMENTS.map((ticket) => ticket.status))).toEqual(new Set(['pending', 'approved', 'rejected']));
+    expect(new Set(INITIAL_ADJUSTMENTS.map((ticket) => ticket.requesterRole))).toEqual(new Set(['hr', 'bs', 'employee']));
+  });
+
+  it('keeps ids unique and balances consistent with the amount', () => {
+    expect(new Set(INITIAL_ADJUSTMENTS.map((ticket) => ticket.id)).size).toBe(INITIAL_ADJUSTMENTS.length);
+    INITIAL_ADJUSTMENTS.forEach((ticket) => {
+      const delta = ticket.type === 'add' ? ticket.amount : -ticket.amount;
+      expect(ticket.afterBalance).toBe(ticket.beforeBalance + delta);
+    });
+  });
+
+  it('keeps each ticket status in line with its approval steps', () => {
+    INITIAL_ADJUSTMENTS.forEach((ticket) => {
+      const statuses = ticket.approvalChain.map((step) => step.status);
+      if (ticket.status === 'approved') expect(statuses.every((status) => status === 'approved')).toBe(true);
+      if (ticket.status === 'rejected') expect(statuses).toContain('rejected');
+      if (ticket.status === 'pending') expect(statuses).toContain('pending');
+    });
+  });
+
+  it('lets only employees skip straight to a two-step chain', () => {
+    INITIAL_ADJUSTMENTS.forEach((ticket) => {
+      expect(ticket.approvalChain.length).toBe(ticket.requesterRole === 'employee' ? 2 : 1);
+    });
+  });
+});
+
+describe('Ledger and adjustments stay in sync', () => {
+  const balances = createInitialBalances();
+
+  it('puts every approved adjustment into its employee ledger', () => {
+    INITIAL_ADJUSTMENTS.filter((ticket) => ticket.status === 'approved').forEach((ticket) => {
+      const ledger = balances.find((item) => item.employeeId === ticket.employeeId).ledger;
+      const entry = ledger.find((row) => row.ticketId === ticket.id);
+      expect(entry).toBeTruthy();
+      expect(entry.amount).toBe(ticket.type === 'add' ? ticket.amount : -ticket.amount);
+    });
+  });
+
+  it('does not put open or rejected tickets in a ledger', () => {
+    const ticketIds = balances.flatMap((item) => item.ledger.map((row) => row.ticketId).filter(Boolean));
+    INITIAL_ADJUSTMENTS.filter((ticket) => ticket.status !== 'approved').forEach((ticket) => {
+      expect(ticketIds).not.toContain(ticket.id);
+    });
+  });
+
+  it('keeps entries in date order with a running balance that ends at available', () => {
+    balances.forEach((item) => {
+      const dates = item.ledger.map((row) => row.date);
+      expect(dates).toEqual([...dates].sort());
+      expect(item.ledger.at(-1).balanceAfter).toBe(item.available);
+      expect(item.ledger.reduce((sum, row) => sum + row.amount, 0)).toBe(item.available);
+    });
+  });
+
+  it('reconciles the summary: entitlement + carry-over - used - collective + adjustments = available', () => {
+    balances.forEach((item) => {
+      expect(item.baseEntitlement + item.carryOver - item.usedLeave - item.cutiBersamaDeduction + item.adjustmentTotal).toBe(item.available);
+    });
+  });
+
+  it('shows approved tickets the same before/after balance the ledger reaches', () => {
+    INITIAL_ADJUSTMENTS.filter((ticket) => ticket.status === 'approved').forEach((ticket) => {
+      const row = balances.find((item) => item.employeeId === ticket.employeeId).ledger.find((entry) => entry.ticketId === ticket.id);
+      expect(row.balanceAfter).toBe(ticket.afterBalance);
+    });
+  });
+});
+
+describe('Ledger history length', () => {
+  const lengths = createInitialBalances().map((item) => item.ledger.length);
+
+  it('has employees with more than 5 entries, so the ledger paginates', () => {
+    expect(lengths.some((count) => count > 5)).toBe(true);
+  });
+
+  it('also has short histories that fit on one page', () => {
+    expect(lengths.some((count) => count <= 5)).toBe(true);
   });
 });

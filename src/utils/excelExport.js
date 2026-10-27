@@ -1377,3 +1377,55 @@ export async function exportHolidaysToExcel({ holidays, treatmentOptions = [], d
   const todayStr = new Date().toISOString().slice(0, 10);
   await downloadWorkbook(workbook, `holidays_${todayStr}.xlsx`);
 }
+
+/**
+ * Exports one employee's leave balance ledger to Excel, oldest entry first, so the running balance reads top to bottom.
+ */
+export async function exportLedgerToExcel({ employeeName, nik, entries, typeLabels = {} }) {
+  if (!entries || entries.length === 0) return;
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'PROAPPS';
+  workbook.created = new Date();
+
+  const worksheet = workbook.addWorksheet('Leave Ledger', {
+    views: [{ state: 'frozen', ySplit: 1 }]
+  });
+
+  worksheet.columns = [
+    { header: 'Date', key: 'date', width: 14 },
+    { header: 'Type', key: 'type', width: 18 },
+    { header: 'Description', key: 'description', width: 60 },
+    { header: 'Reference', key: 'refNo', width: 18 },
+    { header: 'Days', key: 'amount', width: 10 },
+    { header: 'Balance', key: 'balance', width: 10 },
+    { header: 'Requested by', key: 'requestedBy', width: 24 },
+    { header: 'Approved by', key: 'approvedBy', width: 28 }
+  ];
+
+  entries.forEach((entry) => {
+    worksheet.addRow({
+      date: entry.date,
+      type: typeLabels[entry.type] || entry.type,
+      description: entry.description,
+      refNo: entry.refNo,
+      amount: entry.amount,
+      balance: entry.balanceAfter,
+      requestedBy: entry.requestedBy || '',
+      approvedBy: entry.approvedBy || ''
+    });
+  });
+
+  const header = worksheet.getRow(1);
+  header.height = 22;
+  header.eachCell((cell) => {
+    cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF002B7F' } };
+    cell.alignment = { vertical: 'middle', horizontal: 'left' };
+  });
+  worksheet.getColumn('amount').numFmt = '+0;-0;0';
+
+  const safeName = String(employeeName || nik || 'employee').replace(/[^a-z0-9]+/gi, '_').toLowerCase();
+  const todayStr = new Date().toISOString().slice(0, 10);
+  await downloadWorkbook(workbook, `leave_ledger_${safeName}_${todayStr}.xlsx`);
+}

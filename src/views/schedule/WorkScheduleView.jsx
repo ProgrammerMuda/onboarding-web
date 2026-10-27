@@ -35,6 +35,7 @@ import {
   ArrowLeft
 } from '@phosphor-icons/react';
 import { formatDateKey, getEmployeeShiftForDate, calculateEmployeeWeekStats } from '../../models/WorkScheduleModel';
+import { getEmployeeJabatan } from '../../models/ApprovalFlowModel';
 import { getResolvedDivisions } from '../../models/EmployeeModel';
 import { Breadcrumb } from '../components/Breadcrumb';
 import '../employee/employee.css';
@@ -135,31 +136,6 @@ const CAL_MONTH_NAMES = [
   { short: 'Nov', full: 'November' },
   { short: 'Dec', full: 'December' }
 ];
-
-/**
- * Format employee position/jabatan clearly and consistently.
- */
-function getEmployeeJabatan(emp, deptName) {
-  if (!emp) return 'Staff';
-  if (emp.position) {
-    if (!['Building Management', 'Tenant Relation', 'Engineering', 'Finance', 'HRD', 'Housekeeping', 'Security', 'Building Service', 'Management'].includes(emp.position)) {
-      return emp.position;
-    }
-    const rolePrefix = emp.roleId === 'role-mgr' ? 'Manager'
-      : emp.roleId === 'role-head' ? 'Chief'
-      : emp.roleId === 'role-dir' ? 'Director'
-      : emp.roleId === 'role-spv' ? 'Supervisor'
-      : 'Staff';
-    if (emp.position === 'Building Management') {
-      return emp.roleId === 'role-mgr' || emp.roleId === 'role-head' ? 'Building Manager' : `${rolePrefix} Building Management`;
-    }
-    if (emp.position === 'Management') {
-      return 'Director / Management';
-    }
-    return `${rolePrefix} ${emp.position}`;
-  }
-  return deptName || 'Staff';
-}
 
 /**
  * Generate 35 or 42 grid cells for the monthly calendar view.

@@ -1298,3 +1298,28 @@ function formatResolvedResult(rawChain, source, matchedConfig, requester, employ
     }
   };
 }
+
+/**
+ * Format employee position/jabatan clearly and consistently.
+ */
+export function getEmployeeJabatan(emp, deptName) {
+  if (!emp) return 'Staff';
+  if (emp.position) {
+    if (!['Building Management', 'Tenant Relation', 'Engineering', 'Finance', 'HRD', 'Housekeeping', 'Security', 'Building Service', 'Management'].includes(emp.position)) {
+      return emp.position;
+    }
+    const rolePrefix = emp.roleId === 'role-mgr' ? 'Manager'
+      : emp.roleId === 'role-head' ? 'Chief'
+      : emp.roleId === 'role-dir' ? 'Director'
+      : emp.roleId === 'role-spv' ? 'Supervisor'
+      : 'Staff';
+    if (emp.position === 'Building Management') {
+      return emp.roleId === 'role-mgr' || emp.roleId === 'role-head' ? 'Building Manager' : `${rolePrefix} Building Management`;
+    }
+    if (emp.position === 'Management') {
+      return 'Director / Management';
+    }
+    return `${rolePrefix} ${emp.position}`;
+  }
+  return deptName || 'Staff';
+}

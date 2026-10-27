@@ -9,7 +9,10 @@ import {
   persistEmployeeBalances,
   readAdjustments,
   persistAdjustments,
-  ADJUSTMENT_REASON_CATEGORIES
+  ADJUSTMENT_APPROVER_LABELS,
+  ADJUSTMENT_MOCK_REQUESTER_IDS,
+  buildApprovalChain,
+  getCurrentApprovalStep
 } from '../models/PermitTypeModel';
 import { EMPLOYEES } from '../models/ApprovalFlowModel';
 
@@ -430,7 +433,7 @@ export function usePermitTypePresenter() {
   const [adjDraft, setAdjDraft] = useState({
     type: 'add',
     amount: 1,
-    reasonCategory: 'system_error',
+    requesterRole: 'hr',
     reasonNote: ''
   });
 
@@ -456,7 +459,7 @@ export function usePermitTypePresenter() {
     setAdjDraft({
       type: 'add',
       amount: 1,
-      reasonCategory: 'system_error',
+      requesterRole: 'hr',
       reasonNote: ''
     });
     setError('');
@@ -476,36 +479,37 @@ export function usePermitTypePresenter() {
 
   const submitAdjustmentRequest = () => {
     if (!adjustmentTarget) return;
-    if (!adjDraft.amount || Number(adjDraft.amount) < 1) {
-      setError('Jumlah koreksi hari harus minimal 1 hari.');
+    const amount = Number(adjDraft.amount);
+    if (!Number.isInteger(amount) || amount < 1 || amount > 30) {
+      setError('Enter a whole number of days between 1 and 30.');
       return;
     }
     if (!adjDraft.reasonNote.trim()) {
-      setError('Catatan alasan koreksi wajib diisi untuk audit internal.');
+      setError('A reason note is required for the audit trail.');
       return;
     }
 
-    const catObj = ADJUSTMENT_REASON_CATEGORIES.find(c => c.value === adjDraft.reasonCategory);
-    const needsDirector = Number(adjDraft.amount) > 2 || simulatedBalance < 0;
+
+    const requesterRole = adjDraft.requesterRole === 'bs' ? 'bs' : 'hr';
+    const requester = EMPLOYEES.find(e => e.id === ADJUSTMENT_MOCK_REQUESTER_IDS[requesterRole]);
 
     const newTicket = {
       id: `adj-${Date.now()}`,
       employeeId: adjustmentTarget.employeeId,
       employeeName: adjustmentTarget.employeeName,
       permitTypeId: 'permit-annual',
-      permitName: 'Cuti Tahunan (Annual Leave)',
+      permitName: 'Annual Leave',
       type: adjDraft.type,
       amount: Number(adjDraft.amount),
-      reasonCategory: adjDraft.reasonCategory,
-      reasonCategoryLabel: catObj ? catObj.label : 'Koreksi Lainnya',
-      reasonNote: adjDraft.reasonNote,
+      reasonNote: adjDraft.reasonNote.trim(),
       beforeBalance: adjustmentTarget.available,
       afterBalance: simulatedBalance,
       status: 'pending',
-      requestedAt: new Date().toLocaleString('id-ID'),
-      requestedBy: 'HR Specialist',
-      approverRole: needsDirector ? 'HR Director' : 'HR Manager',
-      approverName: needsDirector ? 'Budi Hartono (Director)' : 'Sarah Jenkins (Manager)',
+      requestedAt: new Date().toLocaleString('en-US'),
+      requestedBy: requester?.name || 'Unknown',
+      requestedById: requester?.id || null,
+      requesterRole,
+      approvalChain: buildApprovalChain(requesterRole),
       reviewedAt: null,
       reviewNote: ''
     };
@@ -516,14 +520,36 @@ export function usePermitTypePresenter() {
     closeAdjustmentModal();
 
     setSuccessModal({
-      title: 'Tiket Koreksi Saldo Berhasil Dibuat',
-      subtext: `Pengajuan koreksi saldo untuk ${adjustmentTarget.employeeName} (${adjDraft.type === 'add' ? '+' : '-'}${adjDraft.amount} hari) telah diteruskan ke ${newTicket.approverRole} untuk persetujuan.`
+      title: 'Adjustment request submitted',
+      subtext: `The ${adjDraft.type === 'add' ? '+' : '-'}${adjDraft.amount} day adjustment for ${adjustmentTarget.employeeName} was sent to the ${ADJUSTMENT_APPROVER_LABELS[newTicket.approvalChain[0].role]} for approval.`
     });
   };
 
-  const approveAdjustmentTicket = (ticketId) => {
+  const approveAdjustmentTicket = (ticketId, note = '') => {
     const ticket = adjustments.find(t => t.id === ticketId);
-    if (!ticket) return;
+    const step = getCurrentApprovalStep(ticket);
+    if (!ticket || !step) return;
+
+    const now = new Date().toLocaleString('en-US');
+    const nextChain = ticket.approvalChain.map(s => (s === step
+      ? { ...s, status: 'approved', reviewedAt: now, reviewNote: note.trim() || 'Approved.' }
+      : s));
+    const isFullyApproved = nextChain.every(s => s.status === 'approved');
+
+    if (!isFullyApproved) {
+      // Employee-filed ticket: HR approved, now it waits for the Building Manager.
+      const nextAdjustments = adjustments.map(t => (t.id === ticketId ? { ...t, approvalChain: nextChain } : t));
+      persistAdjustments(nextAdjustments);
+      setAdjustments(nextAdjustments);
+      const nextStep = getCurrentApprovalStep({ ...ticket, approvalChain: nextChain });
+      setSuccessModal({
+        title: 'Step approved',
+        subtext: `Approved as ${ADJUSTMENT_APPROVER_LABELS[step.role]}. It now waits for the ${ADJUSTMENT_APPROVER_LABELS[nextStep.role]}.`
+      });
+      return;
+    }
+
+    const approvers = nextChain.map(s => ADJUSTMENT_APPROVER_LABELS[s.role]).join(' & ');
 
     // 1. Update balances & append to ledger
     const nextBalances = balances.map(b => {
@@ -536,14 +562,18 @@ export function usePermitTypePresenter() {
           type: 'adjustment',
           amount: delta,
           balanceAfter: newAvail,
-          description: `Koreksi Saldo Manual: ${ticket.reasonCategoryLabel} (${ticket.reasonNote})`,
+          description: `Manual adjustment: ${ticket.reasonNote}`,
           refNo: ticket.id.toUpperCase(),
-          approvedBy: `${ticket.approverRole} (Approved)`
+          ticketId: ticket.id,
+          requestedBy: ticket.requestedBy,
+          approvedBy: approvers
         };
         return {
           ...b,
           available: newAvail,
-          ledger: [newLedgerEntry, ...(b.ledger || [])]
+          adjustmentTotal: (b.adjustmentTotal || 0) + delta,
+          // Oldest first; the ledger screen lists newest first.
+          ledger: [...(b.ledger || []), newLedgerEntry]
         };
       }
       return b;
@@ -552,46 +582,44 @@ export function usePermitTypePresenter() {
     persistEmployeeBalances(nextBalances);
     setBalances(nextBalances);
 
-    // 2. Mark ticket as approved
-    const nextAdjustments = adjustments.map(t => {
-      if (t.id === ticketId) {
-        return {
-          ...t,
-          status: 'approved',
-          reviewedAt: new Date().toLocaleString('id-ID'),
-          reviewNote: 'Disetujui sesuai regulasi dan memo pendukung.'
-        };
-      }
-      return t;
-    });
+    // 2. Close the ticket
+    const nextAdjustments = adjustments.map(t => (t.id === ticketId
+      ? { ...t, status: 'approved', approvalChain: nextChain, reviewedAt: now, reviewNote: note.trim() || 'Approved.' }
+      : t));
 
     persistAdjustments(nextAdjustments);
     setAdjustments(nextAdjustments);
 
     setSuccessModal({
-      title: 'Koreksi Saldo Disetujui',
-      subtext: `Koreksi untuk ${ticket.employeeName} telah disetujui. Saldo efektif kini diperbarui di direktori dan riwayat mutasi.`
+      title: 'Adjustment approved',
+      subtext: `The adjustment for ${ticket.employeeName} was approved. The new balance is now in the directory and ledger.`
     });
   };
 
-  const rejectAdjustmentTicket = (ticketId) => {
+  const rejectAdjustmentTicket = (ticketId, note = '') => {
+    const ticket = adjustments.find(t => t.id === ticketId);
+    const step = getCurrentApprovalStep(ticket);
+    if (!ticket || !step) return;
+
+    const now = new Date().toLocaleString('en-US');
     const nextAdjustments = adjustments.map(t => {
-      if (t.id === ticketId) {
-        return {
-          ...t,
-          status: 'rejected',
-          reviewedAt: new Date().toLocaleString('id-ID'),
-          reviewNote: 'Ditolak: Dokumen pendukung atau verifikasi tidak mencukupi.'
-        };
-      }
-      return t;
+      if (t.id !== ticketId) return t;
+      return {
+        ...t,
+        status: 'rejected',
+        approvalChain: t.approvalChain.map(s => (s === step
+          ? { ...s, status: 'rejected', reviewedAt: now, reviewNote: note.trim() }
+          : s)),
+        reviewedAt: now,
+        reviewNote: note.trim()
+      };
     });
     persistAdjustments(nextAdjustments);
     setAdjustments(nextAdjustments);
 
     setSuccessModal({
-      title: 'Koreksi Saldo Ditolak',
-      subtext: 'Tiket pengajuan koreksi telah ditolak dan tidak mengubah saldo karyawan.'
+      title: 'Adjustment rejected',
+      subtext: 'The request was rejected and the employee balance did not change.'
     });
   };
 

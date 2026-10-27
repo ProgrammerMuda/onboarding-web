@@ -1,8 +1,10 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
+  ArrowRight,
   ArrowsClockwise,
   Briefcase,
+  Buildings,
   CalendarBlank,
   CalendarCheck,
   CalendarStar,
@@ -14,10 +16,12 @@ import {
   ClipboardText,
   Clock,
   DotsThreeVertical,
+  Eye,
   FileText,
   FileXls,
   Info,
   MagnifyingGlass,
+  Minus,
   PencilSimple,
   Plus,
   Power,
@@ -32,18 +36,22 @@ import {
   UserCheck,
   Warning,
   WarningCircle,
-  X
+  X,
+  XCircle
 } from '@phosphor-icons/react';
 import {
   ALLOWED_DATE_OPTIONS,
   PERMIT_CATEGORIES,
   TREATMENT_OPTIONS,
-  ADJUSTMENT_REASON_CATEGORIES,
-  validatePermitType
+  validatePermitType,
+  ADJUSTMENT_APPROVER_LABELS,
+  ADJUSTMENT_REQUESTER_LABELS,
+  LEDGER_ENTRY_TYPES,
+  getCurrentApprovalStep
 } from '../../models/PermitTypeModel';
-import { DEPARTMENTS } from '../../models/ApprovalFlowModel';
+import { DEPARTMENTS, EMPLOYEES, getEmployeeJabatan } from '../../models/ApprovalFlowModel';
 import { Breadcrumb } from '../components/Breadcrumb';
-import { exportHolidaysToExcel } from '../../utils/excelExport';
+import { exportHolidaysToExcel, exportLedgerToExcel } from '../../utils/excelExport';
 import './permit-type.css';
 
 const PICKER_POPOVER_WIDTH = 280;
@@ -170,6 +178,83 @@ function HolidayMonthPicker({ value, onChange }) {
   );
 }
 
+// One badge per holiday; hovering or focusing it lists the departments. Portalled so the table's overflow can't clip it.
+function DepartmentBadge({ names, isAll }) {
+  const [anchor, setAnchor] = useState(null);
+  const label = isAll ? 'All departments' : `${names.length} ${names.length === 1 ? 'department' : 'departments'}`;
+
+  const show = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setAnchor({ left: rect.left, top: rect.bottom + 6 });
+  };
+  const hide = () => setAnchor(null);
+
+  return (
+    <>
+      <span
+        className={`permit-dept-badge ${isAll ? 'is-all' : ''}`}
+        tabIndex={0}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+        aria-label={`${label}: ${names.join(', ')}`}
+      >
+        <Buildings size={13} weight="bold" aria-hidden="true" />
+        {label}
+      </span>
+      {anchor && createPortal(
+        <div className="permit-dept-tooltip" role="tooltip" style={{ top: anchor.top, left: anchor.left }}>
+          <span className="permit-dept-tooltip-title">{label}</span>
+          <ul>
+            {names.map((name) => <li key={name}>{name}</li>)}
+          </ul>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
+const BALANCE_PAGE_SIZE = 8;
+const LEDGER_PAGE_SIZE = 5;
+
+function buildPageList(page, totalPages) {
+  if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+  if (page <= 3) return [1, 2, 3, '…', totalPages];
+  if (page >= totalPages - 2) return [1, '…', totalPages - 2, totalPages - 1, totalPages];
+  return [1, '…', page, '…', totalPages];
+}
+
+// Same footer as the leave types table.
+function TablePager({ page, totalPages, count, pageSize, noun, onPage }) {
+  const start = count === 0 ? 0 : (page - 1) * pageSize + 1;
+  const end = Math.min(page * pageSize, count);
+  return (
+    <div className="emp-table-footer">
+      <div className="emp-table-footer-info">
+        Showing <strong className="emp-text-dark">{start}</strong> to <strong className="emp-text-dark">{end}</strong> of{' '}
+        <strong className="emp-text-dark">{count}</strong> {noun}
+      </div>
+      <div className="emp-pagination-controls" aria-label={`${noun} pagination`}>
+        <button type="button" className="emp-page-btn" disabled={page <= 1} onClick={() => onPage(page - 1)} title="Previous page" aria-label="Previous page">
+          <CaretLeft size={14} weight="bold" />
+        </button>
+        {buildPageList(page, totalPages).map((n, index) => n === '…' ? (
+          <span key={`ellipsis-${index}`} className="emp-page-ellipsis">…</span>
+        ) : (
+          <button key={n} type="button" className={`emp-page-btn ${page === n ? 'active' : ''}`} aria-current={page === n ? 'page' : undefined} onClick={() => onPage(n)}>
+            {n}
+          </button>
+        ))}
+        <button type="button" className="emp-page-btn" disabled={page >= totalPages} onClick={() => onPage(page + 1)} title="Next page" aria-label="Next page">
+          <CaretRight size={14} weight="bold" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Matches the employee delete confirmation; portalled so it sits above PermitDialog.
 function HolidayDeleteModal({ holiday, onCancel, onConfirm }) {
   useEffect(() => {
@@ -260,7 +345,7 @@ function PermitDialog({ title, description, onClose, maxWidthClass = '', childre
             type="button"
             className="btn btn-link p-1 text-muted text-decoration-none d-flex align-items-center justify-content-center border-0 shadow-none permit-dialog-close"
             aria-label="Close"
-            title="Tutup dialog"
+            title="Close dialog"
             onClick={onClose}
           >
             <X size={20} weight="bold" />
@@ -332,6 +417,15 @@ function SuccessDialog({ title, subtext, onClose }) {
 export function PermitTypeView({ presenter: p }) {
   const [balanceSubView, setBalanceSubView] = useState('directory'); // 'directory' | 'adjustments'
   const [holidayToDelete, setHolidayToDelete] = useState(null);
+  const [balancePage, setBalancePage] = useState(1);
+  const [balanceStatusFilter, setBalanceStatusFilter] = useState('all'); // 'all' | 'low' | 'negative'
+  const [adjSearch, setAdjSearch] = useState('');
+  const [adjStatusFilter, setAdjStatusFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'rejected'
+  const [adjPage, setAdjPage] = useState(1);
+  const [ledgerPageState, setLedgerPageState] = useState({ id: null, page: 1 });
+  const [reviewTicket, setReviewTicket] = useState(null);
+  const [reviewNote, setReviewNote] = useState('');
+  const [reviewError, setReviewError] = useState('');
   const [activeActionId, setActiveActionId] = useState(null);
   const [actionAnchor, setActionAnchor] = useState(null);
 
@@ -352,22 +446,39 @@ export function PermitTypeView({ presenter: p }) {
     };
   }, [activeActionId]);
 
-  const handleToggleActionMenu = (e, permit) => {
+  const closeLedger = () => {
+    setLedgerPageState({ id: null, page: 1 });
+    p.closeLedgerModal();
+  };
+
+  const openReview = (ticket) => {
+    setReviewTicket(ticket);
+    setReviewNote('');
+    setReviewError('');
+  };
+  const closeReview = () => {
+    setReviewTicket(null);
+    setReviewNote('');
+    setReviewError('');
+  };
+
+  const handleToggleActionMenu = (e, permit, kind = 'permit') => {
     e.stopPropagation();
-    if (activeActionId === permit.id) {
+    const itemId = permit.id ?? permit.employeeId;
+    if (activeActionId === itemId) {
       setActiveActionId(null);
       setActionAnchor(null);
       return;
     }
     const rect = e.currentTarget.getBoundingClientRect();
-    const dropdownHeight = 135;
+    const dropdownHeight = kind === 'holiday' || kind === 'balance' ? 92 : 135;
     const spaceBelow = window.innerHeight - rect.bottom;
     const openUp = spaceBelow < dropdownHeight + 15;
     const top = openUp ? rect.top - dropdownHeight - 4 : rect.bottom + 4;
     const right = Math.max(8, window.innerWidth - rect.right);
 
-    setActiveActionId(permit.id);
-    setActionAnchor({ permit, top, right });
+    setActiveActionId(itemId);
+    setActionAnchor({ permit, kind, top, right });
   };
 
   const canSavePermit = Boolean(p.draft && !validatePermitType(p.draft, p.permits));
@@ -441,7 +552,7 @@ export function PermitTypeView({ presenter: p }) {
             onClick={() => p.setActiveTab('holidays')}
           >
             <CalendarCheck size={18} weight={p.activeTab === 'holidays' ? 'bold' : 'regular'} aria-hidden="true" />
-            <span>Leave Calendar</span>
+            <span>Holiday Calendar</span>
           </button>
 
           <button
@@ -983,120 +1094,105 @@ export function PermitTypeView({ presenter: p }) {
 
             {/* VIEW 2: TABLE VIEW */}
             {p.holidayViewMode === 'table' && (
-              <div className="table-responsive">
-                <table className="permit-table">
-                  <thead>
-                    <tr>
-                      <th scope="col" style={{ width: '18%' }}>Date (2026)</th>
-                      <th scope="col" style={{ width: '38%' }}>Holiday Name</th>
-                      <th scope="col" style={{ width: '18%' }}>Classification</th>
-                      <th scope="col" style={{ width: '16%' }}>Company Treatment</th>
-                      <th scope="col" className="text-end" style={{ width: '10%' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {p.filteredHolidays.length === 0 ? (
-                      <tr>
-                        <td colSpan={5} className="text-center py-5 text-muted">
-                          <CalendarBlank size={32} className="mb-2 text-secondary" />
-                          <p className="mb-0">No holidays match your search.</p>
-                        </td>
-                      </tr>
-                    ) : (
-                      p.filteredHolidays.map((holiday) => {
-                        const treatmentObj = TREATMENT_OPTIONS.find((t) => t.value === holiday.treatment) || TREATMENT_OPTIONS[0];
-
-                        return (
-                          <tr key={holiday.id}>
-                            <td>
-                              <strong className="text-dark" style={{ fontSize: '13.5px' }}>
-                                {holiday.date}
-                              </strong>
-                              <div className="permit-cell-note">
-                                {new Date(holiday.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })}
-                              </div>
-                            </td>
-
-                            <td>
-                              <div className="fw-bold text-dark" style={{ fontSize: '13.5px' }}>
-                                {holiday.name}
-                              </div>
-                              {holiday.note && (
-                                <p className="text-muted small mb-0 mt-1">{holiday.note}</p>
-                              )}
-                            </td>
-
-                            <td>
-                              {holiday.isCutiBersama ? (
-                                <span className="holiday-type-badge cuti">
-                                  <CalendarStar size={14} weight="bold" />
-                                  <span>Collective Leave</span>
-                                </span>
-                              ) : (
-                                <span className="holiday-type-badge national">
-                                  <CalendarBlank size={14} weight="bold" />
-                                  <span>National Holiday</span>
-                                </span>
-                              )}
-                            </td>
-
-                            <td>
-                              {holiday.isCutiBersama ? (
-                                <>
-                                  <span
-                                    className="treatment-pill"
-                                    style={{ backgroundColor: treatmentObj.bg, color: treatmentObj.color, border: `1px solid ${treatmentObj.color}33` }}
-                                  >
-                                    {treatmentObj.badge}
-                                  </span>
-                                  <div className="permit-cell-note">
-                                    {holiday.scope === 'departments'
-                                      ? `${(holiday.scopeValue || []).length} of ${DEPARTMENTS.length} departments`
-                                      : 'All departments'}
-                                  </div>
-                                </>
-                              ) : (
-                                <span className="text-muted small">Official Holiday (No Leave Deduction)</span>
-                              )}
-                              {holiday.pendingAmendment && (
-                                <span className="badge bg-warning text-dark ms-2" style={{ fontSize: '10px' }}>
-                                  Past Revision Pending
-                                </span>
-                              )}
-                            </td>
-
-                            <td>
-                              <div className="d-flex justify-content-end gap-1.5">
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
-                                  style={{ fontSize: '12px', padding: '4px 9px', borderColor: '#002B7F', color: '#002B7F', fontWeight: 600 }}
-                                  onClick={() => p.openHolidayEditor(holiday)}
-                                  title="Edit this holiday or collective leave"
-                                >
-                                  <PencilSimple size={13} weight="bold" />
-                                  <span>Edit</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-danger d-inline-flex align-items-center p-1 px-1.5"
-                                  style={{ fontSize: '12px' }}
-                                  onClick={() => {
-                                    setHolidayToDelete(holiday);
-                                  }}
-                                  title="Delete this holiday"
-                                  aria-label={`Delete ${holiday.name}`}
-                                >
-                                  <Trash size={14} weight="bold" />
-                                </button>
-                              </div>
+              <div className="permit-policy-table-body">
+                <div className="permit-policy-table-inner">
+                  <div className="table-responsive">
+                    <table className="permit-table permit-policy-table permit-holiday-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Date</th>
+                          <th scope="col">Holiday Name</th>
+                          <th scope="col">Classification</th>
+                          <th scope="col">Treatment</th>
+                          <th scope="col">Departments</th>
+                          <th scope="col" className="text-end">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {p.filteredHolidays.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="text-center py-5 text-muted">
+                              <CalendarBlank size={32} className="mb-2 text-secondary" />
+                              <p className="mb-0">No holidays match your search.</p>
                             </td>
                           </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
+                        ) : (
+                          p.filteredHolidays.map((holiday) => {
+                            const treatmentObj = TREATMENT_OPTIONS.find((t) => t.value === holiday.treatment) || TREATMENT_OPTIONS[0];
+    
+                            return (
+                              <tr key={holiday.id}>
+                                <td>
+                                  <strong className="text-dark" style={{ fontSize: '13.5px' }}>
+                                    {holiday.date}
+                                  </strong>
+                                  <div className="permit-cell-note">
+                                    {new Date(holiday.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long' })}
+                                  </div>
+                                </td>
+    
+                                <td>
+                                  <div className="fw-bold text-dark" style={{ fontSize: '13.5px' }}>
+                                    {holiday.name}
+                                  </div>
+                                  {holiday.pendingAmendment && (
+                                    <span className="badge bg-warning text-dark mt-1" style={{ fontSize: '10px' }}>
+                                      Past Revision Pending
+                                    </span>
+                                  )}
+                                </td>
+    
+                                <td>
+                                  {holiday.isCutiBersama ? (
+                                    <span className="holiday-type-badge cuti">
+                                      <CalendarStar size={14} weight="bold" />
+                                      <span>Collective Leave</span>
+                                    </span>
+                                  ) : (
+                                    <span className="holiday-type-badge national">
+                                      <CalendarBlank size={14} weight="bold" />
+                                      <span>National Holiday</span>
+                                    </span>
+                                  )}
+                                </td>
+    
+                                <td>
+                                  <span className={`permit-treatment-badge ${holiday.isCutiBersama && holiday.treatment === 'deduct_annual' ? 'is-deduct' : 'is-free'}`}>
+                                    {holiday.isCutiBersama ? treatmentObj.badge : 'No deduction'}
+                                  </span>
+                                </td>
+
+                                <td>
+                                  {(() => {
+                                    const isScoped = holiday.isCutiBersama && holiday.scope === 'departments';
+                                    const names = isScoped
+                                      ? (holiday.scopeValue || []).map((id) => DEPARTMENTS.find((d) => d.id === id)?.name || id)
+                                      : DEPARTMENTS.map((d) => d.name);
+                                    return <DepartmentBadge names={names} isAll={!isScoped} />;
+                                  })()}
+                                </td>
+
+                                <td>
+                                  <div className="d-flex justify-content-end">
+                                    <button
+                                      type="button"
+                                      className={`permit-btn-dots ${activeActionId === holiday.id ? 'active' : ''}`}
+                                      aria-label={`Actions for ${holiday.name}`}
+                                      title="More actions"
+                                      onClick={(e) => handleToggleActionMenu(e, holiday, 'holiday')}
+                                    >
+                                      <DotsThreeVertical size={18} weight="bold" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                        </table>
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -1106,279 +1202,368 @@ export function PermitTypeView({ presenter: p }) {
       {/* =========================================================================
           TAB 3: BALANCES, LEDGER & ADJUSTMENTS
          ========================================================================= */}
-      {p.activeTab === 'balances' && (
-        <div className="permit-table-card">
-          <div className="d-flex align-items-center justify-content-between p-3 border-bottom bg-light">
-            <div className="btn-group" role="group">
-              <button
-                type="button"
-                className={`btn btn-sm ${balanceSubView === 'directory' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                style={{
-                  backgroundColor: balanceSubView === 'directory' ? '#002B7F' : 'transparent',
-                  borderColor: balanceSubView === 'directory' ? '#002B7F' : '#cbd5e1',
-                  color: balanceSubView === 'directory' ? '#ffffff' : '#475569',
-                  fontWeight: 600
-                }}
-                onClick={() => setBalanceSubView('directory')}
-              >
-                Direktori Saldo Karyawan ({p.balances.length})
-              </button>
-              <button
-                type="button"
-                className={`btn btn-sm ${balanceSubView === 'adjustments' ? 'btn-primary' : 'btn-outline-secondary'}`}
-                style={{
-                  backgroundColor: balanceSubView === 'adjustments' ? '#002B7F' : 'transparent',
-                  borderColor: balanceSubView === 'adjustments' ? '#002B7F' : '#cbd5e1',
-                  color: balanceSubView === 'adjustments' ? '#ffffff' : '#475569',
-                  fontWeight: 600
-                }}
-                onClick={() => setBalanceSubView('adjustments')}
-              >
-                Pengajuan Koreksi Saldo ({p.adjustments.length})
-                {pendingAdjustmentsCount > 0 && (
-                  <span className="badge bg-warning text-dark ms-2">{pendingAdjustmentsCount} Pending</span>
-                )}
-              </button>
+      {p.activeTab === 'balances' && (() => {
+        const isDirectory = balanceSubView === 'directory';
+
+        const balanceRows = p.filteredBalances.filter((item) => (
+          balanceStatusFilter === 'all'
+          || (balanceStatusFilter === 'negative' && item.available < 0)
+          || (balanceStatusFilter === 'low' && item.available >= 0 && item.available <= 3)
+        ));
+        const balanceTotalPages = Math.max(1, Math.ceil(balanceRows.length / BALANCE_PAGE_SIZE));
+        const balancePageSafe = Math.min(balancePage, balanceTotalPages);
+        const pagedBalances = balanceRows.slice((balancePageSafe - 1) * BALANCE_PAGE_SIZE, balancePageSafe * BALANCE_PAGE_SIZE);
+
+        const adjQuery = adjSearch.trim().toLowerCase();
+        const adjustmentRows = p.adjustments
+          .filter((ticket) => (
+            (adjStatusFilter === 'all' || ticket.status === adjStatusFilter)
+            && (!adjQuery || ticket.employeeName.toLowerCase().includes(adjQuery) || ticket.id.toLowerCase().includes(adjQuery))
+          ))
+          .sort((a, b) => Number(b.status === 'pending') - Number(a.status === 'pending'));
+        const adjTotalPages = Math.max(1, Math.ceil(adjustmentRows.length / BALANCE_PAGE_SIZE));
+        const adjPageSafe = Math.min(adjPage, adjTotalPages);
+        const pagedAdjustments = adjustmentRows.slice((adjPageSafe - 1) * BALANCE_PAGE_SIZE, adjPageSafe * BALANCE_PAGE_SIZE);
+
+        return (
+          <div className="permit-tab-section">
+            <div className="permit-table-card">
+              <div className="emp-card-header">
+                <div>
+                  <h2 className="emp-card-title">{isDirectory ? 'Employee leave balances' : 'Adjustment requests'}</h2>
+                  <p className="emp-card-desc">
+                    {isDirectory
+                      ? 'Review annual leave balances, trace every change in the ledger, and request manual corrections.'
+                      : 'Requests from HR need the Building Manager. Requests from employees need HR first, then the Building Manager.'}
+                  </p>
+                </div>
+                <div className="emp-card-actions">
+                  <div className="ws-toolbar-tabs" role="group" aria-label="Balances or adjustment requests">
+                    <button
+                      type="button"
+                      className={`ws-toolbar-tab ${isDirectory ? 'is-active' : ''}`}
+                      aria-pressed={isDirectory}
+                      onClick={() => setBalanceSubView('directory')}
+                    >
+                      <UserCheck size={15} weight={isDirectory ? 'bold' : 'regular'} aria-hidden="true" />
+                      <span>Balances</span>
+                      <span className="permit-tab-count">{p.balances.length}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`ws-toolbar-tab ${!isDirectory ? 'is-active' : ''}`}
+                      aria-pressed={!isDirectory}
+                      onClick={() => setBalanceSubView('adjustments')}
+                    >
+                      <Scales size={15} weight={!isDirectory ? 'bold' : 'regular'} aria-hidden="true" />
+                      <span>Adjustment requests</span>
+                      <span className={`permit-tab-count ${pendingAdjustmentsCount > 0 ? 'is-pending' : ''}`}>
+                        {pendingAdjustmentsCount > 0 ? `${pendingAdjustmentsCount} pending` : p.adjustments.length}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {isDirectory ? (
+                <div className="emp-search-row permit-policy-toolbar">
+                  <div className="emp-search-input-group permit-policy-search">
+                    <MagnifyingGlass size={16} className="emp-search-input-icon" weight="bold" aria-hidden="true" />
+                    <input
+                      type="search"
+                      className="emp-search-input"
+                      aria-label="Search employee by name or NIP"
+                      placeholder="Search name or NIP"
+                      value={p.balanceSearch}
+                      onChange={(e) => { p.setBalanceSearch(e.target.value); setBalancePage(1); }}
+                    />
+                  </div>
+                  <div className="permit-policy-filters">
+                    <select
+                      className="form-select permit-policy-filter"
+                      aria-label="Filter department"
+                      value={p.balanceDeptFilter}
+                      onChange={(e) => { p.setBalanceDeptFilter(e.target.value); setBalancePage(1); }}
+                    >
+                      <option value="all">All departments</option>
+                      {DEPARTMENTS.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                    <select
+                      className="form-select permit-policy-filter permit-policy-filter-status"
+                      aria-label="Filter balance level"
+                      value={balanceStatusFilter}
+                      onChange={(e) => { setBalanceStatusFilter(e.target.value); setBalancePage(1); }}
+                    >
+                      <option value="all">All balances</option>
+                      <option value="low">Low (3 days or less)</option>
+                      <option value="negative">Negative</option>
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div className="emp-search-row permit-policy-toolbar">
+                  <div className="emp-search-input-group permit-policy-search">
+                    <MagnifyingGlass size={16} className="emp-search-input-icon" weight="bold" aria-hidden="true" />
+                    <input
+                      type="search"
+                      className="emp-search-input"
+                      aria-label="Search by employee or request ID"
+                      placeholder="Search employee or request ID"
+                      value={adjSearch}
+                      onChange={(e) => { setAdjSearch(e.target.value); setAdjPage(1); }}
+                    />
+                  </div>
+                  <div className="permit-policy-filters">
+                    <select
+                      className="form-select permit-policy-filter permit-policy-filter-status"
+                      aria-label="Filter status"
+                      value={adjStatusFilter}
+                      onChange={(e) => { setAdjStatusFilter(e.target.value); setAdjPage(1); }}
+                    >
+                      <option value="all">All statuses</option>
+                      <option value="pending">Pending</option>
+                      <option value="approved">Approved</option>
+                      <option value="rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="permit-policy-table-body">
+                <div className="permit-policy-table-inner">
+                  {isDirectory ? (
+                    balanceRows.length > 0 ? (
+                      <>
+                        <div className="table-responsive">
+                          <table className="permit-table permit-policy-table permit-balance-table">
+                            <thead>
+                              <tr>
+                                <th scope="col">Employee</th>
+                                <th scope="col">Entitlement</th>
+                                <th scope="col">Carry-over</th>
+                                <th scope="col">Used</th>
+                                <th scope="col">Collective leave</th>
+                                <th scope="col">Available</th>
+                                <th scope="col" className="text-end">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {pagedBalances.map((item) => {
+                                const dept = DEPARTMENTS.find((d) => d.id === item.departmentId);
+                                const level = item.available < 0 ? 'negative' : item.available <= 3 ? 'low' : 'healthy';
+                                return (
+                                  <tr key={item.employeeId}>
+                                    <td>
+                                      <div className="d-flex align-items-center gap-3">
+                                        <img
+                                          src={item.avatar}
+                                          alt=""
+                                          className="emp-balance-avatar"
+                                          onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'; }}
+                                        />
+                                        <div>
+                                          <strong className="text-dark" style={{ fontSize: '13.5px' }}>{item.employeeName}</strong>
+                                          <span className="text-muted small d-block">NIP {item.nik}</span>
+                                          <span className="permit-cell-note">{getEmployeeJabatan(EMPLOYEES.find((e) => e.id === item.employeeId) || item, dept?.name)}</span>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td><strong>{item.baseEntitlement}</strong> <span className="text-muted">days</span></td>
+                                    <td>
+                                      {item.carryOver > 0
+                                        ? <span className="text-success fw-bold">+{item.carryOver} days</span>
+                                        : <span className="text-muted">0 days</span>}
+                                      {item.carryOver > 0 && <div className="permit-cell-note">Expires 31 Mar</div>}
+                                    </td>
+                                    <td><span className="text-danger fw-semibold">-{item.usedLeave} days</span></td>
+                                    <td>
+                                      {item.cutiBersamaDeduction > 0
+                                        ? <span className="fw-semibold" style={{ color: '#b45309' }}>-{item.cutiBersamaDeduction} days</span>
+                                        : <span className="text-muted">0 days</span>}
+                                    </td>
+                                    <td>
+                                      <span className={`permit-balance-badge is-${level}`}>
+                                        <strong>{item.available}</strong> days
+                                      </span>
+                                      {level === 'low' && <div className="permit-balance-flag is-low">Low balance</div>}
+                                    </td>
+                                    <td className="text-end">
+                                      <button
+                                        type="button"
+                                        className={`permit-btn-dots ${activeActionId === item.employeeId ? 'active' : ''}`}
+                                        aria-label={`Actions for ${item.employeeName}`}
+                                        title="More actions"
+                                        onClick={(e) => handleToggleActionMenu(e, item, 'balance')}
+                                      >
+                                        <DotsThreeVertical size={18} weight="bold" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                        <TablePager page={balancePageSafe} totalPages={balanceTotalPages} count={balanceRows.length} pageSize={BALANCE_PAGE_SIZE} noun="employees" onPage={setBalancePage} />
+                      </>
+                    ) : (
+                      <div className="permit-policy-empty">
+                        <div className="permit-policy-empty-icon"><UserCheck size={25} weight="regular" aria-hidden="true" /></div>
+                        <h3>No matching employees</h3>
+                        <p>Try a different name, department, or balance level.</p>
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary"
+                          onClick={() => { p.setBalanceSearch(''); p.setBalanceDeptFilter('all'); setBalanceStatusFilter('all'); }}
+                        >
+                          Clear filters
+                        </button>
+                      </div>
+                    )
+                  ) : (
+                    adjustmentRows.length > 0 ? (
+                      <>
+                        <div className="table-responsive">
+                          <table className="permit-table permit-policy-table permit-adjustment-table">
+                            <thead>
+                              <tr>
+                                <th scope="col">Request</th>
+                                <th scope="col">Employee</th>
+                                <th scope="col">Requested by</th>
+                                <th scope="col">Notes</th>
+                                <th scope="col">Balance change</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" className="text-end">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {pagedAdjustments.map((ticket) => {
+                                const delta = ticket.type === 'add' ? ticket.amount : -ticket.amount;
+                                return (
+                                  <tr key={ticket.id}>
+                                    <td>
+                                      <strong>{ticket.id.toUpperCase()}</strong>
+                                      <div className="permit-cell-note">{ticket.requestedAt}</div>
+                                    </td>
+                                    <td>
+                                      <div className="fw-bold text-dark">{ticket.employeeName}</div>
+                                      <span className="text-muted small d-block">
+                                        {(() => {
+                                          const employee = EMPLOYEES.find((e) => e.id === ticket.employeeId);
+                                          return getEmployeeJabatan(employee, DEPARTMENTS.find((d) => d.id === employee?.departmentId)?.name);
+                                        })()}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      {ticket.requesterRole === 'employee' ? (
+                                        <>
+                                          <div className="fw-bold text-dark">Self-requested</div>
+                                          <span className="text-muted small d-block">By the employee</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <div className="fw-bold text-dark">{ticket.requestedBy}</div>
+                                          <span className="text-muted small d-block">
+                                            {(() => {
+                                              const requester = EMPLOYEES.find((e) => e.id === ticket.requestedById);
+                                              if (!requester) return ADJUSTMENT_REQUESTER_LABELS[ticket.requesterRole];
+                                              return getEmployeeJabatan(requester, DEPARTMENTS.find((d) => d.id === requester.departmentId)?.name);
+                                            })()}
+                                          </span>
+                                        </>
+                                      )}
+                                    </td>
+                                    <td>
+                                      <p className="permit-ticket-note" title={ticket.reasonNote}>{ticket.reasonNote}</p>
+                                    </td>
+                                    <td>
+                                      <div className="permit-balance-change">
+                                        <span className="text-muted">{ticket.beforeBalance}</span>
+                                        <span aria-hidden="true">&rarr;</span>
+                                        <strong>{ticket.afterBalance}</strong>
+                                        <span className={`permit-delta-chip ${delta > 0 ? 'is-plus' : 'is-minus'}`}>
+                                          {delta > 0 ? `+${delta}` : delta}
+                                        </span>
+                                      </div>
+                                    </td>
+                                    <td>
+                                      {(() => {
+                                        const chain = ticket.approvalChain || [];
+                                        const StatusIcon = ticket.status === 'pending' ? Clock : ticket.status === 'approved' ? CheckCircle : XCircle;
+                                        const statusLabel = ticket.status === 'pending' ? 'Pending' : ticket.status === 'approved' ? 'Approved' : 'Rejected';
+                                        const waitingStep = getCurrentApprovalStep(ticket);
+                                        const decidedStep = chain.slice().reverse().find((step) => step.status !== 'pending');
+
+                                        return (
+                                          <>
+                                            <span className={`permit-ticket-badge is-${ticket.status}`}>
+                                              <StatusIcon size={12} weight="bold" aria-hidden="true" />
+                                              {statusLabel}
+                                            </span>
+                                            {ticket.status === 'pending' ? (
+                                              <div className="permit-status-detail">
+                                                <strong>{ADJUSTMENT_APPROVER_LABELS[waitingStep?.role] || 'Approver'}</strong>
+                                                <span>
+                                                  {chain.length > 1 && (
+                                                    <span className="permit-step-dots" aria-hidden="true">
+                                                      {chain.map((step) => (
+                                                        <i key={step.role} className={step.status === 'approved' ? 'is-done' : step === waitingStep ? 'is-current' : ''} />
+                                                      ))}
+                                                    </span>
+                                                  )}
+                                                  {chain.length > 1 ? `Step ${chain.indexOf(waitingStep) + 1} of ${chain.length}` : 'Awaiting decision'}
+                                                </span>
+                                              </div>
+                                            ) : (
+                                              <div className="permit-status-detail">
+                                                <strong>By {ADJUSTMENT_APPROVER_LABELS[decidedStep?.role] || 'approver'}</strong>
+                                                <span>{ticket.reviewedAt}</span>
+                                              </div>
+                                            )}
+                                          </>
+                                        );
+                                      })()}
+                                    </td>
+                                    <td className="text-end">
+                                      <button
+                                        type="button"
+                                        className="permit-btn-dots"
+                                        aria-label={`View details of ${ticket.id.toUpperCase()}`}
+                                        title="View details"
+                                        onClick={() => openReview(ticket)}
+                                      >
+                                        <Eye size={17} weight="bold" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                        <TablePager page={adjPageSafe} totalPages={adjTotalPages} count={adjustmentRows.length} pageSize={BALANCE_PAGE_SIZE} noun="requests" onPage={setAdjPage} />
+                      </>
+                    ) : (
+                      <div className="permit-policy-empty">
+                        <div className="permit-policy-empty-icon"><Scales size={25} weight="regular" aria-hidden="true" /></div>
+                        <h3>{p.adjustments.length === 0 ? 'No adjustment requests yet' : 'No matching requests'}</h3>
+                        <p>{p.adjustments.length === 0
+                          ? 'Request a correction from the Balances tab. It will show up here for approval.'
+                          : 'Try a different status or search.'}</p>
+                        {p.adjustments.length > 0 && (
+                          <button type="button" className="btn btn-outline-secondary" onClick={() => { setAdjSearch(''); setAdjStatusFilter('all'); }}>
+                            Clear filters
+                          </button>
+                        )}
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-
-          {balanceSubView === 'directory' && (
-            <>
-              <div className="permit-toolbar">
-                <div className="permit-search">
-                  <MagnifyingGlass size={17} className="text-secondary flex-shrink-0" weight="bold" />
-                  <input
-                    type="search"
-                    aria-label="Cari karyawan berdasarkan nama atau NIK"
-                    placeholder="Cari nama karyawan atau NIK..."
-                    value={p.balanceSearch}
-                    onChange={(e) => p.setBalanceSearch(e.target.value)}
-                  />
-                </div>
-
-                <div className="d-flex align-items-center gap-2">
-                  <select
-                    className="form-select"
-                    aria-label="Filter departemen"
-                    value={p.balanceDeptFilter}
-                    onChange={(e) => p.setBalanceDeptFilter(e.target.value)}
-                    style={{ width: '220px' }}
-                  >
-                    <option value="all">Semua Departemen</option>
-                    {DEPARTMENTS.map(d => (
-                      <option key={d.id} value={d.id}>{d.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="table-responsive">
-                <table className="permit-table">
-                  <thead>
-                    <tr>
-                      <th scope="col" style={{ width: '28%' }}>Karyawan</th>
-                      <th scope="col" style={{ width: '12%' }}>Jatah Dasar</th>
-                      <th scope="col" style={{ width: '12%' }}>Carry-Over</th>
-                      <th scope="col" style={{ width: '12%' }}>Terpakai</th>
-                      <th scope="col" style={{ width: '12%' }}>Potong CB</th>
-                      <th scope="col" style={{ width: '12%' }}>Saldo Tersedia</th>
-                      <th scope="col" className="text-end" style={{ width: '12%' }}>Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {p.filteredBalances.map((item) => {
-                      const dept = DEPARTMENTS.find(d => d.id === item.departmentId);
-                      const isAvailLow = item.available <= 3 && item.available >= 0;
-                      const isAvailNeg = item.available < 0;
-
-                      return (
-                        <tr key={item.employeeId}>
-                          <td>
-                            <div className="d-flex align-items-center gap-3">
-                              <img
-                                src={item.avatar}
-                                alt={item.employeeName}
-                                className="emp-balance-avatar"
-                                onError={(e) => {
-                                  e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150';
-                                }}
-                              />
-                              <div>
-                                <strong className="text-dark" style={{ fontSize: '13.5px' }}>
-                                  {item.employeeName}
-                                </strong>
-                                <span className="text-muted small d-block">
-                                  {item.nik} &bull; {dept?.name || item.position}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-
-                          <td>
-                            <strong>{item.baseEntitlement}</strong>
-                            <span className="text-muted"> hr</span>
-                          </td>
-
-                          <td>
-                            {item.carryOver > 0 ? (
-                              <span className="text-success fw-bold">+{item.carryOver} hr</span>
-                            ) : (
-                              <span className="text-muted">0 hr</span>
-                            )}
-                            <div className="permit-cell-note">s/d 31 Mar</div>
-                          </td>
-
-                          <td>
-                            <span className="text-danger fw-semibold">-{item.usedLeave} hr</span>
-                          </td>
-
-                          <td>
-                            <span className="text-primary fw-semibold">-{item.cutiBersamaDeduction} hr</span>
-                          </td>
-
-                          <td>
-                            <div
-                              className={`balance-num-pill ${isAvailNeg ? 'avail-negative' : (isAvailLow ? 'avail-low' : 'avail-high')}`}
-                            >
-                              <span>{item.available}</span>
-                              <small style={{ fontSize: '11px', fontWeight: 600 }}>Hari</small>
-                            </div>
-                          </td>
-
-                          <td>
-                            <div className="d-flex gap-2 justify-content-end">
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
-                                style={{ fontSize: '11.5px', padding: '4px 8px' }}
-                                onClick={() => p.openLedgerModal(item)}
-                                title="Lihat Riwayat Mutasi Saldo Lengkap"
-                              >
-                                <Clock size={13} weight="bold" />
-                                <span>Mutasi</span>
-                              </button>
-
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
-                                style={{ fontSize: '11.5px', padding: '4px 8px', borderColor: '#002B7F', color: '#002B7F' }}
-                                onClick={() => p.openAdjustmentModal(item)}
-                                title="Ajukan Koreksi Saldo Manual"
-                              >
-                                <Scales size={13} weight="bold" />
-                                <span>Koreksi</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-
-          {balanceSubView === 'adjustments' && (
-            <div className="table-responsive">
-              <table className="permit-table">
-                <thead>
-                  <tr>
-                    <th scope="col">ID Tiket & Tanggal</th>
-                    <th scope="col">Karyawan</th>
-                    <th scope="col">Kategori & Alasan</th>
-                    <th scope="col">Simulasi Saldo</th>
-                    <th scope="col">Status Review</th>
-                    <th scope="col" className="text-end">Otorisasi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {p.adjustments.map((ticket) => {
-                    const isPending = ticket.status === 'pending';
-                    const isApproved = ticket.status === 'approved';
-
-                    return (
-                      <tr key={ticket.id}>
-                        <td>
-                          <strong>{ticket.id.toUpperCase()}</strong>
-                          <div className="permit-cell-note">{ticket.requestedAt}</div>
-                        </td>
-
-                        <td>
-                          <div className="fw-bold text-dark">{ticket.employeeName}</div>
-                          <span className="text-muted small">Oleh: {ticket.requestedBy}</span>
-                        </td>
-
-                        <td>
-                          <span className="badge bg-light text-dark border mb-1" style={{ fontSize: '11px' }}>
-                            {ticket.reasonCategoryLabel}
-                          </span>
-                          <p className="text-muted small mb-0">{ticket.reasonNote}</p>
-                        </td>
-
-                        <td>
-                          <div className="d-flex align-items-center gap-2">
-                            <span className="text-muted">{ticket.beforeBalance} hr</span>
-                            <span className="fw-bold text-primary">
-                              &rarr; {ticket.type === 'add' ? `+${ticket.amount}` : `-${ticket.amount}`} &rarr;
-                            </span>
-                            <strong className="text-dark">{ticket.afterBalance} hr</strong>
-                          </div>
-                        </td>
-
-                        <td>
-                          {isPending && (
-                            <span className="badge bg-warning text-dark px-2 py-1">
-                              Menunggu {ticket.approverRole}
-                            </span>
-                          )}
-                          {isApproved && (
-                            <span className="badge bg-success px-2 py-1">
-                              Disetujui
-                            </span>
-                          )}
-                          {ticket.status === 'rejected' && (
-                            <span className="badge bg-danger px-2 py-1">
-                              Ditolak
-                            </span>
-                          )}
-                        </td>
-
-                        <td>
-                          <div className="d-flex justify-content-end gap-2">
-                            {isPending ? (
-                              <>
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-success py-1 px-2"
-                                  style={{ fontSize: '11.5px', fontWeight: 600 }}
-                                  onClick={() => p.approveAdjustmentTicket(ticket.id)}
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-sm btn-outline-danger py-1 px-2"
-                                  style={{ fontSize: '11.5px', fontWeight: 600 }}
-                                  onClick={() => p.rejectAdjustmentTicket(ticket.id)}
-                                >
-                                  Tolak
-                                </button>
-                              </>
-                            ) : (
-                              <span className="text-muted small">{ticket.reviewedAt || 'Telah diproses'}</span>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {p.detailPermit && (() => {
         const d = p.detailPermit;
@@ -2226,223 +2411,443 @@ export function PermitTypeView({ presenter: p }) {
       {/* =========================================================================
           MODAL 3: EMPLOYEE LEAVE LEDGER DRAWER (DETAIL MUTASI SALDO)
          ========================================================================= */}
-      {p.selectedLedgerEmp && (
-        <PermitDialog
-          title={`Rincian Mutasi Saldo: ${p.selectedLedgerEmp.employeeName}`}
-          description={`NIK: ${p.selectedLedgerEmp.nik} • Saldo Tersedia: ${p.selectedLedgerEmp.available} Hari`}
-          onClose={p.closeLedgerModal}
-          maxWidthClass="modal-ledger"
-        >
-          <div className="permit-form-body">
-            <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded border mb-3">
-              <div>
-                <small className="text-muted d-block">Jatah Tahunan</small>
-                <strong>{p.selectedLedgerEmp.baseEntitlement} Hari</strong>
-              </div>
-              <div>
-                <small className="text-muted d-block">Carry-Over</small>
-                <strong className="text-success">+{p.selectedLedgerEmp.carryOver} Hari</strong>
-              </div>
-              <div>
-                <small className="text-muted d-block">Cuti Terpakai</small>
-                <strong className="text-danger">-{p.selectedLedgerEmp.usedLeave} Hari</strong>
-              </div>
-              <div>
-                <small className="text-muted d-block">Potong Cuti Bersama</small>
-                <strong className="text-primary">-{p.selectedLedgerEmp.cutiBersamaDeduction} Hari</strong>
-              </div>
-              <div className="border-start ps-3">
-                <small className="text-muted d-block">Saldo Tersedia</small>
-                <strong className="h5 text-success mb-0">{p.selectedLedgerEmp.available} Hari</strong>
-              </div>
-            </div>
+      {p.adjustmentTarget && (() => {
+        const target = p.adjustmentTarget;
+        const amount = Number(p.adjDraft.amount) || 0;
+        const delta = p.adjDraft.type === 'add' ? amount : -amount;
+        const isNegativeResult = p.simulatedBalance < 0;
+        const amountValid = Number.isInteger(amount) && amount >= 1 && amount <= 30;
+        const canSubmit = amountValid && p.adjDraft.reasonNote.trim().length > 0;
+        const targetDept = DEPARTMENTS.find((d) => d.id === target.departmentId);
+        const targetJabatan = getEmployeeJabatan(EMPLOYEES.find((e) => e.id === target.employeeId) || target, targetDept?.name);
 
-            <h6 className="fw-bold text-dark mb-2" style={{ fontSize: '13px', textTransform: 'uppercase' }}>
-              Riwayat Transaksi & Mutasi Saldo (Audit Trail)
-            </h6>
+        return (
+          <PermitDialog
+            title="Request balance adjustment"
+            description="Add or deduct annual leave days. The balance changes only after approval."
+            onClose={p.closeAdjustmentModal}
+            maxWidthClass="modal-wide"
+          >
+            <div className="permit-form-body permit-adjust-form">
+              {p.error && (
+                <div className="alert alert-danger py-2 px-3 small mb-3 d-flex align-items-center gap-2" role="alert">
+                  <WarningCircle size={16} weight="fill" />
+                  <span>{p.error}</span>
+                </div>
+              )}
 
-            <div className="ledger-timeline-list">
-              {(p.selectedLedgerEmp.ledger || []).map((entry) => {
-                const isCredit = entry.amount > 0;
-                return (
-                  <div key={entry.id} className="ledger-entry-card">
-                    <div className="ledger-entry-left">
-                      <div className={`ledger-entry-icon ${isCredit ? 'credit' : 'debit'}`}>
-                        {isCredit ? <TrendUp size={20} weight="bold" /> : <TrendDown size={20} weight="bold" />}
-                      </div>
-                      <div>
-                        <strong className="text-dark" style={{ fontSize: '13.5px' }}>
-                          {entry.description}
-                        </strong>
-                        <div className="text-muted small mt-1">
-                          {entry.date} &bull; Ref: <span className="font-monospace text-dark">{entry.refNo}</span> &bull; Disetujui: {entry.approvedBy}
-                        </div>
-                      </div>
-                    </div>
+              <section className="permit-adjust-employee" aria-label="Employee">
+                <img
+                  src={target.avatar}
+                  alt=""
+                  className="emp-balance-avatar"
+                  onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150'; }}
+                />
+                <div className="permit-adjust-employee-info">
+                  <strong>{target.employeeName}</strong>
+                  <span>NIP {target.nik}</span>
+                  <span>{targetJabatan}</span>
+                </div>
+                <div className="permit-adjust-employee-balance">
+                  <small>Current balance</small>
+                  <strong>{target.available}<span> days</span></strong>
+                </div>
+              </section>
 
-                    <div className="ledger-entry-amount">
-                      <strong className={isCredit ? 'credit' : 'debit'}>
-                        {isCredit ? `+${entry.amount}` : entry.amount} Hari
-                      </strong>
-                      <small className="text-muted d-block">Saldo Akhir: {entry.balanceAfter} hr</small>
-                    </div>
+              <section className="permit-adjust-section" aria-label="Adjustment">
+                <fieldset className="permit-adjust-type-group">
+                  <legend className="permit-adjust-label">Type</legend>
+                  <div className="permit-adjust-types" role="radiogroup">
+                    {[
+                      { value: 'add', title: 'Add days', hint: 'Credit days to the balance', Icon: TrendUp },
+                      { value: 'deduct', title: 'Deduct days', hint: 'Take days off the balance', Icon: TrendDown }
+                    ].map(({ value, title, hint, Icon }) => (
+                      <label key={value} className={`permit-adjust-type is-${value} ${p.adjDraft.type === value ? 'is-selected' : ''}`}>
+                        <input
+                          type="radio"
+                          name="adjustment-type"
+                          value={value}
+                          checked={p.adjDraft.type === value}
+                          onChange={() => p.setAdjDraft({ ...p.adjDraft, type: value })}
+                        />
+                        <span className="permit-adjust-type-icon"><Icon size={18} weight="bold" aria-hidden="true" /></span>
+                        <span className="permit-adjust-type-text">
+                          <strong>{title}</strong>
+                          <small>{hint}</small>
+                        </span>
+                      </label>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                </fieldset>
 
-          <div className="permit-dialog-footer">
-            <button type="button" className="btn btn-outline-secondary" onClick={p.closeLedgerModal}>
-              Tutup Rincian
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              style={{ backgroundColor: '#002B7F', borderColor: '#002B7F' }}
-              onClick={() => {
-                const target = p.selectedLedgerEmp;
-                p.closeLedgerModal();
-                p.openAdjustmentModal(target);
-              }}
-            >
-              Ajukan Koreksi Saldo
-            </button>
-          </div>
-        </PermitDialog>
-      )}
-
-      {/* =========================================================================
-          MODAL 4: MANUAL BALANCE ADJUSTMENT WITH BEFORE/AFTER SIMULATION
-         ========================================================================= */}
-      {p.adjustmentTarget && (
-        <PermitDialog
-          title={`Koreksi Saldo: ${p.adjustmentTarget.employeeName}`}
-          description={`NIK: ${p.adjustmentTarget.nik} • Saldo Saat Ini: ${p.adjustmentTarget.available} Hari`}
-          onClose={p.closeAdjustmentModal}
-          maxWidthClass="modal-wide"
-        >
-          <div className="permit-form-body">
-            {p.error && (
-              <div className="alert alert-danger py-2 px-3 small mb-3 d-flex align-items-center gap-2">
-                <WarningCircle size={16} weight="bold" />
-                <span>{p.error}</span>
-              </div>
-            )}
-
-            <div className="row g-3">
-              <div className="col-md-6">
-                <label className="form-label small fw-bold">Arah Penyesuaian Saldo</label>
-                <div className="d-flex gap-2">
-                  <button
-                    type="button"
-                    className={`btn w-50 py-2 d-flex align-items-center justify-content-center gap-1 ${p.adjDraft.type === 'add' ? 'btn-success' : 'btn-outline-secondary'}`}
-                    onClick={() => p.setAdjDraft({ ...p.adjDraft, type: 'add' })}
-                  >
-                    <TrendUp size={16} weight="bold" />
-                    <span>Tambah (+)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn w-50 py-2 d-flex align-items-center justify-content-center gap-1 ${p.adjDraft.type === 'deduct' ? 'btn-danger' : 'btn-outline-secondary'}`}
-                    onClick={() => p.setAdjDraft({ ...p.adjDraft, type: 'deduct' })}
-                  >
-                    <TrendDown size={16} weight="bold" />
-                    <span>Kurang (-)</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label small fw-bold">Jumlah Hari Koreksi <span className="text-danger">*</span></label>
-                <input
-                  type="number"
-                  min="1"
-                  max="30"
-                  className="form-control"
-                  value={p.adjDraft.amount}
-                  onChange={(e) => p.setAdjDraft({ ...p.adjDraft, amount: Number(e.target.value) })}
-                  required
-                />
-              </div>
-
-              <div className="col-12">
-                <label className="form-label small fw-bold">Kategori Alasan Koreksi</label>
-                <select
-                  className="form-select"
-                  value={p.adjDraft.reasonCategory}
-                  onChange={(e) => p.setAdjDraft({ ...p.adjDraft, reasonCategory: e.target.value })}
-                >
-                  {ADJUSTMENT_REASON_CATEGORIES.map(c => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="col-12">
-                <label className="form-label small fw-bold">Catatan Detail Alasan (Wajib Audit) <span className="text-danger">*</span></label>
-                <textarea
-                  className="form-control"
-                  rows={2}
-                  placeholder="Jelaskan nomor tiket sengketa, memo persetujuan, atau justifikasi koreksi..."
-                  value={p.adjDraft.reasonNote}
-                  onChange={(e) => p.setAdjDraft({ ...p.adjDraft, reasonNote: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* LIVE SIMULATION: BEFORE VS AFTER CARD */}
-            <div className="balance-sim-card">
-              <label className="form-label small fw-bold text-muted mb-2 text-uppercase">
-                Simulasi Saldo Sebelum vs Sesudah (Live Simulation)
-              </label>
-
-              <div className="balance-sim-row">
-                <div className="balance-sim-node">
-                  <label>Saldo Sebelum</label>
-                  <strong>{p.adjustmentTarget.available} Hari</strong>
+                <div className="permit-adjust-days-group">
+                  <label htmlFor="adj-days" className="permit-adjust-label">Number of days <span className="text-danger">*</span></label>
+                  <div className="permit-adjust-stepper">
+                    <button
+                      type="button"
+                      aria-label="Decrease days"
+                      disabled={amount <= 1}
+                      onClick={() => p.setAdjDraft({ ...p.adjDraft, amount: Math.max(1, amount - 1) })}
+                    >
+                      <Minus size={16} weight="bold" />
+                    </button>
+                    <input
+                      id="adj-days"
+                      type="number"
+                      min="1"
+                      max="30"
+                      step="1"
+                      className={p.adjDraft.amount !== '' && !amountValid ? 'is-invalid' : ''}
+                      value={p.adjDraft.amount}
+                      onChange={(e) => p.setAdjDraft({ ...p.adjDraft, amount: e.target.value === '' ? '' : Number(e.target.value) })}
+                      required
+                    />
+                    <button
+                      type="button"
+                      aria-label="Increase days"
+                      disabled={amount >= 30}
+                      onClick={() => p.setAdjDraft({ ...p.adjDraft, amount: Math.min(30, amount + 1) })}
+                    >
+                      <Plus size={16} weight="bold" />
+                    </button>
+                    <span className="permit-adjust-stepper-unit">days</span>
+                  </div>
+                  <span className="permit-adjust-hint">Whole days, 1 to 30.</span>
                 </div>
 
-                <div className="text-center px-2">
-                  <span
-                    className={`badge ${p.adjDraft.type === 'add' ? 'bg-success' : 'bg-danger'} p-2`}
-                    style={{ fontSize: '13px' }}
-                  >
-                    {p.adjDraft.type === 'add' ? `+${p.adjDraft.amount}` : `-${p.adjDraft.amount}`} Hari
+                <div className="permit-adjust-notes">
+                  <label htmlFor="adj-note" className="permit-adjust-label">Notes <span className="text-danger">*</span></label>
+                  <textarea
+                    id="adj-note"
+                    className="form-control"
+                    rows={3}
+                    placeholder="Why is this adjustment needed? Include the ticket number or approval memo if there is one."
+                    value={p.adjDraft.reasonNote}
+                    onChange={(e) => p.setAdjDraft({ ...p.adjDraft, reasonNote: e.target.value })}
+                    required
+                  />
+                </div>
+              </section>
+
+              <section className="permit-adjust-result" aria-live="polite" aria-label="Result">
+                <div className="permit-adjust-flow">
+                  <div className="permit-adjust-stat">
+                    <small>Current balance</small>
+                    <strong>{target.available}<span> days</span></strong>
+                  </div>
+                  <div className="permit-adjust-flow-mid" aria-hidden="true">
+                    <span className={`permit-delta-chip ${delta >= 0 ? 'is-plus' : 'is-minus'}`}>{delta >= 0 ? `+${delta}` : delta}</span>
+                    <ArrowRight size={18} weight="bold" />
+                  </div>
+                  <div className={`permit-adjust-stat is-after ${isNegativeResult ? 'is-negative' : ''}`}>
+                    <small>New balance</small>
+                    <strong>{p.simulatedBalance}<span> days</span></strong>
+                  </div>
+                </div>
+                {isNegativeResult && (
+                  <p className="permit-adjust-warning">
+                    <WarningCircle size={14} weight="fill" aria-hidden="true" /> This leaves the balance negative.
+                  </p>
+                )}
+                <div className="permit-adjust-approver-row">
+                  <span className="permit-adjust-approver-label">
+                    <UserCheck size={16} weight="bold" aria-hidden="true" />
+                    Approver
+                  </span>
+                  <span className="permit-approver-chip">
+                    <span className="permit-approver-avatar" aria-hidden="true">BM</span>
+                    Building Manager
                   </span>
                 </div>
+              </section>
 
-                <div className="balance-sim-node after-node">
-                  <label>Saldo Baru Setelah Koreksi</label>
-                  <strong>{p.simulatedBalance} Hari</strong>
+            </div>
+
+            <div className="permit-dialog-footer">
+              <button type="button" className="permit-confirm-btn is-cancel" onClick={p.closeAdjustmentModal}>Cancel</button>
+              <button type="button" className="permit-confirm-btn is-primary" onClick={p.submitAdjustmentRequest} disabled={!canSubmit}>
+                Submit request
+              </button>
+            </div>
+          </PermitDialog>
+        );
+      })()}
+
+      {reviewTicket && (() => {
+        const ticket = reviewTicket;
+        const isPending = ticket.status === 'pending';
+        const delta = ticket.type === 'add' ? ticket.amount : -ticket.amount;
+        const chain = ticket.approvalChain || [];
+        const currentStep = getCurrentApprovalStep(ticket);
+        const currentLabel = ADJUSTMENT_APPROVER_LABELS[currentStep?.role] || 'approver';
+        const jabatanOf = (person) => getEmployeeJabatan(person, DEPARTMENTS.find((d) => d.id === person?.departmentId)?.name);
+        const employeePerson = EMPLOYEES.find((e) => e.id === ticket.employeeId);
+        const requesterPerson = EMPLOYEES.find((e) => e.id === ticket.requestedById);
+        const isSelfRequest = ticket.requesterRole === 'employee';
+
+        return (
+          <PermitDialog
+            title={isPending ? 'Review adjustment request' : 'Adjustment request'}
+            description={`${ticket.id.toUpperCase()} • Requested ${ticket.requestedAt}`}
+            onClose={closeReview}
+            maxWidthClass="modal-wide"
+          >
+            <div className="permit-form-body">
+              <div className="permit-review-summary">
+                <div>
+                  <small>Employee</small>
+                  <strong>{ticket.employeeName}</strong>
+                  <span className="permit-review-sub">{jabatanOf(employeePerson)}</span>
+                </div>
+                <div>
+                  <small>Balance change</small>
+                  <span className="permit-balance-change">
+                    <span className="text-muted">{ticket.beforeBalance}</span>
+                    <span aria-hidden="true">&rarr;</span>
+                    <strong>{ticket.afterBalance}</strong>
+                    <span className={`permit-delta-chip ${delta > 0 ? 'is-plus' : 'is-minus'}`}>{delta > 0 ? `+${delta}` : delta} days</span>
+                  </span>
+                </div>
+                <div>
+                  <small>Requested by</small>
+                  {isSelfRequest ? (
+                    <>
+                      <strong>Self-requested</strong>
+                      <span className="permit-review-sub">By the employee</span>
+                    </>
+                  ) : (
+                    <>
+                      <strong>{ticket.requestedBy}</strong>
+                      <span className="permit-review-sub">{requesterPerson ? jabatanOf(requesterPerson) : ADJUSTMENT_REQUESTER_LABELS[ticket.requesterRole]}</span>
+                    </>
+                  )}
                 </div>
               </div>
 
-              <div className="small text-muted mt-3 d-flex align-items-center gap-1">
-                <Info size={14} weight="bold" />
-                <span>
-                  Kewenangan persetujuan: <strong>{Number(p.adjDraft.amount) > 2 || p.simulatedBalance < 0 ? 'HR Director' : 'HR Manager'}</strong>. Saldo baru akan efektif setelah tiket disetujui.
-                </span>
+              <div className="permit-review-block">
+                <small>Notes</small>
+                <p>{ticket.reasonNote}</p>
+              </div>
+
+              <div className="permit-review-block">
+                <small>Approval steps</small>
+                <ol className="permit-approval-steps">
+                  {chain.map((step, index) => (
+                    <li key={step.role} className={`is-${step.status} ${step === currentStep ? 'is-current' : ''}`}>
+                      <span className="permit-approval-marker" aria-hidden="true">
+                        {step.status === 'approved' ? <Check size={12} weight="bold" /> : step.status === 'rejected' ? <X size={12} weight="bold" /> : index + 1}
+                      </span>
+                      <div>
+                        <strong>{ADJUSTMENT_APPROVER_LABELS[step.role]}</strong>
+                        <span className="permit-approval-state">
+                          {step.status === 'pending'
+                            ? (step === currentStep ? 'Waiting for approval' : 'Not started')
+                            : `${step.status === 'approved' ? 'Approved' : 'Rejected'} · ${step.reviewedAt}`}
+                        </span>
+                        {step.reviewNote && step.status !== 'pending' && <p>{step.reviewNote}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              {isPending ? (
+                <div className="mt-3">
+                  <label htmlFor="review-note" className="form-label small fw-bold">
+                    Review note <span className="permit-optional">Required to reject</span>
+                  </label>
+                  <textarea
+                    id="review-note"
+                    className={`form-control ${reviewError ? 'is-invalid' : ''}`}
+                    rows={2}
+                    placeholder="Explain your decision. The requester will see this."
+                    value={reviewNote}
+                    onChange={(e) => { setReviewNote(e.target.value); setReviewError(''); }}
+                  />
+                  {reviewError && <div className="invalid-feedback d-block">{reviewError}</div>}
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <span className={`permit-ticket-badge is-${ticket.status}`}>{ticket.status === 'approved' ? 'Approved' : 'Rejected'}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="permit-dialog-footer">
+              {!isPending && (
+                <button type="button" className="permit-confirm-btn is-cancel" onClick={closeReview}>Close</button>
+              )}
+              {isPending && (
+                <>
+                  <button
+                    type="button"
+                    className="permit-confirm-btn is-danger-outline"
+                    onClick={() => {
+                      if (!reviewNote.trim()) {
+                        setReviewError('Add a note explaining the rejection.');
+                        return;
+                      }
+                      p.rejectAdjustmentTicket(ticket.id, reviewNote);
+                      closeReview();
+                    }}
+                  >
+                    Reject
+                  </button>
+                  <button
+                    type="button"
+                    className="permit-confirm-btn is-success"
+                    onClick={() => {
+                      p.approveAdjustmentTicket(ticket.id, reviewNote);
+                      closeReview();
+                    }}
+                  >
+                    Approve as {currentLabel}
+                  </button>
+                </>
+              )}
+            </div>
+          </PermitDialog>
+        );
+      })()}
+
+      {p.selectedLedgerEmp && (() => {
+        const ledgerEmp = p.selectedLedgerEmp;
+        const typeLabels = Object.fromEntries(LEDGER_ENTRY_TYPES.map((t) => [t.value, t.label]));
+        const typeIcons = { entitlement: CalendarCheck, carry_over: ArrowsClockwise, leave_taken: Briefcase, cuti_bersama: CalendarStar, adjustment: Scales };
+        const entries = ledgerEmp.ledger || [];
+        // Stored oldest first so the running balance reads in order; shown newest first.
+        const allEntries = entries.slice().reverse();
+        const ledgerTotalPages = Math.max(1, Math.ceil(allEntries.length / LEDGER_PAGE_SIZE));
+        const ledgerPage = Math.min(ledgerPageState.id === ledgerEmp.employeeId ? ledgerPageState.page : 1, ledgerTotalPages);
+        const visibleEntries = allEntries.slice((ledgerPage - 1) * LEDGER_PAGE_SIZE, ledgerPage * LEDGER_PAGE_SIZE);
+        const formatLedgerDate = (value) => new Date(`${value}T00:00:00`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        const signed = (value) => (value > 0 ? `+${value}` : value < 0 ? `\u2212${Math.abs(value)}` : '0');
+        const adjustmentTotal = ledgerEmp.adjustmentTotal || 0;
+        const tone = (value) => (value > 0 ? 'is-plus' : value < 0 ? 'is-minus' : '');
+
+        return (
+          <PermitDialog
+            title={`Balance ledger: ${ledgerEmp.employeeName}`}
+            description={`NIP ${ledgerEmp.nik}`}
+            onClose={closeLedger}
+            maxWidthClass="modal-ledger"
+          >
+            <div className="permit-form-body">
+              <div className="permit-ledger-summary" role="group" aria-label="Balance summary">
+                <div><small>Entitlement</small><strong>{ledgerEmp.baseEntitlement}</strong></div>
+                <div>
+                  <small>Carry-over</small>
+                  <strong className={tone(ledgerEmp.carryOver)}>+{ledgerEmp.carryOver}</strong>
+                  {ledgerEmp.carryOver > 0 && ledgerEmp.carryOverExpiry && <span>Expiry {formatLedgerDate(ledgerEmp.carryOverExpiry)}</span>}
+                </div>
+                <div><small>Used</small><strong className={tone(-ledgerEmp.usedLeave)}>{signed(-ledgerEmp.usedLeave)}</strong></div>
+                <div><small>Collective leave</small><strong className={tone(-ledgerEmp.cutiBersamaDeduction)}>{signed(-ledgerEmp.cutiBersamaDeduction)}</strong></div>
+                <div><small>Adjustments</small><strong className={tone(adjustmentTotal)}>{signed(adjustmentTotal)}</strong></div>
+                <div className={`is-total ${ledgerEmp.available < 0 ? 'is-negative' : ''}`}>
+                  <small>Available</small>
+                  <strong>{ledgerEmp.available}<span> days</span></strong>
+                </div>
+              </div>
+
+              <div className="permit-ledger-toolbar">
+                <h3 className="permit-ledger-heading"><Clock size={17} weight="bold" aria-hidden="true" />History Balance</h3>
+                <button
+                  type="button"
+                  className="emp-btn-secondary"
+                  onClick={() => exportLedgerToExcel({ employeeName: ledgerEmp.employeeName, nik: ledgerEmp.nik, entries, typeLabels })}
+                  disabled={entries.length === 0}
+                >
+                  <FileXls size={16} weight="bold" aria-hidden="true" />
+                  <span>Export</span>
+                </button>
+              </div>
+
+              <div className="permit-policy-table-inner">
+                <div className="table-responsive">
+                  <table className="permit-table permit-ledger-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Type</th>
+                        <th scope="col">Description</th>
+                        <th scope="col" className="text-end">Days</th>
+                        <th scope="col" className="text-end">Balance</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleEntries.length === 0 ? (
+                        <tr><td colSpan={5} className="text-center text-muted py-4">No history yet.</td></tr>
+                      ) : visibleEntries.map((entry) => {
+                        const TypeIcon = typeIcons[entry.type] || Scales;
+                        const ticket = entry.ticketId ? p.adjustments.find((t) => t.id === entry.ticketId) : null;
+                        return (
+                          <tr key={entry.id}>
+                            <td className="permit-ledger-date">{formatLedgerDate(entry.date)}</td>
+                            <td>
+                              <span className={`permit-ledger-type is-${entry.type}`}>
+                                <TypeIcon size={12} weight="bold" aria-hidden="true" />
+                                {typeLabels[entry.type] || entry.type}
+                              </span>
+                            </td>
+                            <td>
+                              <div className="fw-semibold text-dark" style={{ fontSize: '13px' }}>{entry.description}</div>
+                              {ticket ? (
+                                <div className="permit-ledger-source">
+                                  <span className="permit-ledger-source-line">
+                                    From adjustment request{' '}
+                                    <button
+                                      type="button"
+                                      className="permit-ledger-ref is-link"
+                                      title="Open this adjustment request"
+                                      onClick={() => { closeLedger(); openReview(ticket); }}
+                                    >
+                                      {entry.refNo}
+                                    </button>
+                                  </span>
+                                  <span>Requested by {entry.requestedBy} &middot; Approved by {entry.approvedBy}</span>
+                                </div>
+                              ) : (
+                                <div className="permit-cell-note">{entry.approvedBy}</div>
+                              )}
+                            </td>
+                            <td className={`text-end permit-ledger-days ${entry.amount > 0 ? 'is-credit' : 'is-debit'}`}>{signed(entry.amount)}</td>
+                            <td className={`text-end permit-ledger-balance ${entry.balanceAfter < 0 ? 'is-negative' : ''}`}>{entry.balanceAfter}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {allEntries.length > LEDGER_PAGE_SIZE && (
+                  <TablePager
+                    page={ledgerPage}
+                    totalPages={ledgerTotalPages}
+                    count={allEntries.length}
+                    pageSize={LEDGER_PAGE_SIZE}
+                    noun="entries"
+                    onPage={(next) => setLedgerPageState({ id: ledgerEmp.employeeId, page: next })}
+                  />
+                )}
               </div>
             </div>
-          </div>
 
-          <div className="permit-dialog-footer">
-            <button type="button" className="btn btn-outline-secondary" onClick={p.closeAdjustmentModal}>
-              Batal
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              style={{ backgroundColor: '#002B7F', borderColor: '#002B7F' }}
-              onClick={p.submitAdjustmentRequest}
-            >
-              Kirim Tiket untuk Persetujuan
-            </button>
-          </div>
-        </PermitDialog>
-      )}
+            <div className="permit-dialog-footer">
+              <button type="button" className="permit-confirm-btn is-cancel" onClick={closeLedger}>Close</button>
+              <button
+                type="button"
+                className="permit-confirm-btn is-primary"
+                onClick={() => {
+                  const target = p.selectedLedgerEmp;
+                  closeLedger();
+                  p.openAdjustmentModal(target);
+                }}
+              >
+                Request adjustment
+              </button>
+            </div>
+          </PermitDialog>
+        );
+      })()}
 
       {/* Status Toggle Modal */}
       {p.statusTarget && (
@@ -2510,6 +2915,67 @@ export function PermitTypeView({ presenter: p }) {
           }}
           onClick={(e) => e.stopPropagation()}
         >
+          {actionAnchor.kind === 'balance' ? (
+            <>
+              <button
+                type="button"
+                className="permit-action-dropdown-item"
+                onClick={() => {
+                  const item = actionAnchor.permit;
+                  setActiveActionId(null);
+                  setActionAnchor(null);
+                  p.openLedgerModal(item);
+                }}
+              >
+                <Clock size={16} weight="bold" />
+                <span>View ledger</span>
+              </button>
+              <button
+                type="button"
+                className="permit-action-dropdown-item"
+                onClick={() => {
+                  const item = actionAnchor.permit;
+                  setActiveActionId(null);
+                  setActionAnchor(null);
+                  p.openAdjustmentModal(item);
+                }}
+              >
+                <Scales size={16} weight="bold" />
+                <span>Request adjustment</span>
+              </button>
+            </>
+          ) : actionAnchor.kind === 'holiday' ? (
+            <>
+              <button
+                type="button"
+                className="permit-action-dropdown-item"
+                onClick={() => {
+                  const holiday = actionAnchor.permit;
+                  setActiveActionId(null);
+                  setActionAnchor(null);
+                  p.openHolidayEditor(holiday);
+                }}
+              >
+                <PencilSimple size={16} weight="bold" />
+                <span>Edit holiday</span>
+              </button>
+              <div className="permit-action-dropdown-divider" />
+              <button
+                type="button"
+                className="permit-action-dropdown-item danger"
+                onClick={() => {
+                  const holiday = actionAnchor.permit;
+                  setActiveActionId(null);
+                  setActionAnchor(null);
+                  setHolidayToDelete(holiday);
+                }}
+              >
+                <Trash size={16} weight="bold" />
+                <span>Delete holiday</span>
+              </button>
+            </>
+          ) : (
+            <>
           <button
             type="button"
             className="permit-action-dropdown-item"
@@ -2559,6 +3025,8 @@ export function PermitTypeView({ presenter: p }) {
               </>
             )}
           </button>
+            </>
+          )}
         </div>,
         document.body
       )}

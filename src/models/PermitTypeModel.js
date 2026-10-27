@@ -8,8 +8,8 @@ import { EMPLOYEES, DEPARTMENTS } from './ApprovalFlowModel';
 
 export const PERMIT_STORAGE_KEY = 'proapps.permit-types.v2';
 export const HOLIDAY_STORAGE_KEY = 'proapps.leave-holidays.v5';
-export const BALANCE_STORAGE_KEY = 'proapps.leave-balances.v1';
-export const ADJUSTMENT_STORAGE_KEY = 'proapps.leave-adjustments.v1';
+export const BALANCE_STORAGE_KEY = 'proapps.leave-balances.v5';
+export const ADJUSTMENT_STORAGE_KEY = 'proapps.leave-adjustments.v8';
 
 export const ALLOWED_DATE_OPTIONS = [
   { value: 'past', label: 'Past dates' },
@@ -266,7 +266,7 @@ export function validatePermitType(draft, permits) {
 
 export const TREATMENT_OPTIONS = [
   { value: 'deduct_annual', label: 'Holiday & Deduct Annual Leave Balance', title: 'Deduct annual leave', description: 'Employees are off. One day is taken from each annual leave balance.', badge: 'Deduct Annual', color: '#002B7F', bg: '#EFF6FF' },
-  { value: 'free_leave', label: 'Company Holiday (Free / No Balance Deduction)', title: 'Company holiday', description: 'Employees are off. Annual leave balances stay the same.', badge: 'Free Company Leave', color: '#10B981', bg: '#ECFDF5' },
+  { value: 'free_leave', label: 'No Deduction (Annual Leave Balance Unchanged)', title: 'No deduction', description: 'Employees are off. Annual leave balances stay the same.', badge: 'No deduction', color: '#10B981', bg: '#ECFDF5' },
 ];
 
 export const SCOPE_OPTIONS = [
@@ -425,7 +425,7 @@ export const INITIAL_HOLIDAYS_2026 = [
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'Company holiday; no annual leave deduction.'
+    note: 'No annual leave deduction.'
   },
   {
     id: 'hol-14',
@@ -503,7 +503,7 @@ export const INITIAL_HOLIDAYS_2026 = [
     treatment: 'free_leave',
     scope: 'all',
     scopeValue: [],
-    note: 'Company holiday; no annual leave deduction.'
+    note: 'No annual leave deduction.'
   },
   {
     id: 'hol-21',
@@ -584,15 +584,35 @@ export function calculateHolidayImpact(holiday, employees = EMPLOYEES) {
 // 3. EMPLOYEE BALANCES & TRANSACTION LEDGER MODEL
 // =========================================================================
 
-export function createInitialBalances() {
+export const LEDGER_ENTRY_TYPES = [
+  { value: 'entitlement', label: 'Entitlement' },
+  { value: 'carry_over', label: 'Carry-over' },
+  { value: 'leave_taken', label: 'Leave taken' },
+  { value: 'cuti_bersama', label: 'Collective leave' },
+  { value: 'adjustment', label: 'Adjustment' }
+];
+
+const LEAVE_SAMPLE_DATES = ['2026-02-10', '2026-04-14', '2026-05-20', '2026-06-23', '2026-07-14', '2026-08-10', '2026-09-08', '2026-10-06'];
+const COLLECTIVE_SAMPLE_DAYS = [
+  { date: '2026-02-18', label: 'Chinese New Year', refNo: 'CB-2026-SKB01' },
+  { date: '2026-03-04', label: 'Nyepi Day', refNo: 'CB-2026-SKB02' }
+];
+
+// Sample overdrawn employees: days taken beyond what the balance covered (allowed up to the negative-balance limit).
+const OVERDRAWN_DAYS = { 'emp-004': 3, 'emp-007': 1 };
+
+function buildBaseBalances() {
   const year = 2026;
   return EMPLOYEES.map((emp, index) => {
     // Generate realistic initial balances based on seniority and department
     const isShiftWorker = ['dept-eng', 'dept-sec', 'dept-hk'].includes(emp.departmentId);
     const baseEntitlement = 12;
     const carryOver = index % 3 === 0 ? 3 : (index % 2 === 0 ? 2 : 0);
-    const usedLeave = (index * 2) % 6;
     const cutiBersamaDeduction = isShiftWorker ? 0 : 2; // Shift workers don't get auto cuti bersama deduction
+    const overdrawn = OVERDRAWN_DAYS[emp.id] || 0;
+    const usedLeave = overdrawn
+      ? baseEntitlement + carryOver - cutiBersamaDeduction + overdrawn
+      : (index * 2) % 6;
     const debtDays = 0;
     const available = baseEntitlement + carryOver - usedLeave - cutiBersamaDeduction;
 
@@ -602,8 +622,8 @@ export function createInitialBalances() {
         date: '2026-01-01',
         type: 'entitlement',
         amount: baseEntitlement,
-        balanceAfter: baseEntitlement,
-        description: 'Jatah Cuti Tahunan Periode 2026 (Annual Entitlement Grant)',
+        balanceAfter: 0,
+        description: 'Annual leave entitlement 2026',
         refNo: 'SYS-GRANT-2026',
         approvedBy: 'Auto System'
       }
@@ -615,38 +635,53 @@ export function createInitialBalances() {
         date: '2026-01-01',
         type: 'carry_over',
         amount: carryOver,
-        balanceAfter: baseEntitlement + carryOver,
-        description: `Carry-over Saldo Cuti 2025 (Kedaluwarsa 31 Mar 2026)`,
+        balanceAfter: 0,
+        description: 'Carry-over from 2025 (expires 31 Mar 2026)',
         refNo: 'SYS-CARRY-2025',
         approvedBy: 'Auto System'
       });
     }
 
-    if (usedLeave > 0) {
+    // Leave is taken in several short requests over the year, so longer histories exist.
+    let remaining = usedLeave;
+    LEAVE_SAMPLE_DATES.forEach((date, step) => {
+      if (remaining <= 0) return;
+      const days = Math.min(remaining, step === LEAVE_SAMPLE_DATES.length - 1 ? remaining : 2);
+      remaining -= days;
       ledger.push({
-        id: `tx-${emp.id}-03`,
-        date: '2026-02-10',
+        id: `tx-${emp.id}-03-${step + 1}`,
+        date,
         type: 'leave_taken',
-        amount: -usedLeave,
-        balanceAfter: baseEntitlement + carryOver - usedLeave,
-        description: `Pengajuan Cuti Pribadi (${usedLeave} hari kerja)`,
-        refNo: `LV-2026-0${index + 10}`,
+        amount: -days,
+        balanceAfter: 0,
+        description: `Leave taken (${days} working ${days === 1 ? 'day' : 'days'})`,
+        refNo: `LV-2026-${String(index + 10).padStart(3, '0')}-${step + 1}`,
         approvedBy: 'Sarah Jenkins (HR Mgr)'
+      });
+    });
+
+    if (cutiBersamaDeduction > 0) {
+      COLLECTIVE_SAMPLE_DAYS.slice(0, cutiBersamaDeduction).forEach((day, step) => {
+        ledger.push({
+          id: `tx-${emp.id}-04-${step + 1}`,
+          date: day.date,
+          type: 'cuti_bersama',
+          amount: -1,
+          balanceAfter: 0,
+          description: `Collective leave deduction: ${day.label}`,
+          refNo: day.refNo,
+          approvedBy: 'HR Policy System'
+        });
       });
     }
 
-    if (cutiBersamaDeduction > 0) {
-      ledger.push({
-        id: `tx-${emp.id}-04`,
-        date: '2026-02-18',
-        type: 'cuti_bersama',
-        amount: -cutiBersamaDeduction,
-        balanceAfter: available,
-        description: `Pemotongan Otomatis Cuti Bersama Tahun Baru Imlek & Nyepi`,
-        refNo: 'CB-2026-SKB01',
-        approvedBy: 'HR Policy System'
-      });
-    }
+    // Date order (stable), with the running balance rebuilt from the entries themselves.
+    let running = 0;
+    ledger.sort((x, y) => x.date.localeCompare(y.date));
+    ledger.forEach((entry) => {
+      running += entry.amount;
+      entry.balanceAfter = running;
+    });
 
     return {
       employeeId: emp.id,
@@ -662,6 +697,7 @@ export function createInitialBalances() {
       usedLeave,
       cutiBersamaDeduction,
       debtDays,
+      adjustmentTotal: 0,
       available,
       ledger
     };
@@ -703,58 +739,156 @@ export function persistEmployeeBalances(balances) {
 // 4. BALANCE ADJUSTMENT WORKFLOW (KOREKSI SALDO & APPROVAL)
 // =========================================================================
 
-export const ADJUSTMENT_REASON_CATEGORIES = [
-  { value: 'system_error', label: 'Koreksi Kesalahan Sistem Absensi / Kuota' },
-  { value: 'overtime_compensation', label: 'Kompensasi Lembur Hari Libur (Comp-Off)' },
-  { value: 'attendance_dispute', label: 'Penyelesaian Sengketa Kehadiran Karyawan' },
-  { value: 'management_policy', label: 'Dispensasi / Kebijakan Khusus Direksi' },
-  { value: 'probation_adjustment', label: 'Penyesuaian Tanggal Efektif Karyawan Tetap' }
+/**
+ * Who has to approve an adjustment depends on who asked for it:
+ * - HR or Building Service file it in this dashboard: the Building Manager (BM) approves.
+ * - The employee files it themselves: HR approves first, then the BM.
+ */
+export const ADJUSTMENT_APPROVER_LABELS = { hr: 'HR', bm: 'Building Manager' };
+export const ADJUSTMENT_REQUESTER_LABELS = { hr: 'HR', bs: 'Building Service', employee: 'Employee' };
+/** Roles that can file a request from this dashboard. */
+export const ADJUSTMENT_DASHBOARD_REQUESTERS = ['hr', 'bs'];
+/** Stand-in people for each role until the dashboard has real logins. */
+export const ADJUSTMENT_MOCK_REQUESTER_IDS = { hr: 'emp-014', bs: 'emp-011' };
+
+export function buildApprovalChain(requesterRole) {
+  const roles = requesterRole === 'employee' ? ['hr', 'bm'] : ['bm'];
+  return roles.map((role) => ({ role, status: 'pending', reviewedAt: null, reviewNote: '' }));
+}
+
+/** First step still waiting for a decision, or null once the ticket is closed. */
+export function getCurrentApprovalStep(ticket) {
+  if (!ticket || ticket.status !== 'pending') return null;
+  return (ticket.approvalChain || []).find((step) => step.status === 'pending') || null;
+}
+
+// Builds a sample ticket. `steps` lists [status, reviewedAt, reviewNote] per approval step, in order.
+function sampleAdjustment({ id, employeeId, type, amount, before, requesterRole, requestedById, requestedAt, reasonNote, steps }) {
+  const employee = EMPLOYEES.find((e) => e.id === employeeId);
+  const requester = EMPLOYEES.find((e) => e.id === (requestedById || employeeId));
+  const roles = buildApprovalChain(requesterRole).map((step) => step.role);
+  const approvalChain = roles.map((role, index) => {
+    const [status = 'pending', reviewedAt = null, reviewNote = ''] = steps[index] || [];
+    return { role, status, reviewedAt, reviewNote };
+  });
+  const rejected = approvalChain.find((step) => step.status === 'rejected');
+  const status = rejected ? 'rejected' : approvalChain.every((step) => step.status === 'approved') ? 'approved' : 'pending';
+  const closing = rejected || (status === 'approved' ? approvalChain[approvalChain.length - 1] : null);
+
+  return {
+    id,
+    employeeId,
+    employeeName: employee?.name || employeeId,
+    permitTypeId: 'permit-annual',
+    permitName: 'Annual Leave',
+    type,
+    amount,
+    reasonNote,
+    beforeBalance: before,
+    afterBalance: before + (type === 'add' ? amount : -amount),
+    status,
+    requestedAt,
+    requestedBy: requester?.name || '',
+    requestedById: requester?.id || null,
+    requesterRole,
+    approvalChain,
+    reviewedAt: closing?.reviewedAt || null,
+    reviewNote: closing?.reviewNote || ''
+  };
+}
+
+const ADJUSTMENT_SEEDS = [
+  sampleAdjustment({ id: 'adj-001', employeeId: 'emp-001', type: 'add', amount: 2, requesterRole: 'employee', requestedAt: '2026-10-21 14:30', reasonNote: 'Compensation for generator maintenance standby on New Year\'s Eve 2026.', steps: [['approved', '2026-10-22 09:40', 'Matches the overtime log.'], ['pending']] }),
+  sampleAdjustment({ id: 'adj-002', employeeId: 'emp-003', type: 'deduct', amount: 1, requesterRole: 'hr', requestedById: 'emp-014', requestedAt: '2026-10-18 09:15', reasonNote: 'Correction of last month\'s over-credited accrual.', steps: [['approved', '2026-10-19 11:20', 'Approved per attendance audit.']] }),
+  sampleAdjustment({ id: 'adj-003', employeeId: 'emp-002', type: 'add', amount: 1, requesterRole: 'employee', requestedAt: '2026-10-26 08:05', reasonNote: 'Worked the 17 Aug event setup but it was recorded as a normal day.', steps: [] }),
+  sampleAdjustment({ id: 'adj-004', employeeId: 'emp-006', type: 'add', amount: 1, requesterRole: 'bs', requestedById: 'emp-011', requestedAt: '2026-10-27 07:50', reasonNote: 'Covered the lift breakdown call-out on a public holiday.', steps: [] }),
+  sampleAdjustment({ id: 'adj-005', employeeId: 'emp-003', type: 'add', amount: 2, before: 10, requesterRole: 'employee', requestedAt: '2026-10-27 08:10', reasonNote: 'Worked two Sundays for the chiller replacement but the roster showed day off.', steps: [] }),
+  sampleAdjustment({ id: 'adj-006', employeeId: 'emp-009', type: 'add', amount: 1, before: 9, requesterRole: 'hr', requestedById: 'emp-014', requestedAt: '2026-10-26 16:45', reasonNote: 'Public holiday shift on 17 Aug was not credited as comp-off.', steps: [] }),
+  sampleAdjustment({ id: 'adj-007', employeeId: 'emp-010', type: 'add', amount: 1, before: 7, requesterRole: 'bs', requestedById: 'emp-011', requestedAt: '2026-10-26 13:20', reasonNote: 'Security patrol covered the evacuation drill outside shift hours.', steps: [] }),
+  sampleAdjustment({ id: 'adj-008', employeeId: 'emp-016', type: 'deduct', amount: 1, before: 8, requesterRole: 'hr', requestedById: 'emp-014', requestedAt: '2026-10-25 11:05', reasonNote: 'Leave taken on 9 Oct was not deducted from the balance.', steps: [] }),
+  sampleAdjustment({ id: 'adj-009', employeeId: 'emp-020', type: 'add', amount: 2, before: 11, requesterRole: 'employee', requestedAt: '2026-10-24 09:30', reasonNote: 'Overtime on the Independence Day event cleanup.', steps: [['approved', '2026-10-24 14:10', 'Matches the overtime log.']] }),
+  sampleAdjustment({ id: 'adj-010', employeeId: 'emp-024', type: 'deduct', amount: 2, before: 9, requesterRole: 'hr', requestedById: 'emp-014', requestedAt: '2026-10-23 15:00', reasonNote: 'Duplicate carry-over credit after the system migration.', steps: [['approved', '2026-10-23 17:25', 'Confirmed against the migration report.']] }),
+  sampleAdjustment({ id: 'adj-011', employeeId: 'emp-026', type: 'add', amount: 1, before: 6, requesterRole: 'bs', requestedById: 'emp-011', requestedAt: '2026-10-23 10:15', reasonNote: 'Handled the generator failure on a public holiday.', steps: [['approved', '2026-10-23 13:40', 'Approved. Please log the incident report.']] }),
+  sampleAdjustment({ id: 'adj-012', employeeId: 'emp-030', type: 'add', amount: 3, before: 12, requesterRole: 'employee', requestedAt: '2026-10-22 08:50', reasonNote: 'Standby on three public holidays for the cooling tower overhaul.', steps: [['approved', '2026-10-22 10:20', 'Verified with the duty roster.'], ['approved', '2026-10-22 15:05', 'Approved.']] }),
+  sampleAdjustment({ id: 'adj-013', employeeId: 'emp-017', type: 'add', amount: 2, before: 8, requesterRole: 'employee', requestedAt: '2026-10-21 17:20', reasonNote: 'Extra leave requested as compensation for the tenant event weekend.', steps: [['rejected', '2026-10-22 09:00', 'No overtime record for those dates.']] }),
+  sampleAdjustment({ id: 'adj-014', employeeId: 'emp-018', type: 'deduct', amount: 1, before: 10, requesterRole: 'hr', requestedById: 'emp-014', requestedAt: '2026-10-20 14:30', reasonNote: 'Half-day leave counted twice by the attendance system.', steps: [['rejected', '2026-10-20 16:50', 'Attendance log shows two separate half days. No correction needed.']] }),
+  sampleAdjustment({ id: 'adj-015', employeeId: 'emp-022', type: 'add', amount: 1, before: 9, requesterRole: 'bs', requestedById: 'emp-011', requestedAt: '2026-10-19 09:05', reasonNote: 'Emergency elevator rescue call-out on a Saturday.', steps: [['approved', '2026-10-19 11:30', 'Approved.']] }),
+  sampleAdjustment({ id: 'adj-016', employeeId: 'emp-025', type: 'deduct', amount: 2, before: 7, requesterRole: 'employee', requestedAt: '2026-10-18 12:40', reasonNote: 'Requesting a correction because last year\'s carry-over was credited twice.', steps: [['approved', '2026-10-18 15:00', 'Confirmed with payroll.'], ['pending']] }),
+  sampleAdjustment({ id: 'adj-017', employeeId: 'emp-027', type: 'add', amount: 1, before: 5, requesterRole: 'hr', requestedById: 'emp-014', requestedAt: '2026-10-17 10:25', reasonNote: 'Probation end date was entered a month late, so one day of accrual is missing.', steps: [['approved', '2026-10-17 13:15', 'Approved per HR records.']] }),
+  sampleAdjustment({ id: 'adj-018', employeeId: 'emp-029', type: 'add', amount: 2, before: 8, requesterRole: 'employee', requestedAt: '2026-10-16 08:25', reasonNote: 'Worked both days of the tenant relocation over the long weekend.', steps: [['approved', '2026-10-16 11:00', 'Matches the attendance record.'], ['rejected', '2026-10-16 16:30', 'The relocation was already compensated with overtime pay.']] })
 ];
 
-export const INITIAL_ADJUSTMENTS = [
-  {
-    id: 'adj-001',
-    employeeId: 'emp-001',
-    employeeName: 'Budi Hartono',
-    permitTypeId: 'permit-annual',
-    permitName: 'Cuti Tahunan (Annual Leave)',
-    type: 'add',
-    amount: 2,
-    reasonCategory: 'overtime_compensation',
-    reasonCategoryLabel: 'Kompensasi Lembur Hari Libur (Comp-Off)',
-    reasonNote: 'Kompensasi standby maintenance genset pada malam Tahun Baru 2026.',
-    beforeBalance: 10,
-    afterBalance: 12,
-    status: 'pending',
-    requestedAt: '2026-10-21 14:30 WIB',
-    requestedBy: 'Ahmad Fauzi (Supervisor)',
-    approverRole: 'HR Manager',
-    approverName: 'Sarah Jenkins',
-    reviewedAt: null,
-    reviewNote: ''
-  },
-  {
-    id: 'adj-002',
-    employeeId: 'emp-003',
-    employeeName: 'Ahmad Fauzi',
-    permitTypeId: 'permit-annual',
-    permitName: 'Cuti Tahunan (Annual Leave)',
-    type: 'deduct',
-    amount: 1,
-    reasonCategory: 'system_error',
-    reasonCategoryLabel: 'Koreksi Kesalahan Sistem Absensi / Kuota',
-    reasonNote: 'Revisi kelebihan kredit akrual masa kerja bulan lalu.',
-    beforeBalance: 14,
-    afterBalance: 13,
-    status: 'approved',
-    requestedAt: '2026-10-18 09:15 WIB',
-    requestedBy: 'HR Specialist',
-    approverRole: 'HR Manager',
-    approverName: 'Sarah Jenkins',
-    reviewedAt: '2026-10-19 11:20 WIB',
-    reviewNote: 'Approved sesuai audit absensi.'
-  }
-];
+// Approved tickets are applied in the order they were approved, so the balance each ticket shows
+// is the same one the employee's ledger reaches. Open or rejected tickets start from today's balance.
+function settleSampleAdjustments(seeds) {
+  const running = new Map(buildBaseBalances().map((item) => [item.employeeId, item.available]));
+  const byApproval = seeds
+    .filter((ticket) => ticket.status === 'approved')
+    .sort((a, b) => (a.reviewedAt || '').localeCompare(b.reviewedAt || ''));
+  const settled = new Map();
+
+  byApproval.forEach((ticket) => {
+    const before = running.get(ticket.employeeId);
+    const after = before + (ticket.type === 'add' ? ticket.amount : -ticket.amount);
+    running.set(ticket.employeeId, after);
+    settled.set(ticket.id, { before, after });
+  });
+
+  return seeds.map((ticket) => {
+    const done = settled.get(ticket.id);
+    const before = done ? done.before : running.get(ticket.employeeId);
+    const after = done ? done.after : before + (ticket.type === 'add' ? ticket.amount : -ticket.amount);
+    return { ...ticket, beforeBalance: before, afterBalance: after };
+  });
+}
+
+// Newest first, the way tickets are listed once new ones are added.
+export const INITIAL_ADJUSTMENTS = settleSampleAdjustments(ADJUSTMENT_SEEDS)
+  .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
+
+/** Adds each approved adjustment to the employee's ledger and rebuilds the running balance in date order. */
+function applyAdjustmentsToBalances(balances, tickets) {
+  return balances.map((item) => {
+    const mine = tickets.filter((ticket) => ticket.status === 'approved' && ticket.employeeId === item.employeeId);
+    if (mine.length === 0) return item;
+
+    const entries = mine.map((ticket) => {
+      const last = ticket.approvalChain[ticket.approvalChain.length - 1];
+      return {
+        id: `tx-${ticket.id}`,
+        date: (last.reviewedAt || ticket.requestedAt).slice(0, 10),
+        type: 'adjustment',
+        amount: ticket.type === 'add' ? ticket.amount : -ticket.amount,
+        balanceAfter: 0,
+        description: `Manual adjustment: ${ticket.reasonNote}`,
+        refNo: ticket.id.toUpperCase(),
+        ticketId: ticket.id,
+        requestedBy: ticket.requestedBy,
+        approvedBy: ticket.approvalChain.map((step) => ADJUSTMENT_APPROVER_LABELS[step.role]).join(' & ')
+      };
+    });
+
+    // Stable sort keeps same-day entries in the order they were created.
+    let running = 0;
+    const ledger = [...item.ledger, ...entries]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map((entry) => {
+        running += entry.amount;
+        return { ...entry, balanceAfter: running };
+      });
+
+    return {
+      ...item,
+      adjustmentTotal: entries.reduce((sum, entry) => sum + entry.amount, 0),
+      available: running,
+      ledger
+    };
+  });
+}
+
+export function createInitialBalances() {
+  return applyAdjustmentsToBalances(buildBaseBalances(), INITIAL_ADJUSTMENTS);
+}
 
 export function readAdjustments() {
   try {
