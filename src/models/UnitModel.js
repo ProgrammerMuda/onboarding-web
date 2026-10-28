@@ -336,7 +336,7 @@ export function getEmptyDraft(category = '') {
 export function getDetailFields(category) {
   return {
     npp: category !== 'non_unit',
-    ipl: category !== 'non_unit',
+    ipl: true,
     bedrooms: category === 'hunian'
   };
 }

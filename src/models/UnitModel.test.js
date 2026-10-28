@@ -172,7 +172,7 @@ describe('Add Unit steps', () => {
     const { getDetailFields, buildUnit, getEmptyDraft } = await import('./UnitModel');
     expect(getDetailFields('hunian')).toEqual({ npp: true, ipl: true, bedrooms: true });
     expect(getDetailFields('non_hunian')).toEqual({ npp: true, ipl: true, bedrooms: false });
-    expect(getDetailFields('non_unit')).toEqual({ npp: false, ipl: false, bedrooms: false });
+    expect(getDetailFields('non_unit')).toEqual({ npp: false, ipl: true, bedrooms: false });
 
     const draft = {
       ...getEmptyDraft('non_unit'), code: 'AKIOS9', tower: 'Tower A', floor: 'GF',
@@ -182,7 +182,7 @@ describe('Add Unit steps', () => {
     expect(unit.detail.area).toBe(12);
     expect(unit.detail).not.toHaveProperty('npp');
     expect(unit.detail).not.toHaveProperty('bedrooms');
-    expect(unit.detail).not.toHaveProperty('invoiceIpl');
+    expect(unit.detail).toHaveProperty('invoiceIpl');
     expect(unit.ownerName).toBe('P3SRS');
     expect(unit.status).toBe('vacant');
   });
@@ -330,7 +330,8 @@ describe('Unit Detail is fully required', () => {
     expect(keys('non_hunian')).not.toContain('bedrooms');
     expect(keys('non_hunian')).toContain('npp');
     expect(keys('non_unit')).not.toEqual(expect.arrayContaining(['npp']));
-    expect(keys('non_unit')).not.toContain('iplInterval');
+    expect(keys('non_unit')).toContain('iplInterval');
+    expect(keys('non_unit', { invoiceIpl: 'no' })).not.toContain('iplInterval');
     expect(keys('hunian', { invoiceIpl: 'no' })).not.toContain('iplInterval');
   });
 
@@ -353,7 +354,10 @@ describe('Unit Detail is fully required', () => {
   it('only asks for what the unit type has', async () => {
     const { isUnitStepComplete, getEmptyDraft } = await import('./UnitModel');
     expect(isUnitStepComplete(2, fullDetail(getEmptyDraft, 'non_hunian', { bedrooms: '' }))).toBe(true);
-    expect(isUnitStepComplete(2, fullDetail(getEmptyDraft, 'non_unit', { bedrooms: '', npp: '', iplInterval: '' }))).toBe(true);
+    expect(isUnitStepComplete(2, fullDetail(getEmptyDraft, 'non_unit', { bedrooms: '', npp: '' }))).toBe(true);
+    // IPL is asked for a Non-Unit too, so its interval is required while IPL is on the invoice
+    expect(isUnitStepComplete(2, fullDetail(getEmptyDraft, 'non_unit', { bedrooms: '', npp: '', iplInterval: '' }))).toBe(false);
+    expect(isUnitStepComplete(2, fullDetail(getEmptyDraft, 'non_unit', { bedrooms: '', npp: '', invoiceIpl: 'no', iplInterval: '' }))).toBe(true);
     expect(isUnitStepComplete(2, fullDetail(getEmptyDraft, 'hunian', { invoiceIpl: 'no', iplInterval: '' }))).toBe(true);
   });
 
@@ -547,5 +551,22 @@ describe('changing the unit type while editing', () => {
     expect(describeTypeChange(facility, 'hunian')).toBe('The owner is cleared and shows Not assigned.');
     expect(describeTypeChange(occupied, 'non_hunian')).toBe('');
     expect(describeTypeChange(occupied, 'hunian')).toBe('');
+  });
+});
+
+describe('IPL on a Non-Unit', () => {
+  it('is saved with the facility and follows the on/off rule', async () => {
+    const { buildUnit, getEmptyDraft, validateUnitDetail, applyDraftPatch } = await import('./UnitModel');
+    const draft = { ...fullDetail(getEmptyDraft, 'non_unit', { bedrooms: '', npp: '' }), tower: 'Tower A', floor: 'GF', code: 'AKIOS8' };
+    const unit = buildUnit(draft);
+    expect(unit.detail).toMatchObject({ invoiceIpl: 'yes', iplInterval: '1' });
+    expect(unit.detail).not.toHaveProperty('npp');
+    expect(validateUnitDetail(draft)).toBe('');
+    expect(validateUnitDetail({ ...draft, iplInterval: '' })).toMatch(/IPL bill interval/);
+
+    const off = applyDraftPatch(draft, { invoiceIpl: 'no' });
+    expect(off.iplInterval).toBe('');
+    expect(validateUnitDetail(off)).toBe('');
+    expect(buildUnit(off).detail).toMatchObject({ invoiceIpl: 'no', iplInterval: '' });
   });
 });

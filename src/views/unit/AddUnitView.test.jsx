@@ -44,8 +44,9 @@ describe('AddUnitView', () => {
 
     const facility = renderToString(<AddUnitView presenter={makePresenter(2, 'non_unit')} />);
     expect(facility).not.toContain('NPP');
-    expect(facility).not.toContain('IPL');
     expect(facility).not.toContain('Number of Bedroom');
+    expect(facility).toContain('Insert IPL To Invoice');
+    expect(facility).toContain('IPL Bill Interval');
   });
 
   it('step 3 is an overview with no ownership fields', () => {
@@ -66,12 +67,12 @@ describe('AddUnitView', () => {
     expect(html).not.toContain('starts as Vacant');
   });
 
-  it('step 3 for a Non-Unit skips NPP and IPL', () => {
+  it('step 3 for a Non-Unit lists IPL but not NPP', () => {
     const html = renderToString(
       <AddUnitView presenter={makePresenter(3, 'non_unit', { tower: 'Tower A', floor: 'GF', code: 'AKIOS9', area: '6' })} />
     );
     expect(html).not.toContain('NPP');
-    expect(html).not.toContain('IPL');
+    expect(html).toContain('IPL bill');
   });
 
   it('shows the error banner', () => {
@@ -177,7 +178,7 @@ describe('AddUnitView required marks on step 2', () => {
 
   it('drops the marks for fields that do not apply or are switched off', () => {
     const facility = renderToString(<AddUnitView presenter={makePresenter(2, 'non_unit')} />);
-    expect((facility.match(/<span class="req">\*<\/span>/g) || []).length).toBe(6);
+    expect((facility.match(/<span class="req">\*<\/span>/g) || []).length).toBe(7);
     const noIpl = renderToString(<AddUnitView presenter={makePresenter(2, 'hunian', { invoiceIpl: 'no', iplInterval: '' })} />);
     expect((noIpl.match(/<span class="req">\*<\/span>/g) || []).length).toBe(8);
   });

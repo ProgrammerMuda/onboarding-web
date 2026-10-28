@@ -85,11 +85,11 @@ describe('UnitDetailView', () => {
     expect(html).toContain('No IPL');
   });
 
-  it('skips NPP, IPL, and bedrooms for a Non-Unit', () => {
+  it('skips NPP and bedrooms but shows IPL for a Non-Unit', () => {
     const html = render(seed((u) => u.category === 'non_unit' && u.status === 'rented'));
     expect(html).not.toContain('NPP');
-    expect(html).not.toContain('IPL');
     expect(html).not.toContain('Bedrooms');
+    expect(html).toContain('IPL bill');
     expect(html).toContain('P3SRS');
     expect(html).toContain('>Renter<');
   });
@@ -153,10 +153,11 @@ describe('UnitDetailView bill settings', () => {
     expect(blank).toContain('Not set up yet');
   });
 
-  it('shows only Electric and Water for a Non-Unit', () => {
+  it('shows all four bill rows for a Non-Unit too', () => {
     const html = render(SEED_UNITS.find((u) => u.category === 'non_unit'));
-    expect(rows(html)).toBe(2);
-    expect(html).not.toContain('IPL bill');
+    expect(rows(html)).toBe(4);
+    expect(html).toContain('>IPL bill<');
+    expect(html).toContain('>IPL bill interval<');
   });
 });
 
