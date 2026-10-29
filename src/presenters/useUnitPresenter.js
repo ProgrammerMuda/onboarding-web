@@ -14,10 +14,13 @@ import {
   validateUnitInfo,
   validateUnitDetail,
   buildUnit,
-  unitsToCsv,
   getPageItems,
-  getCategory
+  getCategory,
+  importRowsToUnits
 } from '../models/UnitModel';
+import { parseUnitImportFile, downloadWorkbook } from '../utils/excelExport';
+import { buildUnitWorkbook } from '../utils/listExcel';
+import { protectScheduleWorkbook } from '../utils/workScheduleExcel';
 
 const EMPTY_FILTERS = { tower: '', floor: '', status: '', query: '' };
 const PAGE_SIZE = { table: 10, cards: 9 };
@@ -160,14 +163,40 @@ export function useUnitPresenter() {
 
   const closeSuccessModal = useCallback(() => setSuccessModal(null), []);
 
-  const exportCsv = useCallback(() => {
-    const blob = new Blob([unitsToCsv(filtered)], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `units-${getCategory(activeTab).id}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+  // Import: read the template, then check every row like the Add Unit form, against all units already there.
+  const prepareUnitImport = useCallback(async (file, category) => {
+    const rows = await parseUnitImportFile(file, category);
+    const { units, errors } = importRowsToUnits(rows, category, allUnits);
+    return { ready: units.length, errors, payload: units };
+  }, [allUnits]);
+
+  const importUnits = useCallback((units) => {
+    if (!units.length) return false;
+    const next = [...units, ...customUnits];
+    if (!persistCustomUnits(next)) return false;
+    setCustomUnits(next);
+    setActiveTabState(units[0].category);
+    setFilters(EMPTY_FILTERS);
+    setPage(1);
+    setSuccessModal({
+      title: 'Units Imported!',
+      subtext: `${units.length} ${getCategory(units[0].category).label} ${units.length === 1 ? 'record has' : 'records have'} been added.`
+    });
+    return true;
+  }, [customUnits]);
+
+  // Exports the units on the active tab with the filters applied, like the Tenant Member export.
+  const [exporting, setExporting] = useState(false);
+  const exportExcel = useCallback(async () => {
+    setExporting(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const workbook = buildUnitWorkbook({ units: filtered, category: activeTab, exportedOn: today });
+      await protectScheduleWorkbook(workbook);
+      await downloadWorkbook(workbook, `units-${activeTab}-${today}.xlsx`);
+    } finally {
+      setExporting(false);
+    }
   }, [filtered, activeTab]);
 
   return {
@@ -208,9 +237,12 @@ export function useUnitPresenter() {
     editingUnit,
     cancelAdd,
     saveUnit,
+    prepareUnitImport,
+    importUnits,
     formError,
     successModal,
     closeSuccessModal,
-    exportCsv
+    exportExcel,
+    exporting
   };
 }

@@ -845,7 +845,7 @@ export default function WorkScheduleView({ presenter }) {
               </button>
             </div>
 
-            {/* Export CSV matching Data Karyawan secondary button */}
+            {/* Export Excel matching Data Karyawan secondary button */}
             <button
               type="button"
               className="emp-btn-secondary"

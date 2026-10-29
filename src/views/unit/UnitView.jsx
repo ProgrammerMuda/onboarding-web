@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import {
   ArrowRight,
   Plus,
+  FileArrowUp,
+  FileArrowDown,
   FileXls,
   MagnifyingGlass,
   ArrowsClockwise,
@@ -24,6 +26,8 @@ import {
   X
 } from '@phosphor-icons/react';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { AddMenuButton, ActionToast, useActionToast, runTemplateDownload } from '../components/AddMenuButton';
+import { downloadUnitImportTemplate } from '../../utils/excelExport';
 import {
   UNIT_CATEGORIES,
   getStatusOptions,
@@ -37,6 +41,8 @@ import '../employee/employee.css';
 import '../schedule/work-schedule.css';
 import { AddUnitView } from './AddUnitView';
 import { UnitDetailView } from './UnitDetailView';
+import { UnitTemplateDialog } from './UnitTemplateDialog';
+import { UnitImportModal } from './UnitImportModal';
 import './unit.css';
 
 const TAB_ICONS = { hunian: House, non_hunian: Storefront, non_unit: Elevator };
@@ -363,16 +369,31 @@ function SuccessModal({ title, subtext, onClose }) {
   );
 }
 
+const ADD_UNIT_MENU = [
+  { id: 'manual', title: 'Add Unit Manually', desc: 'Fill in unit details directly via form', Icon: Plus, tone: '' },
+  'divider',
+  { id: 'import', title: 'Import Units (Excel)', desc: 'Bulk upload units from a filled template', Icon: FileArrowUp, tone: 'secondary' },
+  { id: 'template', title: 'Download Template Unit', desc: 'Pick Residential, Non-Residential, or Non-Unit', Icon: FileArrowDown, tone: 'download' }
+];
+
 export function UnitView({ presenter }) {
   const {
     activeTab, setActiveTab, counts, viewMode, setViewMode, totalRecords, pagedUnits,
     filters, setFilter, options, hasActiveFilters, resetFilters,
     selectedUnit, openDetail, closeDetail,
-    pageMode, startAdd, startEdit, exportCsv, successModal, closeSuccessModal
+    pageMode, startAdd, startEdit, exportExcel, exporting, successModal, closeSuccessModal
   } = presenter;
 
   const category = getCategory(activeTab);
   const tabRefs = useRef({});
+  const [toast, notify] = useActionToast();
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const onAddSelect = (id) => {
+    if (id === 'manual') startAdd();
+    else if (id === 'import') setImportOpen(true);
+    else setTemplateOpen(true);
+  };
   const [menu, setMenu] = useState(null);
 
   const closeMenu = (restoreFocus) => {
@@ -459,15 +480,12 @@ export function UnitView({ presenter }) {
               })}
             </div>
 
-            <button type="button" className="emp-btn-secondary" onClick={exportCsv} disabled={totalRecords === 0}>
+            <button type="button" className="emp-btn-secondary" onClick={exportExcel} disabled={totalRecords === 0 || exporting}>
               <FileXls size={16} weight="bold" aria-hidden="true" />
-              <span>Export CSV</span>
+              <span>{exporting ? 'Exporting…' : 'Export Excel'}</span>
             </button>
 
-            <button type="button" className="emp-btn-primary" onClick={startAdd}>
-              <Plus size={16} weight="bold" aria-hidden="true" />
-              <span>Add Unit</span>
-            </button>
+            <AddMenuButton label="Add Unit" items={ADD_UNIT_MENU} onSelect={onAddSelect} />
           </div>
         </div>
 
@@ -573,6 +591,28 @@ export function UnitView({ presenter }) {
           onEdit={(unit) => { setMenu(null); startEdit(unit); }}
         />
       )}
+      {importOpen && (
+        <UnitImportModal
+          initialType={activeTab}
+          prepare={presenter.prepareUnitImport}
+          onClose={() => setImportOpen(false)}
+          onImport={(units) => {
+            if (presenter.importUnits(units)) setImportOpen(false);
+            else notify('The units could not be saved. Try again.');
+          }}
+        />
+      )}
+      {templateOpen && (
+        <UnitTemplateDialog
+          initialType={activeTab}
+          onCancel={() => setTemplateOpen(false)}
+          onDownload={async (type) => {
+            await runTemplateDownload(() => downloadUnitImportTemplate(type), notify);
+            setTemplateOpen(false);
+          }}
+        />
+      )}
+      <ActionToast message={toast} />
       {successModal && (
         <SuccessModal title={successModal.title} subtext={successModal.subtext} onClose={closeSuccessModal} />
       )}

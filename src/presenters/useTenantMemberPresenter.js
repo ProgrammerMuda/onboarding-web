@@ -22,12 +22,13 @@ import {
   pendingFirst,
   getRelationOptions,
   getTowerOptions,
-  filterRows
+  filterRows,
+  importRowsToMembers
 } from '../models/TenantMemberModel';
 import { getPageItems } from '../models/UnitModel';
 import { buildTenantMemberWorkbook } from '../utils/tenantMemberExcel';
 import { protectScheduleWorkbook } from '../utils/workScheduleExcel';
-import { downloadWorkbook } from '../utils/excelExport';
+import { downloadWorkbook, parseTenantMemberImportFile } from '../utils/excelExport';
 
 const EMPTY_FILTERS = { query: '', tower: '', status: '', relation: '' };
 const PAGE_SIZE = 10;
@@ -293,6 +294,22 @@ export function useTenantMemberPresenter() {
     setSuccessModal({ kind: 'add', name: row.name, parentName: row.tenantName, unitCode: row.unitCodes[0] });
   }, [draft, unitChoices, rentingById, addedMembers.length, editingMember, selectedId]);
 
+  // Import: rows are checked against the units and renters the wizard sees right now.
+  const prepareMemberImport = useCallback(async (file, kind) => {
+    const rows = await parseTenantMemberImportFile(file, kind);
+    const { members, errors } = importRowsToMembers(rows, kind, { units: unitChoices, renting: rentingById, firstId: addedMembers.length + 1 });
+    return { ready: members.length, errors, payload: members };
+  }, [unitChoices, rentingById, addedMembers.length]);
+
+  const importMembers = useCallback((members) => {
+    if (!members.length) return 0;
+    setAddedMembers((prev) => [...members, ...prev]);
+    setActiveTabState('member');
+    setFilters(EMPTY_FILTERS);
+    setPage(1);
+    return members.length;
+  }, []);
+
   const closeSuccessModal = useCallback(() => setSuccessModal(null), []);
 
 
@@ -330,6 +347,8 @@ export function useTenantMemberPresenter() {
     pageItems: getPageItems(currentPage, totalPages),
     setPage,
     exportExcel,
-    exporting
+    exporting,
+    prepareMemberImport,
+    importMembers
   };
 }

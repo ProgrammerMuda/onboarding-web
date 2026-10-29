@@ -4,6 +4,9 @@ import { CalendarClock } from 'lucide-react';
 import { Invoice } from '@phosphor-icons/react';
 import { Stack, Clock, ArrowsClockwise, CheckCircle, XCircle, MagnifyingGlass, FunnelSimple, FileXls, Plus, Eye, PencilSimple, FileText, CaretLeft, CaretRight, X, DotsThreeVertical, Receipt, SlidersHorizontal, ShieldCheck, PaperPlaneTilt } from '@phosphor-icons/react';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { buildInstallmentWorkbook } from '../../utils/listExcel';
+import { protectScheduleWorkbook } from '../../utils/workScheduleExcel';
+import { downloadWorkbook } from '../../utils/excelExport';
 import '../employee/employee.css';
 import './installments.css';
 import AddInstallmentView from './AddInstallmentView';
@@ -480,30 +483,22 @@ export default function InstallmentView() {
     setNotice(editing ? 'Installment plan updated.' : 'Installment plan request submitted for multi-party approval.');
     formRef.current?.close();
   };
-  const exportPlans = () => {
-    const data = [
-      ['Unit', 'Invoice', 'Created By', 'Created Email', 'Created Date', 'Start', 'Months', 'Amount', 'Paid', 'Remaining', 'Status'],
-      ...filtered.map((plan) => [
-        plan.unit,
-        plan.invoice,
-        plan.createdBy?.name || '',
-        plan.createdBy?.email || '',
-        `${formatDate(plan.createdAt)} ${formatTime(plan.createdAt)}`.trim(),
-        plan.start,
-        plan.months,
-        plan.amount,
-        plan.paid,
-        plan.amount - plan.paid,
-        plan.status
-      ])
-    ];
-    const csv = data.map((row) => row.map((value) => {
-      const text = String(value);
-      return `"${(/^[=+@-]/.test(text) ? "'" : '') + text.replace(/"/g, '""')}"`;
-    }).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url; link.download = 'installments-sample.csv'; link.click(); URL.revokeObjectURL(url);
+  const [exporting, setExporting] = useState(false);
+  // Exports the plans that match the current filters, laid out like the Tenant Member export.
+  const exportPlans = async () => {
+    setExporting(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const plans = filtered.map((plan) => ({ ...plan, createdLabel: `${formatDate(plan.createdAt)} ${formatTime(plan.createdAt)}`.trim() }));
+      const workbook = buildInstallmentWorkbook({ plans, exportedOn: today });
+      await protectScheduleWorkbook(workbook);
+      await downloadWorkbook(workbook, `installments-${today}.xlsx`);
+    } catch (err) {
+      console.error('Failed to export installment plans:', err);
+      setNotice('The export could not be created. Try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (viewMode === 'detail' && selectedPlan) {
@@ -597,7 +592,7 @@ export default function InstallmentView() {
         <div className="emp-card-header">
           <div><h2 className="emp-card-title">Installment Management</h2><p className="emp-card-desc">Track invoice installments, payment progress, and approvals.</p></div>
           <div className="emp-card-actions">
-            <button type="button" className="emp-btn-secondary" onClick={exportPlans} disabled={!filtered.length}><FileXls size={16} weight="bold" />Export</button>
+            <button type="button" className="emp-btn-secondary" onClick={exportPlans} disabled={!filtered.length || exporting}><FileXls size={16} weight="bold" />{exporting ? 'Exporting…' : 'Export Excel'}</button>
             <button type="button" className="emp-btn-primary" onClick={() => openForm()}><Plus size={16} weight="bold" />New Installment</button>
           </div>
         </div>

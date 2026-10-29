@@ -23,7 +23,7 @@ function makePresenter(activeTab, viewMode, filters = {}) {
     totalRecords: filtered.length, pagedUnits: filtered.slice(0, pageSize), pageSize,
     currentPage: 1, totalPages, pageItems: getPageItems(1, totalPages), setPage: noop,
     selectedUnit: null, openDetail: noop, closeDetail: noop, addDialog: null,
-    pageMode: 'list', startAdd: noop, formError: '', successModal: null, closeSuccessModal: noop, exportCsv: noop
+    pageMode: 'list', startAdd: noop, formError: '', successModal: null, closeSuccessModal: noop, exportExcel: noop, exporting: false
   };
 }
 
@@ -86,5 +86,29 @@ describe('UnitView row actions', () => {
     expect((html.match(/unit-btn-dots/g) || []).length).toBe(9);
     expect(html).toContain('unit-card__head-actions');
     expect(html).toContain('View detail');
+  });
+});
+
+describe('UnitTemplateDialog', () => {
+  it('lists the three unit types and preselects the one passed in', async () => {
+    const { renderToString } = await import('react-dom/server');
+    const { UnitTemplateDialog } = await import('./UnitTemplateDialog');
+    const html = renderToString(<UnitTemplateDialog initialType="non_unit" onDownload={() => {}} onCancel={() => {}} />);
+    expect(html).toContain('Residential Unit');
+    expect(html).toContain('Non-Residential Unit');
+    expect(html).toMatch(/is-checked"><input[^>]*value="non_unit"/);
+    expect(html.match(/is-checked/g)).toHaveLength(1);
+  });
+});
+
+describe('UnitImportModal', () => {
+  it('looks like the Import Employees modal and starts with the active type', async () => {
+    const { renderToString } = await import('react-dom/server');
+    const { UnitImportModal } = await import('./UnitImportModal');
+    const html = renderToString(<UnitImportModal initialType="non_hunian" prepare={async () => ({})} onImport={() => {}} onClose={() => {}} />);
+    expect(html).toContain('emp-import-template-banner');
+    expect(html).toContain('add-emp-unified-dropzone');
+    expect(html).toMatch(/<option value="non_hunian" selected="">/);
+    expect(html).toMatch(/emp-btn-save"[^>]*disabled=""/);
   });
 });

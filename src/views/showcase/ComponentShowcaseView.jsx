@@ -278,7 +278,7 @@ export function ComponentShowcaseView({ presenter }) {
           </div>
           <button 
             className="btn btn-outline-primary btn-sm rounded-pill px-3"
-            onClick={() => showToast('Exporting table records to CSV...')}
+            onClick={() => showToast('Exporting table records to Excel...')}
           >
             Export Records
           </button>

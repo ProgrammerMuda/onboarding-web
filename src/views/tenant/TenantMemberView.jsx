@@ -1,12 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
   UsersThree,
-  UserCircle,
-  House,
-  ShieldCheck,
-  Key,
   Handshake,
+  UserCircle,
+  ShieldCheck,
   User,
   FileXls,
   DotsThreeVertical,
@@ -16,21 +13,25 @@ import {
   Warning,
   PencilSimple,
   Prohibit,
-  Plus,
+  UserPlus,
+  FileArrowUp,
+  FileArrowDown,
   MagnifyingGlass,
   ArrowsClockwise,
-  CaretDown,
   CaretLeft,
   CaretRight,
   X
 } from '@phosphor-icons/react';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { AddMenuButton, ActionToast, useActionToast, runTemplateDownload } from '../components/AddMenuButton';
+import { downloadTenantMemberImportTemplate } from '../../utils/excelExport';
+import { TemplateTypeDialog } from '../components/TemplateTypeDialog';
+import { TenantMemberImportModal } from './TenantMemberImportModal';
 import {
   TENANT_MEMBER_TABS,
   TENANT_STATUSES,
   MEMBER_STATUSES
 } from '../../models/TenantMemberModel';
-import { initialsOf } from '../../models/UnitModel';
 import '../employee/employee.css';
 import '../schedule/work-schedule.css';
 import '../unit/unit.css';
@@ -38,8 +39,7 @@ import { AddTenantMemberView } from './AddTenantMemberView';
 import { TenantMemberDetailView } from './TenantMemberDetailView';
 import { TenantRenterDetailView } from './TenantRenterDetailView';
 import './tenant-member.css';
-
-const ITEM_HEIGHT = 38;
+import { PersonCell, UnitBadge, StatusPill, RoleChip, FilterSelect, RowActionMenu, rowMenuAnchor } from './ListParts';
 
 const COLUMNS = {
   tenant: ['Tenant', 'Relation', 'Member of', 'Units', 'Status'],
@@ -51,43 +51,12 @@ const TAB_HINTS = {
   member: 'Family and staff registered under a tenant, and their approval status.'
 };
 
-function PersonCell({ name, email }) {
-  return (
-    <div className="tm-person">
-      <span className="tm-avatar" aria-hidden="true">{initialsOf(name)}</span>
-      <div className="tm-person__text">
-        <span className="ws-emp-name-bold">{name}</span>
-        <span className="ws-emp-email-muted">{email}</span>
-      </div>
-    </div>
-  );
-}
-
-function UnitBadge({ code }) {
-  return (
-    <span className="tm-unit-badge">
-      <House size={14} weight="bold" aria-hidden="true" />
-      <span>{code}</span>
-    </span>
-  );
-}
-
-function StatusPill({ status }) {
-  return <span className={`tm-status tm-status--${status.toLowerCase()}`}>{status}</span>;
-}
-
-const ROLE_ICONS = { Owner: Key, Renter: Handshake, Proxy: ShieldCheck };
-
 // Who this person belongs to and that person's role. One line, so every row has the same height.
 function MemberOfCell({ name, role }) {
-  const Icon = ROLE_ICONS[role];
   return (
     <div className="tm-memberof">
       <span className="tm-memberof__name">{name}</span>
-      <span className="tm-role-chip">
-        <Icon size={14} weight="bold" aria-hidden="true" />
-        {role}
-      </span>
+      <RoleChip role={role} />
     </div>
   );
 }
@@ -141,65 +110,6 @@ function Table({ tab, rows, menuRowId, onToggleMenu }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-// Portal menu; closes on outside click, scroll, resize, Tab, and Escape.
-function RowActionMenu({ anchor, items, onClose }) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const list = () => [...(ref.current?.querySelectorAll('[role="menuitem"]') ?? [])];
-    list()[0]?.focus({ preventScroll: true });
-
-    const onDown = (e) => {
-      if (ref.current?.contains(e.target) || anchor.trigger?.contains(e.target)) return;
-      onClose(false);
-    };
-    const onKey = (e) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onClose(true);
-      } else if (e.key === 'Tab') {
-        onClose(false);
-      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        const els = list();
-        const at = els.indexOf(document.activeElement);
-        const step = e.key === 'ArrowDown' ? 1 : -1;
-        els[(at + step + els.length) % els.length]?.focus({ preventScroll: true });
-      }
-    };
-    const away = () => onClose(false);
-
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    window.addEventListener('scroll', away, true);
-    window.addEventListener('resize', away);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-      window.removeEventListener('scroll', away, true);
-      window.removeEventListener('resize', away);
-    };
-  }, [anchor, onClose]);
-
-  return createPortal(
-    <div
-      ref={ref}
-      className="unit-action-menu"
-      role="menu"
-      aria-label={`Actions for ${anchor.row.name}`}
-      style={{ position: 'fixed', top: `${anchor.top}px`, right: `${anchor.right}px`, zIndex: 99999 }}
-    >
-      {items.map(({ key, label, icon: Icon, run, danger, success }) => (
-        <button key={key} type="button" role="menuitem" className={`unit-action-menu__item${danger ? ' tm-menu-danger' : ''}${success ? ' tm-menu-success' : ''}`} onClick={run}>
-          <Icon size={16} weight="bold" aria-hidden="true" />
-          <span>{label}</span>
-        </button>
-      ))}
-    </div>,
-    document.body
   );
 }
 
@@ -441,17 +351,6 @@ function TableFooter({ presenter }) {
   );
 }
 
-function FilterSelect({ label, children, ...rest }) {
-  return (
-    <div className="unit-select-wrap">
-      <select aria-label={rest.id ? undefined : label} className="emp-search-input unit-select" {...rest}>
-        {children}
-      </select>
-      <CaretDown size={14} weight="bold" className="unit-select-caret" aria-hidden="true" />
-    </div>
-  );
-}
-
 function StatCard({ tone, icon: Icon, label, value }) {
   return (
     <div className="emp-stat-card">
@@ -520,6 +419,18 @@ function SuccessModal({ member, onClose }) {
   );
 }
 
+const TEMPLATE_OPTIONS = [
+  { id: 'renter', label: 'Renter', hint: 'Renters of a unit: identity, rent period and start, and door access.', Icon: Handshake },
+  { id: 'member', label: 'Member', hint: 'Family or staff of an owner or renter: relation, proxy, identity, and door access.', Icon: UsersThree }
+];
+
+const ADD_MEMBER_MENU = [
+  { id: 'manual', title: 'Add Tenant Member Manually', desc: 'Register family or staff to a unit via form', Icon: UserPlus, tone: '' },
+  'divider',
+  { id: 'import', title: 'Import Tenant Member (Excel)', desc: 'Bulk upload renters or members from a filled template', Icon: FileArrowUp, tone: 'secondary' },
+  { id: 'template', title: 'Download Template Tenant Member', desc: 'Pick Renter or Member', Icon: FileArrowDown, tone: 'download' }
+];
+
 export function TenantMemberView({ presenter }) {
   const {
     activeTab, setActiveTab, stats, filters, setFilter, resetFilters, hasActiveFilters,
@@ -527,6 +438,14 @@ export function TenantMemberView({ presenter }) {
   } = presenter;
   const tabRefs = useRef({});
   const [menu, setMenu] = useState(null);
+  const [toast, notify] = useActionToast();
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const onAddSelect = (id) => {
+    if (id === 'manual') presenter.startAdd();
+    else if (id === 'import') setImportOpen(true);
+    else setTemplateOpen(true);
+  };
   const [statusChange, setStatusChange] = useState(null);
   const [approval, setApproval] = useState(null);
   const askDeactivate = (row, kind) => setStatusChange({ row, kind, action: 'deactivate' });
@@ -603,15 +522,7 @@ export function TenantMemberView({ presenter }) {
       setMenu(null);
       return;
     }
-    const height = itemsFor(row).length * ITEM_HEIGHT + 14;
-    const rect = trigger.getBoundingClientRect();
-    const openUp = window.innerHeight - rect.bottom < height + 16;
-    setMenu({
-      row,
-      trigger,
-      top: openUp ? rect.top - height - 4 : rect.bottom + 4,
-      right: Math.max(8, window.innerWidth - rect.right)
-    });
+    setMenu(rowMenuAnchor(row, trigger, itemsFor(row).length));
   };
 
   if (presenter.pageMode === 'add' || presenter.pageMode === 'edit') {
@@ -700,10 +611,7 @@ export function TenantMemberView({ presenter }) {
               <FileXls size={16} weight="bold" aria-hidden="true" />
               <span>{exporting ? 'Exporting…' : 'Export Excel'}</span>
             </button>
-            <button type="button" className="emp-btn-primary" onClick={presenter.startAdd}>
-              <Plus size={16} weight="bold" aria-hidden="true" />
-              <span>Add tenant member</span>
-            </button>
+            <AddMenuButton label="Add tenant member" items={ADD_MEMBER_MENU} onSelect={onAddSelect} />
           </div>
         </div>
 
@@ -795,6 +703,34 @@ export function TenantMemberView({ presenter }) {
       </div>
 
       {menu && <RowActionMenu anchor={menu} items={itemsFor(menu.row)} onClose={closeMenu} />}
+      {importOpen && (
+        <TenantMemberImportModal
+          initialKind={activeTab === 'tenant' ? 'renter' : 'member'}
+          prepare={presenter.prepareMemberImport}
+          onDownloadTemplate={(download) => runTemplateDownload(download, notify)}
+          onClose={() => setImportOpen(false)}
+          onImport={(members) => {
+            const n = presenter.importMembers(members);
+            setImportOpen(false);
+            notify(`${n} ${n === 1 ? 'person' : 'people'} imported as Pending. Approve them from the Member list.`);
+          }}
+        />
+      )}
+      {templateOpen && (
+        <TemplateTypeDialog
+          title="Download Template Tenant Member"
+          description="Choose who you are importing. The template columns follow the Add Tenant Member form for that choice."
+          legend="Import for"
+          options={TEMPLATE_OPTIONS}
+          initialId={activeTab === 'tenant' ? 'renter' : 'member'}
+          onCancel={() => setTemplateOpen(false)}
+          onDownload={async (kind) => {
+            await runTemplateDownload(() => downloadTenantMemberImportTemplate(kind), notify);
+            setTemplateOpen(false);
+          }}
+        />
+      )}
+      <ActionToast message={toast} />
       {overlays}
     </div>
   );

@@ -619,7 +619,7 @@ export default function EmployeeView({ presenter }) {
                     </div>
                     <div className="emp-add-item-text">
                       <span className="emp-add-item-title">Download Template</span>
-                      <span className="emp-add-item-desc">Download standardized CSV template</span>
+                      <span className="emp-add-item-desc">Download standardized Excel template (.xlsx)</span>
                     </div>
                   </button>
                 </div>

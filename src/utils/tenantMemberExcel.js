@@ -2,7 +2,11 @@ import ExcelJS from 'exceljs';
 import { memberTypeLabel, unitOwnerOf } from '../models/TenantMemberModel';
 
 const fill = (argb) => ({ type: 'pattern', pattern: 'solid', fgColor: { argb } });
-const STATUS_COLORS = { Active: 'FF166534', Pending: 'FF92400E', Rejected: 'FFB91C1C', Inactive: 'FF475569', Unoccupied: 'FF475569' };
+const STATUS_COLORS = {
+  Active: 'FF166534', Pending: 'FF92400E', Rejected: 'FFB91C1C', Inactive: 'FF475569', Unoccupied: 'FF475569',
+  Occupied: 'FF166534', Rented: 'FF0369A1', Vacant: 'FF475569',
+  'Pending Approval': 'FF92400E', Approved: 'FF166534', Completed: 'FF166534', Overdue: 'FFB91C1C'
+};
 
 // Group bands on row 4 alternate navy and sky, like the Work Schedule export.
 const GROUP_FILLS = ['FF002B7F', 'FF0284C7'];
@@ -87,7 +91,9 @@ function fitWidth(header, values) {
   return Math.min(FIT_MAX, Math.ceil(longest * 1.1) + 3);
 }
 
-function addSheet(workbook, spec, rows, exportedOn) {
+// Kinds: 'text' keeps digits as text, 'status' and 'type' are bold and colored, 'number' is centered,
+// 'money' is a right-aligned amount with thousands separators.
+export function addListSheet(workbook, spec, rows, exportedOn) {
   const columns = spec.groups.flatMap((g) => g.columns);
   const sheet = workbook.addWorksheet(spec.name, {
     views: [{ state: 'frozen', xSplit: 1, ySplit: 5, topLeftCell: 'B6', showGridLines: false }]
@@ -144,7 +150,8 @@ function addSheet(workbook, spec, rows, exportedOn) {
             : 'FF0F172A' }
       };
       cell.fill = fill(index % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC');
-      cell.alignment = { vertical: 'middle', horizontal: kind === 'number' ? 'center' : 'left' };
+      cell.alignment = { vertical: 'middle', horizontal: kind === 'number' ? 'center' : kind === 'money' ? 'right' : 'left' };
+      if (kind === 'money') cell.numFmt = '#,##0';
       cell.border = { bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } }, right: { style: 'thin', color: { argb: 'FFE2E8F0' } } };
       // ID and phone numbers keep their leading zeros and all 16 digits.
       if (kind === 'text') cell.numFmt = '@';
@@ -159,7 +166,73 @@ function addSheet(workbook, spec, rows, exportedOn) {
 export function buildTenantMemberWorkbook({ tenants, members, exportedOn }) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'PROAPPS';
-  addSheet(workbook, TENANT_SHEET, tenants, exportedOn);
-  addSheet(workbook, MEMBER_SHEET, members, exportedOn);
+  addListSheet(workbook, TENANT_SHEET, tenants, exportedOn);
+  addListSheet(workbook, MEMBER_SHEET, members, exportedOn);
+  return workbook;
+}
+
+// Tenant Management export: one row per tenant, then one row per tenant and unit.
+const titleCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
+
+const TENANT_LIST_SHEET = {
+  name: 'Tenants',
+  noun: 'tenants',
+  title: 'PROAPPS | TENANT MANAGEMENT',
+  note: 'VIEW ONLY | Owners, renters, and proxies. Each unit they hold is on the Units sheet.',
+  groups: [
+    { label: 'TENANT', columns: [
+      ['Name', 28, (t) => t.name],
+      ['Email', 32, (t) => t.email],
+      ['Phone Number', 18, (t) => t.phone, 'text'],
+      ['NIK', 22, (t) => t.nik, 'text'],
+      ['NPWP', 22, (t) => t.npwp, 'text']
+    ] },
+    { label: 'UNIT', columns: [
+      ['Units', 'fit', (t) => t.units.map((u) => u.code).join(', ')],
+      ['Roles', 'fit', (t) => [...new Set(t.units.map((u) => titleCase(u.role)))].join(', '), 'type']
+    ] },
+    { label: 'ADDRESS', columns: [
+      ['Citizenship', 18, (t) => t.citizenship],
+      ['Province', 16, (t) => t.province],
+      ['KTP Address', 'fit', (t) => t.ktpAddress],
+      ['Postal Code', 12, (t) => t.postalCode, 'text']
+    ] },
+    { label: 'EMERGENCY CONTACT', columns: [
+      ['Contact Name', 24, (t) => t.emergencyContact?.name],
+      ['Relationship', 14, (t) => t.emergencyContact?.relationship],
+      ['Contact Phone', 18, (t) => t.emergencyContact?.phone, 'text']
+    ] }
+  ]
+};
+
+const TENANT_UNIT_SHEET = {
+  name: 'Units',
+  noun: 'tenant units',
+  title: 'PROAPPS | TENANT UNITS',
+  note: 'VIEW ONLY | One row per tenant and unit. Rent Period and End Rent apply to renters only.',
+  groups: [
+    { label: 'TENANT', columns: [
+      ['Name', 28, (r) => r.tenant.name],
+      ['Email', 32, (r) => r.tenant.email]
+    ] },
+    { label: 'UNIT', columns: [
+      ['Unit', 12, (r) => r.unit.code],
+      ['Tower', 12, (r) => r.unit.tower],
+      ['Role', 12, (r) => titleCase(r.unit.role), 'type'],
+      ['Entry Date', 14, (r) => r.unit.handoverDate, 'text'],
+      ['Status', 14, (r) => r.unit.status, 'status']
+    ] },
+    { label: 'RENT', columns: [
+      ['Rent Period', 14, (r) => (r.unit.rentalPeriod ? `${r.unit.rentalPeriod} months` : '')],
+      ['End Rent', 14, (r) => r.unit.endRentDate ?? '', 'text']
+    ] }
+  ]
+};
+
+export function buildTenantManagementWorkbook({ tenants, exportedOn }) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'PROAPPS';
+  addListSheet(workbook, TENANT_LIST_SHEET, tenants, exportedOn);
+  addListSheet(workbook, TENANT_UNIT_SHEET, tenants.flatMap((tenant) => tenant.units.map((unit) => ({ tenant, unit }))), exportedOn);
   return workbook;
 }

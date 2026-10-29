@@ -1,5 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
-import { TenantModel, TOWER_OPTIONS, UNIT_OPTIONS, ROLE_OPTIONS } from '../models/TenantModel';
+import { TenantModel, TOWER_OPTIONS, UNIT_OPTIONS, ROLE_OPTIONS, importRowsToTenants, importRowsToTenantUnits } from '../models/TenantModel';
+import { SEED_UNITS, mergeUnits, readCustomUnits } from '../models/UnitModel';
+import { buildTenantManagementWorkbook } from '../utils/tenantMemberExcel';
+import { protectScheduleWorkbook } from '../utils/workScheduleExcel';
+import { downloadWorkbook, parseTenantImportFile, parseTenantUnitImportFile } from '../utils/excelExport';
 
 /**
  * useTenantPresenter - Presenter Layer (MVP)
@@ -37,7 +41,8 @@ export function useTenantPresenter() {
   const [currentPage, setCurrentPage] = useState(1);
   const [goToPageInput, setGoToPageInput] = useState('1');
 
-  const rawTenants = useMemo(() => TenantModel.getAllTenants(), []);
+  // Kept in state so imported tenants and units show up in the list right away (in memory, like the mock data).
+  const [rawTenants, setRawTenants] = useState(() => TenantModel.getAllTenants());
 
   // Set active tab and reset page to 1
   const setActiveTab = useCallback((tabId) => {
@@ -188,6 +193,73 @@ export function useTenantPresenter() {
     setGoToPageInput('1');
   }, []);
 
+  // Live filters for the list toolbar: each change applies at once. The tab keeps its role.
+  const setFilter = useCallback((key, value) => {
+    if (key === 'tower') setFilterTower(value);
+    else if (key === 'unit') setFilterUnit(value);
+    else if (key === 'name') setFilterName(value);
+    setAppliedFilters(prev => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+    setGoToPageInput('1');
+  }, []);
+
+  const resetFilters = useCallback(() => {
+    setFilterTower('');
+    setFilterUnit('');
+    setFilterName('');
+    setAppliedFilters(prev => ({ ...prev, tower: '', unit: '', name: '' }));
+    setCurrentPage(1);
+    setGoToPageInput('1');
+  }, []);
+
+  const hasActiveFilters = Boolean(appliedFilters.tower || appliedFilters.unit || appliedFilters.name);
+
+  // Exports every tenant that matches the current tab and filters, not only the visible page.
+  const [exporting, setExporting] = useState(false);
+  const exportExcel = useCallback(async () => {
+    setExporting(true);
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const workbook = buildTenantManagementWorkbook({ tenants: filteredTenants, exportedOn: today });
+      await protectScheduleWorkbook(workbook);
+      await downloadWorkbook(workbook, `tenant-management-${today}.xlsx`);
+    } finally {
+      setExporting(false);
+    }
+  }, [filteredTenants]);
+
+  // Import: the file is read and every row checked before anything is added.
+  const prepareTenantImport = useCallback(async (file) => {
+    const rows = await parseTenantImportFile(file);
+    const { tenants, errors } = importRowsToTenants(rows, rawTenants);
+    return { ready: tenants.length, errors, payload: tenants };
+  }, [rawTenants]);
+
+  const importTenants = useCallback((tenants) => {
+    setRawTenants((prev) => [...tenants, ...prev]);
+    setCurrentPage(1);
+    setGoToPageInput('1');
+    return tenants.length;
+  }, []);
+
+  const prepareTenantUnitImport = useCallback(async (file) => {
+    const rows = await parseTenantUnitImportFile(file);
+    const knownUnits = [
+      ...mergeUnits(SEED_UNITS, readCustomUnits()).map((u) => ({ code: u.code, tower: u.tower })),
+      ...rawTenants.flatMap((t) => t.units.map((u) => ({ code: u.code, tower: u.tower })))
+    ];
+    const { assignments, errors } = importRowsToTenantUnits(rows, rawTenants, knownUnits);
+    return { ready: assignments.length, errors, payload: assignments };
+  }, [rawTenants]);
+
+  const importTenantUnits = useCallback((assignments) => {
+    setRawTenants((prev) => prev.map((t) => {
+      const added = assignments.filter((a) => a.tenantId === t.id).map((a) => a.unit);
+      return added.length ? { ...t, units: [...t.units, ...added] } : t;
+    }));
+    return assignments.length;
+  }, []);
+
   const handleGoToPage = useCallback(() => {
     const pageNum = parseInt(goToPageInput, 10);
     if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
@@ -202,8 +274,8 @@ export function useTenantPresenter() {
 
   const selectedTenant = useMemo(() => {
     if (!selectedTenantId) return null;
-    return TenantModel.getTenantById(selectedTenantId);
-  }, [selectedTenantId]);
+    return rawTenants.find((t) => t.id === Number(selectedTenantId)) ?? null;
+  }, [selectedTenantId, rawTenants]);
 
   const handleViewDetails = useCallback((tenantId) => {
     setSelectedTenantId(tenantId);
@@ -243,6 +315,15 @@ export function useTenantPresenter() {
     setGoToPageInput,
     applyFilter,
     resetFilter,
+    setFilter,
+    resetFilters,
+    hasActiveFilters,
+    exportExcel,
+    exporting,
+    prepareTenantImport,
+    importTenants,
+    prepareTenantUnitImport,
+    importTenantUnits,
     handleGoToPage,
     // Detail View properties
     viewMode,

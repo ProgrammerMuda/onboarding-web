@@ -1,0 +1,29 @@
+/* Download template: pick which form the template is for */
+.unit-tpl { position: relative; width: min(520px, calc(100vw - 32px)); padding: 24px; text-align: left; border-radius: 14px; }
+.unit-tpl__close {
+  position: absolute; top: 14px; right: 14px; display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #64748b; cursor: pointer;
+}
+.unit-tpl__close:hover { background: #f1f5f9; color: #0f172a; }
+.unit-tpl__close:focus-visible { outline: 3px solid #0284c7; outline-offset: 2px; }
+.unit-tpl__title { margin: 0 40px 4px 0; font-size: 17px; font-weight: 700; color: #0f172a; }
+.unit-tpl__desc { margin: 0 0 18px; font-size: 13px; line-height: 1.5; color: #475569; }
+.unit-tpl__options { display: flex; flex-direction: column; gap: 10px; margin: 0 0 22px; padding: 0; border: 0; }
+.unit-tpl__option {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  border: 1px solid #e2e8f0; border-radius: 10px; background: #ffffff; cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.unit-tpl__option:hover { border-color: #cbd5e1; background: #f8fafc; }
+.unit-tpl__option.is-checked { border-color: #0088cc; background: #f0f9ff; }
+.unit-tpl__option:focus-within { outline: 3px solid #0284c7; outline-offset: 2px; }
+.unit-tpl__option input { position: absolute; opacity: 0; pointer-events: none; }
+.unit-tpl__icon {
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: 38px; height: 38px; border-radius: 10px; background: #eaf8ff; border: 1px solid #c2ebff; color: #009ce8;
+}
+.unit-tpl__option.is-checked .unit-tpl__icon { background: #0088cc; border-color: #0088cc; color: #ffffff; }
+.unit-tpl__text { display: flex; flex-direction: column; min-width: 0; }
+.unit-tpl__name { font-size: 14px; font-weight: 600; color: #0f172a; }
+.unit-tpl__hint { font-size: 12.5px; color: #64748b; }
+.unit-tpl__foot { display: flex; justify-content: flex-end; gap: 10px; }

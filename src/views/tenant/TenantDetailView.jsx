@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { 
   ArrowLeft, 
   PencilSimple, 
@@ -29,9 +29,87 @@ import {
   X,
   DotsThreeVertical,
   Eye,
-  SignOut
+  SignOut,
+  ArrowsClockwise
 } from '@phosphor-icons/react';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { AddVehicleDialog } from './AddVehicleDialog';
+import { PersonCell, UnitBadge, RoleChip, StatusPill, FilterSelect, RowActionMenu, rowMenuAnchor } from './ListParts';
+import '../employee/employee.css';
+import '../employee/add-employee.css';
+import '../employee/employee-detail.css';
+
+const UNIT_COLUMNS = ['Unit', 'Tower', 'Role', 'Entry date', 'Status'];
+const MEMBER_COLUMNS = ['Member', 'Relation', 'NIK', 'Unit', 'Status'];
+const VEHICLE_COLUMNS = ['Plate', 'Type', 'Brand & model', 'Color', 'Parking slot', 'RFID'];
+const UNIT_STATUSES = ['Occupant', 'Unoccupied'];
+const MEMBER_ROW_STATUSES = ['Active', 'Pending'];
+const EMPTY_UNIT_FILTERS = { query: '', role: '', status: '' };
+const EMPTY_MEMBER_FILTERS = { query: '', unit: '', relation: '', status: '' };
+const EMPTY_VEHICLE_FILTERS = { query: '', type: '' };
+
+const hasFilters = (filters) => Object.values(filters).some(Boolean);
+const titleCase = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '');
+const matches = (query, ...fields) => {
+  const q = query.trim().toLowerCase();
+  return !q || fields.some((f) => (f || '').toLowerCase().includes(q));
+};
+
+function SearchBox({ label, placeholder, value, onChange }) {
+  return (
+    <div className="emp-search-input-group unit-search-group">
+      <MagnifyingGlass size={16} weight="bold" className="emp-search-input-icon" aria-hidden="true" />
+      <input
+        type="text"
+        className="emp-search-input"
+        aria-label={label}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+      />
+      {value && (
+        <button type="button" className="unit-search-clear" onClick={() => onChange('')} aria-label="Clear search">
+          <X size={14} weight="bold" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ResetButton({ disabled, onClick }) {
+  return (
+    <button type="button" className="emp-btn-secondary" onClick={onClick} disabled={disabled}>
+      <ArrowsClockwise size={16} weight="bold" aria-hidden="true" />
+      <span>Reset</span>
+    </button>
+  );
+}
+
+function EmptyState({ Icon, filtered, noun, idle }) {
+  return (
+    <div className="unit-empty">
+      <Icon size={36} color="#cbd5e1" aria-hidden="true" />
+      <h3>{filtered ? `No ${noun} match these filters` : `No ${noun} yet`}</h3>
+      <p>{filtered ? 'Change or reset the filters to see more.' : idle}</p>
+    </div>
+  );
+}
+
+function DotsButton({ name, open, onClick }) {
+  return (
+    <button
+      type="button"
+      className={`unit-btn-dots${open ? ' is-open' : ''}`}
+      aria-label={`Actions for ${name}`}
+      aria-haspopup="menu"
+      aria-expanded={open}
+      onClick={(e) => onClick(e.currentTarget)}
+    >
+      <DotsThreeVertical size={18} weight="bold" />
+    </button>
+  );
+}
 
 export function TenantDetailView({ presenter }) {
   const {
@@ -42,8 +120,15 @@ export function TenantDetailView({ presenter }) {
   } = presenter;
 
   const [notification, setNotification] = useState(null);
-  const [unitSearchQuery, setUnitSearchQuery] = useState('');
-  const [openUnitActionDropdown, setOpenUnitActionDropdown] = useState(null);
+  const [unitFilters, setUnitFilters] = useState(EMPTY_UNIT_FILTERS);
+  const [memberFilters, setMemberFilters] = useState(EMPTY_MEMBER_FILTERS);
+  const [vehicleFilters, setVehicleFilters] = useState(EMPTY_VEHICLE_FILTERS);
+  const [rowMenu, setRowMenu] = useState(null);
+  const tabRefs = useRef({});
+  const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+  const setUnitFilter = (key, value) => setUnitFilters((f) => ({ ...f, [key]: value }));
+  const setMemberFilter = (key, value) => setMemberFilters((f) => ({ ...f, [key]: value }));
+  const setVehicleFilter = (key, value) => setVehicleFilters((f) => ({ ...f, [key]: value }));
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
   const [onboardingForm, setOnboardingForm] = useState({
     tenancyType: 'Owner',
@@ -241,12 +326,84 @@ export function TenantDetailView({ presenter }) {
     .join('')
     .toUpperCase();
 
+  const units = (selectedTenant.units || []).map((u, idx) => {
+    const roleLabel = titleCase(u.role) || 'Owner';
+    const isUnoccupied = roleLabel === 'Owner' && (u.status === 'Unoccupied' || u.code === 'C0303');
+    // Units without their own member list fall back to the tenant's members on the first unit.
+    const members = u.members !== undefined
+      ? u.members
+      : (isUnoccupied ? [] : (idx === 0 ? (selectedTenant.members || []) : []));
+    return { ...u, roleLabel, statusLabel: isUnoccupied ? 'Unoccupied' : 'Occupant', members };
+  });
+  const unitRoleOptions = [...new Set(units.map((u) => u.roleLabel))];
+  const filteredUnits = units.filter((u) =>
+    matches(unitFilters.query, u.code, u.tower)
+    && (!unitFilters.role || u.roleLabel === unitFilters.role)
+    && (!unitFilters.status || u.statusLabel === unitFilters.status)
+  );
+
+  const memberRows = units.flatMap((unit) => unit.members.map((m) => ({
+    unit,
+    member: {
+      ...m,
+      email: m.email || `${m.name.trim().toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
+      statusLabel: (m.status || '').toLowerCase() === 'pending' ? 'Pending' : 'Active'
+    }
+  })));
+  const memberRelationOptions = [...new Set(memberRows.map((r) => r.member.relationship))];
+  const filteredMembers = memberRows.filter(({ member: m, unit }) =>
+    matches(memberFilters.query, m.name, m.email, m.nik)
+    && (!memberFilters.unit || unit.code === memberFilters.unit)
+    && (!memberFilters.relation || m.relationship === memberFilters.relation)
+    && (!memberFilters.status || m.statusLabel === memberFilters.status)
+  );
+
+  const vehicles = selectedTenant.vehicles || [];
+  const vehicleTypeOptions = [...new Set(vehicles.map((v) => v.type))];
+  const filteredVehicles = vehicles.filter((v) =>
+    matches(vehicleFilters.query, v.plate, v.brand, v.slot)
+    && (!vehicleFilters.type || v.type === vehicleFilters.type)
+  );
+
+  const rowMenuItems = (row) => (row.kind === 'unit'
+    ? [
+      { key: 'view', label: 'View detail unit', icon: Eye, run: () => { setRowMenu(null); handleAction(`Viewing details for Unit ${row.unit.code}`); } },
+      { key: 'offboard', label: 'Offboarding ownership', icon: SignOut, danger: true, run: () => { setRowMenu(null); handleAction(`Offboarding Ownership flow initiated for Unit ${row.unit.code}`); } }
+    ]
+    : [
+      { key: 'view', label: 'View detail', icon: Eye, run: () => { setRowMenu(null); handleViewMemberDetail(row.member, row.unit); } }
+    ]);
+
+  const toggleRowMenu = (row, trigger) => {
+    const same = rowMenu && (rowMenu.row.key ?? rowMenu.row.name) === (row.key ?? row.name);
+    setRowMenu(same ? null : rowMenuAnchor(row, trigger, rowMenuItems(row).length));
+  };
+
+  const closeRowMenu = (restoreFocus) => {
+    if (restoreFocus) rowMenu?.trigger?.focus();
+    setRowMenu(null);
+  };
+
+  // "Owner A0101 · Renter C0303" under the name in the banner.
+  const unitSummary = selectedTenant.units?.length
+    ? selectedTenant.units.map((u) => `${u.role.charAt(0)}${u.role.slice(1).toLowerCase()} ${u.code}`).join(' · ')
+    : 'No units assigned';
+
   const tabs = [
     { id: 'information', label: 'Information', icon: Info, count: null },
-    { id: 'units', label: 'Units', icon: Buildings, count: selectedTenant.units?.length || 0 },
-    { id: 'members', label: 'Members', icon: Users, count: selectedTenant.members?.length || 0 },
-    { id: 'vehicles', label: 'Vehicles', icon: Car, count: selectedTenant.vehicles?.length || 0 }
+    { id: 'units', label: 'Units', icon: Buildings, count: units.length },
+    { id: 'members', label: 'Members', icon: Users, count: memberRows.length },
+    { id: 'vehicles', label: 'Vehicles', icon: Car, count: vehicles.length }
   ];
+
+  const onTabKeyDown = (e, index) => {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const step = e.key === 'ArrowRight' ? 1 : -1;
+    const next = tabs[(index + step + tabs.length) % tabs.length];
+    setDetailActiveTab(next.id);
+    tabRefs.current[next.id]?.focus();
+  };
 
   return (
     <div className="w-100 position-relative pb-4">
@@ -263,69 +420,34 @@ export function TenantDetailView({ presenter }) {
         </div>
       )}
 
-      {/* Breadcrumb */}
       <Breadcrumb
+        className="add-emp-breadcrumb"
         items={[
-          { label: 'Tenant' },
-          { label: 'Tenant Management', onClick: handleBackToList },
-          { label: `Detail Tenant: ${selectedTenant.name}` }
+          { label: 'Tenant Management' },
+          { label: 'Tenant List', onClick: handleBackToList },
+          { label: 'Detail Tenant' }
         ]}
       />
 
-      {/* 1. Page Header: Back Icon (←) + Large Title + Subtle Sub-text */}
-      <div 
-        className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3"
-        style={{ marginBottom: '24px' }}
-      >
-        <div className="d-flex align-items-center gap-3">
-          {/* Back Arrow Icon Button */}
-          <button 
-            type="button" 
-            className="btn btn-light d-flex align-items-center justify-content-center border shadow-none"
-            style={{ 
-              width: '42px',
-              height: '42px',
-              borderRadius: '10px',
-              backgroundColor: '#FFFFFF',
-              borderColor: '#E2E8F0',
-              color: '#002B7F',
-              cursor: 'pointer',
-              flexShrink: 0,
-              padding: 0,
-              transition: 'all 0.15s ease'
-            }}
-            onClick={handleBackToList}
-            title="Back to Tenants List"
-          >
-            <ArrowLeft size={22} weight="bold" color="#002B7F" />
-          </button>
-
-          {/* Large Title & Sub-text */}
-          <div>
-            <h2 className="fw-bold mb-0.5" style={{ fontSize: '1.75rem', letterSpacing: '-0.025em', color: '#002B7F', lineHeight: 1.2 }}>
-              Detail Tenant: {selectedTenant.name}
-            </h2>
-            <div className="text-muted fw-medium" style={{ fontSize: '0.85rem', color: '#64748B' }}>
-              Tenant Management
+      <div className="emp-hero-banner">
+        <div className="emp-hero-banner-content">
+          <div className="emp-hero-banner-left">
+            <button type="button" className="emp-hero-back-btn" onClick={handleBackToList} aria-label="Back to Tenant List">
+              <ArrowLeft size={18} weight="bold" />
+            </button>
+            <div>
+              <div className="emp-hero-banner-tag">TENANT</div>
+              <h1 className="emp-hero-banner-title">{selectedTenant.name}</h1>
+              <p className="emp-hero-banner-desc">{unitSummary}</p>
             </div>
           </div>
-        </div>
-
-        {/* Header Actions */}
-        <div className="d-flex align-items-center gap-2.5">
-          <button 
-            type="button" 
-            className="btn text-white fw-semibold px-4 py-2 d-flex align-items-center gap-2 shadow-none border-0"
-            style={{ 
-              backgroundColor: '#002B7F', 
-              borderRadius: '8px', 
-              fontSize: '0.875rem',
-              transition: 'background-color 0.15s ease'
-            }}
+          <button
+            type="button"
+            className="emp-hero-edit-btn"
             onClick={() => handleAction(`Edit modal opened for ${selectedTenant.name}`)}
           >
-            <PencilSimple size={16} weight="bold" />
-            <span>Edit</span>
+            <PencilSimple size={19} weight="bold" aria-hidden="true" />
+            <span>Edit tenant</span>
           </button>
         </div>
       </div>
@@ -373,53 +495,31 @@ export function TenantDetailView({ presenter }) {
           </div>
         </div>
 
-        {/* Integrated Tab Navigation Bar */}
-        <div 
-          className="d-flex align-items-center px-4 border-top"
-          style={{ borderColor: '#F1F5F9', backgroundColor: '#FFFFFF', gap: '8px' }}
-        >
-          {tabs.map((tab) => {
-            const isActive = detailActiveTab === tab.id;
-            const Icon = tab.icon;
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                className={`btn d-inline-flex align-items-center gap-2 border-0 py-3 px-3.5 fw-bold position-relative ${
-                  isActive ? 'text-primary' : 'text-muted'
-                }`}
-                style={{
-                  fontSize: '0.875rem',
-                  color: isActive ? '#002B7F' : '#64748B',
-                  backgroundColor: 'transparent',
-                  borderRadius: '0',
-                  transition: 'all 0.15s ease'
-                }}
-                onClick={() => setDetailActiveTab(tab.id)}
-              >
-                <Icon size={18} weight={isActive ? 'bold' : 'regular'} />
-                <span>{tab.label}</span>
-                {tab.count !== null && (
-                  <span 
-                    className={`badge rounded-pill px-2 py-0.5 ${
-                      isActive ? 'bg-primary text-white' : 'bg-light text-muted border'
-                    }`}
-                    style={{ fontSize: '0.72rem', backgroundColor: isActive ? '#002B7F' : '#F1F5F9' }}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-                {/* Active Indicator Underline */}
-                {isActive && (
-                  <div 
-                    className="position-absolute bottom-0 start-0 end-0"
-                    style={{ height: '3px', backgroundColor: '#002B7F', borderRadius: '3px 3px 0 0' }}
-                  />
-                )}
-              </button>
-            );
-          })}
+        <div className="tnm-detail-tabs">
+          <div className="ws-toolbar-tabs" role="tablist" aria-label="Tenant detail">
+            {tabs.map((tab, i) => {
+              const active = detailActiveTab === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  ref={(el) => { tabRefs.current[tab.id] = el; }}
+                  type="button"
+                  role="tab"
+                  id={`tnm-detail-tab-${tab.id}`}
+                  aria-selected={active}
+                  tabIndex={active ? 0 : -1}
+                  className={`ws-toolbar-tab ${active ? 'is-active' : ''}`}
+                  onClick={() => setDetailActiveTab(tab.id)}
+                  onKeyDown={(e) => onTabKeyDown(e, i)}
+                >
+                  <Icon size={15} weight={active ? 'bold' : 'regular'} aria-hidden="true" />
+                  <span>{tab.label}</span>
+                  {tab.count !== null && <span className="unit-tab-count">{tab.count}</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -432,21 +532,9 @@ export function TenantDetailView({ presenter }) {
             style={{ borderRadius: '12px', borderColor: '#E2E8F0', padding: '32px 36px' }}
           >
             {/* Header */}
-            <div 
-              className="d-flex align-items-center justify-content-between border-bottom" 
-              style={{ borderColor: '#F1F5F9', paddingBottom: '20px', marginBottom: '28px' }}
-            >
+            <div className="tnm-info-card__head">
               <div className="d-flex align-items-center gap-3">
-                <div 
-                  className="d-flex align-items-center justify-content-center flex-shrink-0"
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '10px',
-                    backgroundColor: '#EFF6FF',
-                    color: '#002B7F'
-                  }}
-                >
+                <div className="emp-detail-card-badge emp-badge-secondary tnm-info-card__badge" aria-hidden="true">
                   <IdentificationCard size={22} weight="bold" />
                 </div>
                 <div>
@@ -458,26 +546,6 @@ export function TenantDetailView({ presenter }) {
                   </div>
                 </div>
               </div>
-
-              <button
-                type="button"
-                className="btn btn-sm d-inline-flex align-items-center fw-semibold border shadow-none"
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  borderColor: '#CBD5E1',
-                  color: '#002B7F',
-                  borderRadius: '8px',
-                  padding: '8px 18px',
-                  fontSize: '0.85rem',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onClick={() => handleAction('Edit Tenant Information')}
-              >
-                <PencilSimple size={16} weight="bold" />
-                <span>Edit</span>
-              </button>
             </div>
 
             {/* Modern 2-Column Grid of Structured Field Tiles */}
@@ -621,21 +689,9 @@ export function TenantDetailView({ presenter }) {
             style={{ borderRadius: '12px', borderColor: '#E2E8F0', padding: '32px 36px' }}
           >
             {/* Header */}
-            <div 
-              className="d-flex align-items-center justify-content-between border-bottom" 
-              style={{ borderColor: '#F1F5F9', paddingBottom: '20px', marginBottom: '28px' }}
-            >
+            <div className="tnm-info-card__head">
               <div className="d-flex align-items-center gap-3">
-                <div 
-                  className="d-flex align-items-center justify-content-center flex-shrink-0"
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '10px',
-                    backgroundColor: '#FEF2F2',
-                    color: '#DC2626'
-                  }}
-                >
+                <div className="emp-detail-card-badge emp-badge-secondary tnm-info-card__badge" aria-hidden="true">
                   <ShieldCheck size={22} weight="bold" />
                 </div>
                 <div>
@@ -647,26 +703,6 @@ export function TenantDetailView({ presenter }) {
                   </div>
                 </div>
               </div>
-
-              <button
-                type="button"
-                className="btn btn-sm d-inline-flex align-items-center fw-semibold border shadow-none"
-                style={{
-                  backgroundColor: '#FFFFFF',
-                  borderColor: '#CBD5E1',
-                  color: '#002B7F',
-                  borderRadius: '8px',
-                  padding: '8px 18px',
-                  fontSize: '0.85rem',
-                  gap: '8px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-                onClick={() => handleAction('Edit Emergency Contact')}
-              >
-                <PencilSimple size={16} weight="bold" />
-                <span>Edit</span>
-              </button>
             </div>
 
             {/* Modern 2-Column Grid of Structured Field Tiles */}
@@ -783,624 +819,234 @@ export function TenantDetailView({ presenter }) {
         </div>
       )}
 
-      {/* 5. Tab Content: Units */}
       {detailActiveTab === 'units' && (
-        <div 
-          className="card border bg-white shadow-2xs"
-          style={{ borderRadius: '12px', borderColor: '#E2E8F0', overflow: 'visible' }}
-        >
-          {/* Top Toolbar: Search Bar + Onboarding Action Button */}
-          <div 
-            className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center justify-content-between gap-3 p-4 border-bottom"
-            style={{ borderColor: '#F1F5F9', backgroundColor: '#FFFFFF', borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}
-          >
-            {/* Search Box */}
-            <div className="position-relative" style={{ minWidth: '280px', maxWidth: '380px' }}>
-              <MagnifyingGlass 
-                size={18} 
-                weight="bold" 
-                className="position-absolute top-50 translate-middle-y"
-                style={{ left: '14px', color: '#64748B', pointerEvents: 'none' }} 
-              />
-              <input
-                type="text"
-                className="form-control shadow-none"
-                style={{
-                  paddingLeft: '40px',
-                  paddingRight: unitSearchQuery ? '36px' : '14px',
-                  paddingTop: '9px',
-                  paddingBottom: '9px',
-                  borderRadius: '8px',
-                  borderColor: '#CBD5E1',
-                  fontSize: '0.875rem',
-                  backgroundColor: '#F8FAFC',
-                  color: '#1E293B'
-                }}
-                placeholder="Search unit code, tower, role..."
-                value={unitSearchQuery}
-                onChange={(e) => setUnitSearchQuery(e.target.value)}
-              />
-              {unitSearchQuery && (
-                <button
-                  type="button"
-                  className="btn btn-link p-0 position-absolute top-50 translate-middle-y text-muted text-decoration-none"
-                  style={{ right: '12px', width: '20px', height: '20px' }}
-                  onClick={() => setUnitSearchQuery('')}
-                  title="Clear search"
-                >
-                  <X size={15} weight="bold" />
-                </button>
+        <div className="emp-card-container tm-page">
+          <div className="emp-card-header">
+            <div>
+              <h2 className="emp-card-title">Units</h2>
+              <p className="emp-card-desc">Units this tenant owns, rents, or holds a proxy for.</p>
+            </div>
+            <div className="emp-card-actions">
+              <button type="button" className="emp-btn-primary" onClick={() => setIsOnboardingModalOpen(true)}>
+                <Plus size={16} weight="bold" aria-hidden="true" />
+                <span>Onboarding</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="emp-search-row unit-filter-row">
+            <SearchBox label="Search units" placeholder="Search unit code or tower" value={unitFilters.query} onChange={(v) => setUnitFilter('query', v)} />
+            <FilterSelect label="Filter role" value={unitFilters.role} onChange={(e) => setUnitFilter('role', e.target.value)}>
+              <option value="">All roles</option>
+              {unitRoleOptions.map((r) => <option key={r} value={r}>{r}</option>)}
+            </FilterSelect>
+            <FilterSelect label="Filter status" value={unitFilters.status} onChange={(e) => setUnitFilter('status', e.target.value)}>
+              <option value="">All statuses</option>
+              {UNIT_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </FilterSelect>
+            <ResetButton disabled={!hasFilters(unitFilters)} onClick={() => setUnitFilters(EMPTY_UNIT_FILTERS)} />
+          </div>
+
+          <div className="emp-card-body">
+            <div className="emp-table-card-inner">
+              {filteredUnits.length === 0 ? (
+                <EmptyState
+                  Icon={Buildings}
+                  filtered={hasFilters(unitFilters)}
+                  noun="units"
+                  idle="Units appear here once this tenant is onboarded to one."
+                />
+              ) : (
+                <div className="emp-table-responsive">
+                  <table className="emp-table tm-table">
+                    <thead>
+                      <tr>
+                        {UNIT_COLUMNS.map((c) => <th key={c} scope="col">{c}</th>)}
+                        <th scope="col" className="unit-col-action">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredUnits.map((u) => (
+                        <tr key={u.code}>
+                          <td data-label="Unit"><UnitBadge code={u.code} /></td>
+                          <td data-label="Tower"><span className="tm-memberof__name">{u.tower}</span></td>
+                          <td data-label="Role"><RoleChip role={u.roleLabel} /></td>
+                          <td data-label="Entry date"><span className="unit-muted">{u.handoverDate}</span></td>
+                          <td data-label="Status"><StatusPill status={u.statusLabel} /></td>
+                          <td className="unit-col-action">
+                            <DotsButton
+                              name={u.code}
+                              open={rowMenu?.row.name === u.code}
+                              onClick={(trigger) => toggleRowMenu({ name: u.code, unit: u, kind: 'unit' }, trigger)}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
-
-            {/* Action: Onboarding Button with Plus icon */}
-            <button
-              type="button"
-              className="btn text-white fw-semibold d-inline-flex align-items-center justify-content-center gap-2 shadow-none border-0"
-              style={{
-                backgroundColor: '#002B7F',
-                borderRadius: '8px',
-                padding: '9px 20px',
-                fontSize: '0.875rem'
-              }}
-              onClick={() => setIsOnboardingModalOpen(true)}
-            >
-              <Plus size={18} weight="bold" />
-              <span>Onboarding</span>
-            </button>
-          </div>
-
-          {/* Units Table */}
-          <div className="table-responsive" style={{ overflow: 'visible' }}>
-            <table className="table align-middle mb-0 bg-white">
-              <thead style={{ backgroundColor: '#F8FAFC' }}>
-                <tr className="border-bottom" style={{ borderColor: '#E2E8F0' }}>
-                  <th className="py-3 ps-4 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    UNIT CODE
-                  </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    TOWER
-                  </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    ROLE / TYPE
-                  </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    ENTRY DATE
-                  </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    STATUS
-                  </th>
-                  <th className="py-3 text-uppercase fw-bold text-center" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em', width: '90px' }}>
-                    ACTION
-                  </th>
-                </tr>
-              </thead>
-              <tbody style={{ backgroundColor: '#FFFFFF' }}>
-                {(() => {
-                  const unitsList = selectedTenant.units || [];
-                  const filtered = unitsList.filter((u) => {
-                    if (!unitSearchQuery.trim()) return true;
-                    const q = unitSearchQuery.toLowerCase();
-                    return (
-                      (u.code && u.code.toLowerCase().includes(q)) ||
-                      (u.tower && u.tower.toLowerCase().includes(q)) ||
-                      (u.role && u.role.toLowerCase().includes(q)) ||
-                      (u.handoverDate && u.handoverDate.toLowerCase().includes(q)) ||
-                      (u.status && u.status.toLowerCase().includes(q))
-                    );
-                  });
-
-                  if (filtered.length === 0) {
-                    return (
-                      <tr>
-                        <td colSpan="6" className="text-center py-5 text-muted fw-medium">
-                          {unitSearchQuery ? `No units match "${unitSearchQuery}".` : 'No units assigned to this tenant yet.'}
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  return filtered.map((u, idx) => {
-                    const itemKey = u.code || idx;
-                    const isDropdownOpen = openUnitActionDropdown === itemKey;
-
-                    return (
-                      <tr key={idx} className="border-bottom" style={{ borderColor: '#F1F5F9' }}>
-                        <td className="py-3.5 ps-4 fw-bold font-monospace text-dark" style={{ fontSize: '0.9rem' }}>
-                          {u.code}
-                        </td>
-                        <td className="py-3.5 text-muted fw-semibold" style={{ fontSize: '0.85rem' }}>
-                          {u.tower || 'Tower A'}
-                        </td>
-                        <td className="py-3.5">
-                          {(() => {
-                            const roleLower = (u.role || '').toLowerCase();
-                            const isOwner = roleLower === 'owner';
-                            const isRenter = roleLower === 'renter';
-                            const isProxy = roleLower === 'proxy' || roleLower === 'proxies';
-
-                            const bg = isOwner ? '#DCFCE7' : isRenter ? '#FEF3C7' : isProxy ? '#E0F2FE' : '#F1F5F9';
-                            const color = isOwner ? '#15803D' : isRenter ? '#B45309' : isProxy ? '#0284C7' : '#475569';
-                            const label = u.role ? (u.role.charAt(0).toUpperCase() + u.role.slice(1).toLowerCase()) : '';
-
-                            return (
-                              <span 
-                                className="badge px-2.5 py-1 fw-bold border-0"
-                                style={{ 
-                                  backgroundColor: bg, 
-                                  color: color, 
-                                  fontSize: '0.75rem'
-                                }}
-                              >
-                                {label}
-                              </span>
-                            );
-                          })()}
-                        </td>
-                        <td className="py-3.5 text-muted fw-medium" style={{ fontSize: '0.85rem' }}>
-                          {u.handoverDate || '15 Jan 2022'}
-                        </td>
-                        <td className="py-3.5">
-                          {(() => {
-                            const isOwnerRole = (u.role || '').toUpperCase() === 'OWNER';
-                            const isUnoccupied = isOwnerRole && (u.status === 'Unoccupied' || u.code === 'C0303');
-
-                            if (isUnoccupied) {
-                              return (
-                                <span 
-                                  className="badge px-2.5 py-1 fw-bold border-0"
-                                  style={{ 
-                                    backgroundColor: '#F1F5F9', 
-                                    color: '#475569', 
-                                    fontSize: '0.75rem'
-                                  }}
-                                >
-                                  Unoccupied
-                                </span>
-                              );
-                            }
-
-                            return (
-                              <span 
-                                className="badge px-2.5 py-1 fw-bold border-0"
-                                style={{ 
-                                  backgroundColor: '#DCFCE7', 
-                                  color: '#15803D', 
-                                  fontSize: '0.75rem'
-                                }}
-                              >
-                                Occupant
-                              </span>
-                            );
-                          })()}
-                        </td>
-                        <td className="py-3.5 text-center position-relative">
-                          <button
-                            type="button"
-                            className="btn btn-sm border-0 d-inline-flex align-items-center justify-content-center shadow-none p-0 mx-auto"
-                            style={{
-                              width: '32px',
-                              height: '32px',
-                              borderRadius: '8px',
-                              backgroundColor: isDropdownOpen ? '#EEF2F6' : 'transparent',
-                              color: '#334155',
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease'
-                            }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setOpenUnitActionDropdown(isDropdownOpen ? null : itemKey);
-                            }}
-                            title="Unit Actions"
-                          >
-                            <DotsThreeVertical size={20} weight="bold" />
-                          </button>
-
-                          {/* Action Dropdown Popup */}
-                          {isDropdownOpen && (
-                            <>
-                              <div 
-                                className="position-fixed top-0 start-0 w-100 h-100" 
-                                style={{ zIndex: 1040 }}
-                                onClick={() => setOpenUnitActionDropdown(null)} 
-                              />
-                              <div
-                                className="position-absolute end-0 bg-white border shadow-lg"
-                                style={{
-                                  top: 'calc(100% + 4px)',
-                                  right: '8px',
-                                  borderRadius: '10px',
-                                  borderColor: '#E2E8F0',
-                                  minWidth: '220px',
-                                  width: 'max-content',
-                                  zIndex: 1050,
-                                  padding: '6px',
-                                  textAlign: 'left',
-                                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08)'
-                                }}
-                              >
-                                <button
-                                  type="button"
-                                  className="d-flex align-items-center text-dark fw-semibold border-0 w-100 text-start"
-                                  style={{ 
-                                    gap: '10px', 
-                                    padding: '8px 14px', 
-                                    fontSize: '0.85rem', 
-                                    cursor: 'pointer', 
-                                    backgroundColor: 'transparent',
-                                    borderRadius: '6px',
-                                    whiteSpace: 'nowrap',
-                                    transition: 'background-color 0.15s ease' 
-                                  }}
-                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
-                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                  onClick={() => {
-                                    setOpenUnitActionDropdown(null);
-                                    handleAction(`Viewing details for Unit ${u.code}`);
-                                  }}
-                                >
-                                  <Eye size={16} weight="bold" className="flex-shrink-0" style={{ color: '#002B7F' }} />
-                                  <span style={{ whiteSpace: 'nowrap' }}>View Detail Unit</span>
-                                </button>
-                                
-                                <div style={{ height: '1px', backgroundColor: '#F1F5F9', margin: '4px 0' }} />
-                                
-                                <button
-                                  type="button"
-                                  className="d-flex align-items-center text-danger fw-semibold border-0 w-100 text-start"
-                                  style={{ 
-                                    gap: '10px', 
-                                    padding: '8px 14px', 
-                                    fontSize: '0.85rem', 
-                                    cursor: 'pointer', 
-                                    backgroundColor: 'transparent',
-                                    borderRadius: '6px',
-                                    whiteSpace: 'nowrap',
-                                    transition: 'background-color 0.15s ease' 
-                                  }}
-                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FEF2F2'}
-                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                                  onClick={() => {
-                                    setOpenUnitActionDropdown(null);
-                                    handleAction(`Offboarding Ownership flow initiated for Unit ${u.code}`);
-                                  }}
-                                >
-                                  <SignOut size={16} weight="bold" className="flex-shrink-0" style={{ color: '#DC2626' }} />
-                                  <span style={{ whiteSpace: 'nowrap' }}>Offboarding Ownership</span>
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  });
-                })()}
-              </tbody>
-            </table>
           </div>
         </div>
       )}
 
-      {/* 6. Tab Content: Members (Organized Per Unit) */}
       {detailActiveTab === 'members' && (
-        <div className="d-flex flex-column" style={{ gap: '24px' }}>
-          {(!selectedTenant.units || selectedTenant.units.length === 0) ? (
-            <div 
-              className="card border bg-white shadow-2xs text-center"
-              style={{ borderRadius: '12px', borderColor: '#E2E8F0', padding: '48px 24px' }}
-            >
-              <Users size={44} weight="bold" className="text-muted mb-2.5 mx-auto" />
-              <h6 className="fw-bold text-dark mb-1">No Units Assigned</h6>
-              <p className="text-muted small mb-0">There are no units or registered members for this tenant yet.</p>
+        <div className="emp-card-container tm-page">
+          <div className="emp-card-header">
+            <div>
+              <h2 className="emp-card-title">Members</h2>
+              <p className="emp-card-desc">Family and staff registered under this tenant, per unit.</p>
             </div>
-          ) : (
-            selectedTenant.units.map((unit, unitIdx) => {
-              const roleLower = (unit.role || '').toLowerCase();
-              const isOwner = roleLower === 'owner';
-              const isRenter = roleLower === 'renter';
-              const isProxy = roleLower === 'proxy' || roleLower === 'proxies';
+            <div className="emp-card-actions">
+              <button
+                type="button"
+                className="emp-btn-primary"
+                disabled={units.length === 0}
+                onClick={() => handleOpenAddMemberModal(units.find((u) => u.code === memberFilters.unit) ?? units[0])}
+              >
+                <Plus size={16} weight="bold" aria-hidden="true" />
+                <span>Add member</span>
+              </button>
+            </div>
+          </div>
 
-              const roleBg = isOwner ? '#DCFCE7' : isRenter ? '#FEF3C7' : isProxy ? '#E0F2FE' : '#F1F5F9';
-              const roleColor = isOwner ? '#15803D' : isRenter ? '#B45309' : isProxy ? '#0284C7' : '#475569';
-              const roleLabel = unit.role ? (unit.role.charAt(0).toUpperCase() + unit.role.slice(1).toLowerCase()) : 'Owner';
+          <div className="emp-search-row unit-filter-row">
+            <SearchBox label="Search members" placeholder="Search name, email, or NIK" value={memberFilters.query} onChange={(v) => setMemberFilter('query', v)} />
+            <FilterSelect label="Filter unit" value={memberFilters.unit} onChange={(e) => setMemberFilter('unit', e.target.value)}>
+              <option value="">All units</option>
+              {units.map((u) => <option key={u.code} value={u.code}>{u.code}</option>)}
+            </FilterSelect>
+            <FilterSelect label="Filter relation" value={memberFilters.relation} onChange={(e) => setMemberFilter('relation', e.target.value)}>
+              <option value="">All relations</option>
+              {memberRelationOptions.map((r) => <option key={r} value={r}>{r}</option>)}
+            </FilterSelect>
+            <FilterSelect label="Filter status" value={memberFilters.status} onChange={(e) => setMemberFilter('status', e.target.value)}>
+              <option value="">All statuses</option>
+              {MEMBER_ROW_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+            </FilterSelect>
+            <ResetButton disabled={!hasFilters(memberFilters)} onClick={() => setMemberFilters(EMPTY_MEMBER_FILTERS)} />
+          </div>
 
-              const isUnoccupied = isOwner && (unit.status === 'Unoccupied' || unit.code === 'C0303');
-              
-              // Resolve members for this unit
-              const unitMembers = unit.members !== undefined 
-                ? unit.members 
-                : (isUnoccupied ? [] : (unitIdx === 0 ? (selectedTenant.members || []) : []));
-
-              return (
-                <div 
-                  key={unit.code || unitIdx}
-                  className="card border bg-white shadow-2xs overflow-hidden"
-                  style={{ borderRadius: '12px', borderColor: '#E2E8F0' }}
-                >
-                  {/* Unit Section Header Bar */}
-                  <div 
-                    className="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3 border-bottom"
-                    style={{ backgroundColor: '#F8FAFC', borderColor: '#E2E8F0', padding: '16px 24px' }}
-                  >
-                    <div className="d-flex flex-wrap align-items-center" style={{ gap: '12px' }}>
-                      <div 
-                        className="d-inline-flex align-items-center justify-content-center fw-bold font-monospace text-dark border"
-                        style={{ 
-                          backgroundColor: '#FFFFFF', 
-                          borderColor: '#CBD5E1', 
-                          borderRadius: '6px', 
-                          padding: '6px 14px',
-                          fontSize: '0.9rem' 
-                        }}
-                      >
-                        <Door size={16} weight="bold" className="me-1.5 text-muted" />
-                        {unit.code}
-                      </div>
-
-                      <span className="text-muted fw-semibold" style={{ fontSize: '0.85rem' }}>
-                        {unit.tower || 'Tower A'}
-                      </span>
-
-                      {/* Role Badge */}
-                      <span 
-                        className="badge fw-bold border-0"
-                        style={{ 
-                          backgroundColor: roleBg, 
-                          color: roleColor, 
-                          fontSize: '0.75rem',
-                          padding: '5px 10px'
-                        }}
-                      >
-                        {roleLabel}
-                      </span>
-
-                      {/* Status Badge (Only for Unoccupied units) */}
-                      {isUnoccupied && (
-                        <span 
-                          className="badge fw-bold border-0"
-                          style={{ 
-                            backgroundColor: '#F1F5F9', 
-                            color: '#475569', 
-                            fontSize: '0.75rem',
-                            padding: '5px 10px'
-                          }}
-                        >
-                          Unoccupied
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="d-flex align-items-center" style={{ gap: '10px' }}>
-                      <span 
-                        className="badge fw-semibold border"
-                        style={{ 
-                          backgroundColor: '#EFF6FF',
-                          color: '#002B7F',
-                          borderColor: '#BFDBFE',
-                          borderRadius: '6px',
-                          fontSize: '0.75rem',
-                          padding: '6px 12px'
-                        }}
-                      >
-                        {unitMembers.length} {unitMembers.length === 1 ? 'Member' : 'Members'}
-                      </span>
-
-                      <button
-                        type="button"
-                        className="btn btn-sm d-inline-flex align-items-center fw-semibold shadow-none border-0 text-white"
-                        style={{
-                          backgroundColor: '#0F172A',
-                          borderRadius: '8px',
-                          fontSize: '0.8125rem',
-                          padding: '6px 16px',
-                          gap: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E293B'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0F172A'}
-                        onClick={() => handleOpenAddMemberModal(unit)}
-                      >
-                        <Plus size={16} weight="bold" />
-                        <span>Add Member</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Members Table */}
-                  <div className="table-responsive">
-                    <table className="table align-middle mb-0 bg-white" style={{ tableLayout: 'fixed', width: '100%' }}>
-                      <thead style={{ backgroundColor: '#F8FAFC' }}>
-                        <tr className="border-bottom" style={{ borderColor: '#E2E8F0' }}>
-                          <th className="py-3 ps-4 text-uppercase fw-bold" style={{ width: '24%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                            MEMBER NAME
-                          </th>
-                          <th className="py-3 text-uppercase fw-bold" style={{ width: '15%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                            RELATIONSHIP
-                          </th>
-                          <th className="py-3 text-uppercase fw-bold" style={{ width: '18%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                            NIK
-                          </th>
-                          <th className="py-3 text-uppercase fw-bold" style={{ width: '19%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                            EMAIL
-                          </th>
-                          <th className="py-3 text-uppercase fw-bold" style={{ width: '12%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                            STATUS
-                          </th>
-                          <th className="py-3 pe-4 text-uppercase fw-bold text-end" style={{ width: '12%', backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                            ACTION
-                          </th>
+          <div className="emp-card-body">
+            <div className="emp-table-card-inner">
+              {filteredMembers.length === 0 ? (
+                <EmptyState
+                  Icon={Users}
+                  filtered={hasFilters(memberFilters)}
+                  noun="members"
+                  idle={units.length === 0 ? 'Onboard this tenant to a unit first, then add members to it.' : 'Use Add member to register family or staff to a unit.'}
+                />
+              ) : (
+                <div className="emp-table-responsive">
+                  <table className="emp-table tm-table">
+                    <thead>
+                      <tr>
+                        {MEMBER_COLUMNS.map((c) => <th key={c} scope="col">{c}</th>)}
+                        <th scope="col" className="unit-col-action">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredMembers.map(({ member: m, unit }) => (
+                        <tr key={`${unit.code}-${m.id}`}>
+                          <td data-label="Member"><PersonCell name={m.name} email={m.email} /></td>
+                          <td data-label="Relation"><span className="tm-relation">{m.relationship}</span></td>
+                          <td data-label="NIK"><span className="unit-muted">{m.nik}</span></td>
+                          <td data-label="Unit"><UnitBadge code={unit.code} /></td>
+                          <td data-label="Status"><StatusPill status={m.statusLabel} /></td>
+                          <td className="unit-col-action">
+                            <DotsButton
+                              name={m.name}
+                              open={rowMenu?.row.key === `${unit.code}-${m.id}`}
+                              onClick={(trigger) => toggleRowMenu({ key: `${unit.code}-${m.id}`, name: m.name, member: m, unit, kind: 'member' }, trigger)}
+                            />
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody style={{ backgroundColor: '#FFFFFF' }}>
-                        {unitMembers.length === 0 ? (
-                          <tr>
-                            <td colSpan="6" className="text-center text-muted fw-medium" style={{ padding: '36px 20px', fontSize: '0.875rem' }}>
-                              <div className="d-flex flex-column align-items-center justify-content-center gap-2">
-                                <span>
-                                  {isUnoccupied 
-                                    ? 'This unit is currently unoccupied. No active members registered.' 
-                                    : `No family members or occupants registered for Unit ${unit.code}.`}
-                                </span>
-                                <button
-                                  type="button"
-                                  className="btn btn-sm d-inline-flex align-items-center fw-semibold border shadow-none mt-2"
-                                  style={{
-                                    backgroundColor: '#FFFFFF',
-                                    color: '#0F172A',
-                                    borderColor: '#CBD5E1',
-                                    borderRadius: '8px',
-                                    fontSize: '0.8125rem',
-                                    padding: '7px 18px',
-                                    gap: '8px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.15s ease'
-                                  }}
-                                  onClick={() => handleOpenAddMemberModal(unit)}
-                                >
-                                  <Plus size={16} weight="bold" />
-                                  <span>Add Member to Unit {unit.code}</span>
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : (
-                          unitMembers.map((m) => {
-                            const isPending = (m.status || '').toLowerCase() === 'pending';
-                            return (
-                              <tr key={m.id} className="border-bottom" style={{ borderColor: '#F1F5F9' }}>
-                                <td className="py-3.5 ps-4 fw-bold text-dark text-truncate" style={{ fontSize: '0.9rem' }}>
-                                  {m.name}
-                                </td>
-                                <td className="py-3.5 text-muted fw-semibold text-truncate" style={{ fontSize: '0.85rem' }}>
-                                  {m.relationship}
-                                </td>
-                                <td className="py-3.5 font-monospace text-dark fw-medium text-truncate" style={{ fontSize: '0.85rem' }}>
-                                  {m.nik}
-                                </td>
-                                <td className="py-3.5 text-muted fw-medium text-truncate" style={{ fontSize: '0.85rem' }}>
-                                  {m.email || (m.name ? `${m.name.trim().toLowerCase().replace(/\s+/g, '.')}@gmail.com` : '—')}
-                                </td>
-                                <td className="py-3.5">
-                                  <span 
-                                    className="badge fw-semibold rounded-pill px-2.5 py-1"
-                                    style={{
-                                      backgroundColor: isPending ? '#FEF3C7' : '#10B981',
-                                      color: isPending ? '#B45309' : '#FFFFFF',
-                                      fontSize: '0.75rem',
-                                      border: isPending ? '1px solid #FDE68A' : '1px solid #10B981'
-                                    }}
-                                  >
-                                    {isPending ? 'Pending' : 'Active'}
-                                  </span>
-                                </td>
-                                <td className="py-3.5 pe-4 text-end">
-                                  <button 
-                                    type="button" 
-                                    className="btn btn-sm d-inline-flex align-items-center fw-semibold shadow-none border"
-                                    style={{
-                                      backgroundColor: '#F8FAFC',
-                                      borderColor: '#CBD5E1',
-                                      color: '#002B7F',
-                                      borderRadius: '6px',
-                                      padding: '5px 12px',
-                                      fontSize: '0.8rem',
-                                      gap: '6px',
-                                      transition: 'all 0.15s ease'
-                                    }}
-                                    onClick={() => handleViewMemberDetail(m, unit)}
-                                    title="Member detail"
-                                  >
-                                    <Eye size={15} weight="bold" />
-                                    <span>Detail</span>
-                                  </button>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              );
-            })
-          )}
-        </div>
-      )}
-
-      {/* 7. Tab Content: Vehicles */}
-      {detailActiveTab === 'vehicles' && (
-        <div 
-          className="card border bg-white shadow-2xs overflow-hidden"
-          style={{ borderRadius: '12px', borderColor: '#E2E8F0' }}
-        >
-          <div className="table-responsive">
-            <table className="table align-middle mb-0 bg-white">
-              <thead style={{ backgroundColor: '#F8FAFC' }}>
-                <tr className="border-bottom" style={{ borderColor: '#E2E8F0' }}>
-                  <th className="py-3 ps-4 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    LICENSE PLATE
-                  </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    TYPE
-                  </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    VEHICLE BRAND & MODEL
-                  </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    COLOR
-                  </th>
-                  <th className="py-3 text-uppercase fw-bold" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    PARKING SLOT
-                  </th>
-                  <th className="py-3 pe-4 text-uppercase fw-bold text-end" style={{ backgroundColor: '#F8FAFC', fontSize: '0.75rem', color: '#64748B', letterSpacing: '0.05em' }}>
-                    RFID ACCESS
-                  </th>
-                </tr>
-              </thead>
-              <tbody style={{ backgroundColor: '#FFFFFF' }}>
-                {!selectedTenant.vehicles || selectedTenant.vehicles.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="text-center text-muted fw-medium" style={{ padding: '48px 24px', fontSize: '0.875rem' }}>
-                      No vehicles registered for this tenant.
-                    </td>
-                  </tr>
-                ) : (
-                  selectedTenant.vehicles.map((v) => (
-                    <tr key={v.id} className="border-bottom" style={{ borderColor: '#F1F5F9' }}>
-                      <td className="py-3.5 ps-4">
-                        <span 
-                          className="badge bg-dark text-white px-2.5 py-1.5 font-monospace fw-bold"
-                          style={{ fontSize: '0.8rem', letterSpacing: '0.05em' }}
-                        >
-                          {v.plate}
-                        </span>
-                      </td>
-                      <td className="py-3.5 fw-semibold text-dark" style={{ fontSize: '0.85rem' }}>
-                        {v.type}
-                      </td>
-                      <td className="py-3.5 text-dark fw-medium" style={{ fontSize: '0.85rem' }}>
-                        {v.brand}
-                      </td>
-                      <td className="py-3.5 text-muted fw-medium" style={{ fontSize: '0.85rem' }}>
-                        {v.color}
-                      </td>
-                      <td className="py-3.5 font-monospace fw-bold text-primary" style={{ fontSize: '0.85rem' }}>
-                        {v.slot}
-                      </td>
-                      <td className="py-3.5 pe-4 text-end font-monospace text-muted fw-medium" style={{ fontSize: '0.825rem' }}>
-                        {v.rfid}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+              )}
+            </div>
           </div>
         </div>
       )}
+
+      {detailActiveTab === 'vehicles' && (
+        <div className="emp-card-container tm-page">
+          <div className="emp-card-header">
+            <div>
+              <h2 className="emp-card-title">Vehicles</h2>
+              <p className="emp-card-desc">Vehicles registered to this tenant and the parking slot each one uses.</p>
+            </div>
+            <div className="emp-card-actions">
+              <button type="button" className="emp-btn-primary" onClick={() => setIsAddVehicleOpen(true)}>
+                <Plus size={16} weight="bold" aria-hidden="true" />
+                <span>Add vehicle</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="emp-search-row unit-filter-row">
+            <SearchBox label="Search vehicles" placeholder="Search plate, brand, or slot" value={vehicleFilters.query} onChange={(v) => setVehicleFilter('query', v)} />
+            <FilterSelect label="Filter type" value={vehicleFilters.type} onChange={(e) => setVehicleFilter('type', e.target.value)}>
+              <option value="">All types</option>
+              {vehicleTypeOptions.map((type) => <option key={type} value={type}>{type}</option>)}
+            </FilterSelect>
+            <ResetButton disabled={!hasFilters(vehicleFilters)} onClick={() => setVehicleFilters(EMPTY_VEHICLE_FILTERS)} />
+          </div>
+
+          <div className="emp-card-body">
+            <div className="emp-table-card-inner">
+              {filteredVehicles.length === 0 ? (
+                <EmptyState
+                  Icon={Car}
+                  filtered={hasFilters(vehicleFilters)}
+                  noun="vehicles"
+                  idle="Vehicles appear here once registered to this tenant."
+                />
+              ) : (
+                <div className="emp-table-responsive">
+                  <table className="emp-table tm-table">
+                    <thead>
+                      <tr>
+                        {VEHICLE_COLUMNS.map((c) => <th key={c} scope="col">{c}</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredVehicles.map((v) => (
+                        <tr key={v.id}>
+                          <td data-label="Plate"><span className="tm-unit-badge">{v.plate}</span></td>
+                          <td data-label="Type"><span className="tm-relation">{v.type}</span></td>
+                          <td data-label="Brand & model"><span className="tm-memberof__name">{v.brand}</span></td>
+                          <td data-label="Color"><span className="unit-muted">{v.color}</span></td>
+                          <td data-label="Parking slot"><span className="tm-memberof__name">{v.slot}</span></td>
+                          <td data-label="RFID"><span className="unit-muted">{v.rfid}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isAddVehicleOpen && (
+        <AddVehicleDialog
+          tenantName={selectedTenant.name}
+          existingPlates={vehicles.map((v) => v.plate)}
+          onCancel={() => setIsAddVehicleOpen(false)}
+          onSave={(vehicle) => {
+            selectedTenant.vehicles = [...vehicles, { ...vehicle, id: Date.now() }];
+            setIsAddVehicleOpen(false);
+            handleAction(`Vehicle ${vehicle.plate} added to ${selectedTenant.name}.`);
+          }}
+        />
+      )}
+
+      {rowMenu && <RowActionMenu anchor={rowMenu} items={rowMenuItems(rowMenu.row)} onClose={closeRowMenu} />}
 
       {/* 8. Onboarding Unit Modal (Matches User Screenshot) */}
       {isOnboardingModalOpen && (
@@ -1701,41 +1347,30 @@ export function TenantDetailView({ presenter }) {
             {/* Modal Form */}
             <form onSubmit={handleAddMemberSubmit}>
               <div className="p-4 d-flex flex-column" style={{ gap: '16px' }}>
-                {/* Target Unit Pill Display */}
                 <div>
-                  <label className="form-label text-dark small fw-semibold mb-1.5" style={{ fontSize: '0.8125rem', color: '#1E293B' }}>
+                  <label htmlFor="tnm-member-unit" className="form-label text-dark small fw-semibold mb-1.5" style={{ fontSize: '0.8125rem', color: '#1E293B' }}>
                     Target Unit
                   </label>
-                  <div 
-                    className="d-flex align-items-center justify-content-between px-3 py-2 border"
-                    style={{ 
-                      borderRadius: '8px', 
-                      borderColor: '#CBD5E1', 
-                      height: '42px', 
-                      backgroundColor: '#F8FAFC' 
+                  <select
+                    id="tnm-member-unit"
+                    className="form-select shadow-none"
+                    style={{
+                      borderRadius: '8px',
+                      borderColor: '#CBD5E1',
+                      height: '42px',
+                      fontSize: '0.875rem',
+                      color: '#1E293B',
+                      backgroundColor: '#FFFFFF',
+                      padding: '0 14px',
+                      cursor: 'pointer'
                     }}
+                    value={selectedUnitForMember?.code ?? ''}
+                    onChange={(e) => setSelectedUnitForMember(units.find((u) => u.code === e.target.value))}
                   >
-                    <div className="d-flex align-items-center gap-2">
-                      <Door size={16} weight="bold" className="text-primary" />
-                      <span className="fw-bold text-dark font-monospace" style={{ fontSize: '0.9rem' }}>
-                        {selectedUnitForMember?.code}
-                      </span>
-                      <span className="text-muted small">
-                        ({selectedUnitForMember?.tower || 'Tower A'})
-                      </span>
-                    </div>
-                    <span 
-                      className="badge fw-semibold"
-                      style={{ 
-                        backgroundColor: '#EFF6FF', 
-                        color: '#002B7F',
-                        fontSize: '0.725rem',
-                        padding: '4px 8px'
-                      }}
-                    >
-                      {selectedUnitForMember?.role || 'Occupant'}
-                    </span>
-                  </div>
+                    {units.map((u) => (
+                      <option key={u.code} value={u.code}>{u.code} · {u.tower} · {u.roleLabel}</option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Member Name */}

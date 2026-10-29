@@ -617,3 +617,160 @@ export class TenantModel {
     return MOCK_TENANTS.find(t => t.id === numericId) || null;
   }
 }
+
+// ----------------------------------------------------
+// Import from the Tenant and Tenant Unit templates. Each row is checked on its own;
+// rows with a problem are reported with their Excel row number and left out.
+// ----------------------------------------------------
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const digits = (v) => String(v ?? '').replace(/\D/g, '');
+
+// DD/MM/YYYY to a Date, or null when it is not a real day.
+export function parseDmy(value) {
+  const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(value ?? '').trim());
+  if (!m) return null;
+  const [d, mo, y] = [Number(m[1]), Number(m[2]) - 1, Number(m[3])];
+  const date = new Date(y, mo, d);
+  return date.getFullYear() === y && date.getMonth() === mo && date.getDate() === d ? date : null;
+}
+
+const formatDay = (date) => `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+
+const addMonths = (date, months) => {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+};
+
+export function importRowsToTenants(rows, existingTenants = []) {
+  const emails = new Set(existingTenants.map((t) => (t.email || '').toLowerCase()));
+  const niks = new Set(existingTenants.map((t) => t.nik));
+  let nextId = existingTenants.reduce((max, t) => Math.max(max, Number(t.id) || 0), 0) + 1;
+  const tenants = [];
+  const errors = [];
+
+  rows.forEach(({ rowNumber, values }) => {
+    const v = (key) => String(values[key] ?? '').trim();
+    const email = v('email').toLowerCase();
+    const nik = digits(v('nik'));
+    const phone = digits(v('phone'));
+    const npwp = digits(v('npwp'));
+    const ecPhone = digits(v('ecPhone'));
+
+    let error = '';
+    if (!v('name')) error = 'Full name is required.';
+    else if (!email) error = 'Email is required.';
+    else if (!EMAIL_RE.test(email)) error = `Email "${v('email')}" is not a valid email.`;
+    else if (emails.has(email)) error = `Email ${email} is already used by another tenant.`;
+    else if (!phone) error = 'Phone number is required.';
+    else if (phone.length < 9 || phone.length > 15) error = 'Phone number must be 9 to 15 digits.';
+    else if (!nik) error = 'NIK is required.';
+    else if (nik.length !== 16) error = 'NIK must be exactly 16 digits.';
+    else if (niks.has(nik)) error = `NIK ${nik} is already used by another tenant.`;
+    else if (npwp && npwp.length !== 15 && npwp.length !== 16) error = 'NPWP must be 15 or 16 digits.';
+    else if (v('postalCode') && !/^\d{5}$/.test(v('postalCode'))) error = 'Postal code must be 5 digits.';
+    else if (ecPhone && (ecPhone.length < 9 || ecPhone.length > 15)) error = 'Emergency phone number must be 9 to 15 digits.';
+
+    if (error) {
+      errors.push({ rowNumber, message: error });
+      return;
+    }
+    emails.add(email);
+    niks.add(nik);
+    tenants.push({
+      id: nextId++,
+      name: v('name'),
+      email,
+      phone,
+      nik,
+      npwp: v('npwp'),
+      citizenship: v('citizenship') || 'Indonesian (WNI)',
+      province: v('province'),
+      ktpAddress: v('ktpAddress'),
+      postalCode: v('postalCode'),
+      emergencyContact: {
+        name: v('ecName'),
+        relationship: v('ecRelationship'),
+        phone: ecPhone,
+        nik: '',
+        ktpAddress: '',
+        currentAddress: ''
+      },
+      members: [],
+      vehicles: [],
+      units: [],
+      type: 'owner'
+    });
+  });
+
+  return { tenants, errors };
+}
+
+const ROLES = { owner: 'OWNER', renter: 'RENTER', proxy: 'PROXY' };
+
+/**
+ * `knownUnits` are { code, tower } for every unit in the Unit menu and Tenant Management.
+ * Returns { assignments: [{ tenantId, unit }], errors }. A unit keeps one Owner and one Renter,
+ * and a proxy needs the unit to have an owner.
+ */
+export function importRowsToTenantUnits(rows, tenants, knownUnits) {
+  const unitByCode = new Map(knownUnits.map((u) => [u.code.toUpperCase(), u]));
+  const holders = new Map();
+  const hold = (code, role, tenant) => holders.set(`${code}|${role}`, tenant);
+  const holderOf = (code, role) => holders.get(`${code}|${role}`);
+  tenants.forEach((t) => t.units.forEach((u) => hold(u.code.toUpperCase(), u.role, t)));
+  const heldBy = new Set(tenants.flatMap((t) => t.units.map((u) => `${t.id}|${u.code.toUpperCase()}`)));
+
+  const assignments = [];
+  const errors = [];
+
+  rows.forEach(({ rowNumber, values }) => {
+    const v = (key) => String(values[key] ?? '').trim();
+    const email = v('email').toLowerCase();
+    const code = v('unitCode').toUpperCase();
+    const role = ROLES[v('role').toLowerCase()];
+    const matches = tenants.filter((t) => (t.email || '').toLowerCase() === email);
+    const tenant = matches[0];
+    const entry = parseDmy(v('entryDate'));
+    const start = parseDmy(v('startRent'));
+    const period = v('rentPeriod');
+
+    let error = '';
+    if (!email) error = 'Tenant email is required.';
+    else if (matches.length === 0) error = `No tenant has the email ${email}. Import or add the tenant first.`;
+    else if (matches.length > 1) error = `The email ${email} belongs to ${matches.length} tenants. Fix it in Tenant Management first.`;
+    else if (!code) error = 'Unit code is required.';
+    else if (!unitByCode.has(code)) error = `Unit ${code} is not registered in the Unit menu.`;
+    else if (!role) error = 'Role must be Owner, Renter, or Proxy.';
+    else if (!v('entryDate')) error = 'Entry date is required.';
+    else if (!entry) error = `Entry date "${v('entryDate')}" is not a date in DD/MM/YYYY.`;
+    else if (heldBy.has(`${tenant.id}|${code}`)) error = `${tenant.name} already holds unit ${code}.`;
+    else if (role !== 'PROXY' && holderOf(code, role)) {
+      error = `Unit ${code} already has ${role === 'OWNER' ? 'an owner' : 'a renter'} (${holderOf(code, role).name}).`;
+    } else if (role === 'PROXY' && !holderOf(code, 'OWNER')) error = `Unit ${code} has no owner yet, so it cannot have a proxy.`;
+    else if (role === 'RENTER' && !/^\d+$/.test(period)) error = 'Rent period is required for a renter, in whole months.';
+    else if (role === 'RENTER' && (Number(period) < 1 || Number(period) > 120)) error = 'Rent period must be 1 to 120 months.';
+    else if (role === 'RENTER' && !start) error = 'Start rent is required for a renter, in DD/MM/YYYY.';
+
+    if (error) {
+      errors.push({ rowNumber, message: error });
+      return;
+    }
+    const known = unitByCode.get(code);
+    const unit = {
+      role,
+      code,
+      tower: known.tower || `Tower ${code.charAt(0)}`,
+      handoverDate: formatDay(entry),
+      status: 'Occupant',
+      ...(role === 'RENTER' ? { rentalPeriod: Number(period), endRentDate: formatDay(addMonths(start, Number(period))) } : {})
+    };
+    hold(code, role, tenant);
+    heldBy.add(`${tenant.id}|${code}`);
+    assignments.push({ tenantId: tenant.id, unit });
+  });
+
+  return { assignments, errors };
+}

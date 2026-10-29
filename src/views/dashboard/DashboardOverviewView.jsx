@@ -193,7 +193,7 @@ export function DashboardOverviewView({ presenter, onStartNewOnboarding }) {
 
             <div className="mt-3 text-center">
               <button className="btn btn-link text-secondary text-decoration-none fw-semibold small p-0">
-                View Full Audit Logs & Export CSV →
+                View Full Audit Logs & Export Excel →
               </button>
             </div>
           </div>

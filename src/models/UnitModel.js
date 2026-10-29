@@ -630,17 +630,6 @@ export function applyUnitEdit(unit, draft) {
   return next;
 }
 
-export function unitsToCsv(units) {
-  const header = ['Code', 'Category', 'Tower', 'Floor', 'Status', 'Owner', 'Tenant', 'Occupant', 'Occupant role'];
-  const esc = (v) => `"${String(v ?? '').replaceAll('"', '""')}"`;
-  const rows = units.map((u) => [
-    u.code, getCategory(u.category).label, u.tower, u.floor,
-    getStatusLabel(u.category, u.status), u.ownerName, u.tenantName, getOccupantName(u),
-    describeOccupant(getOccupant(u))
-  ]);
-  return [header, ...rows].map((r) => r.map(esc).join(',')).join('\n');
-}
-
 export function getPageItems(current, total) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   const pages = new Set([1, total, current - 1, current, current + 1]);
@@ -651,4 +640,48 @@ export function getPageItems(current, total) {
     out.push(p);
   });
   return out;
+}
+
+// Import from the Unit template: each row becomes a draft and goes through the same checks as the Add Unit form.
+// `rows` are { rowNumber, values } where values are keyed like the template columns.
+const yesNoValue = (v) => (String(v ?? '').trim().toLowerCase() === 'no' ? 'no' : 'yes');
+
+export function importRowsToUnits(rows, category, existingUnits = []) {
+  const towers = category === 'non_unit' ? NON_UNIT_AREAS : TOWER_OPTIONS;
+  const accepted = [];
+  const errors = [];
+
+  rows.forEach(({ rowNumber, values }) => {
+    const v = (key) => String(values[key] ?? '').trim();
+    const tower = towers.find((t) => t.toLowerCase() === v('tower').toLowerCase()) ?? v('tower');
+    const draft = {
+      ...getEmptyDraft(category),
+      tower,
+      floor: v('floor').toUpperCase(),
+      code: v('code').toUpperCase(),
+      area: v('area'),
+      electricCapacity: v('electricCapacity'),
+      waterMeterNo: v('waterMeterNo'),
+      electricMeterNo: v('electricMeterNo'),
+      waterMeterStart: v('waterMeterStart'),
+      electricMeterStart: v('electricMeterStart'),
+      npp: v('npp'),
+      bedrooms: v('bedrooms'),
+      invoiceElectric: yesNoValue(values.invoiceElectric),
+      invoiceWater: yesNoValue(values.invoiceWater),
+      invoiceIpl: yesNoValue(values.invoiceIpl)
+    };
+    draft.iplInterval = draft.invoiceIpl === 'no' ? '' : (v('iplInterval') || '1');
+
+    let error = '';
+    if (draft.tower && !towers.includes(draft.tower)) error = `Tower "${draft.tower}" is not one of ${towers.join(', ')}.`;
+    else if (draft.tower && draft.floor && !getFloorOptions(category, draft.tower).includes(draft.floor)) {
+      error = `Floor "${draft.floor}" does not exist for this unit type in ${draft.tower}.`;
+    }
+    error = error || validateUnitInfo(draft, [...existingUnits, ...accepted]) || validateUnitDetail(draft);
+    if (error) errors.push({ rowNumber, code: draft.code, message: error });
+    else accepted.push(buildUnit(draft));
+  });
+
+  return { units: accepted, errors };
 }

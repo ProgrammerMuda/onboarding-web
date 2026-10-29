@@ -1,4 +1,6 @@
 import ExcelJS from 'exceljs';
+import { UNIT_CATEGORIES, TOWER_OPTIONS as UNIT_TOWERS, NON_UNIT_AREAS, getFloorOptions } from '../models/UnitModel';
+import { UNIT_CHOICES } from '../models/TenantMemberModel';
 
 /**
  * Triggers a browser download of an ExcelJS workbook as a .xlsx file.
@@ -1428,4 +1430,473 @@ export async function exportLedgerToExcel({ employeeName, nik, entries, typeLabe
   const safeName = String(employeeName || nik || 'employee').replace(/[^a-z0-9]+/gi, '_').toLowerCase();
   const todayStr = new Date().toISOString().slice(0, 10);
   await downloadWorkbook(workbook, `leave_ledger_${safeName}_${todayStr}.xlsx`);
+}
+
+// ----------------------------------------------------
+// Unit import templates, one per unit type, styled like the Employee template
+// ----------------------------------------------------
+
+const BORDER = (argb) => ({
+  top: { style: 'thin', color: { argb } },
+  bottom: { style: 'thin', color: { argb } },
+  left: { style: 'thin', color: { argb } },
+  right: { style: 'thin', color: { argb } }
+});
+const GROUP_BANDS = ['FF002B7F', 'FF0284C7'];
+const UNIT_TEMPLATE_INPUT_ROWS = 100;
+
+const listValidation = (options, title) => ({
+  type: 'list',
+  allowBlank: true,
+  formulae: [`"${options.join(',')}"`],
+  showErrorMessage: true,
+  errorStyle: 'warning',
+  errorTitle: title,
+  error: `Choose ${title.toLowerCase()} from the dropdown.`
+});
+
+// The columns follow the Add Unit wizard for that type: NPP is left out for Non-Unit,
+// and Number of Bedroom only applies to a Residential Unit.
+export function getUnitTemplateColumns(category) {
+  const isNonUnit = category === 'non_unit';
+  const towers = isNonUnit ? NON_UNIT_AREAS : UNIT_TOWERS;
+  const floors = getFloorOptions(category, 'Tower A');
+  const yesNo = ['Yes', 'No'];
+  const info = 'STEP 1: UNIT INFO';
+  const detail = 'STEP 2: UNIT DETAIL';
+  const billing = 'STEP 3: BILLING';
+  return [
+    { header: isNonUnit ? 'Tower or Area *' : 'Tower *', key: 'tower', width: 16, align: 'center', group: info, options: towers, rule: 'Dropdown List (Mandatory)' },
+    { header: 'Floor *', key: 'floor', width: 10, align: 'center', isString: true, group: info, options: floors, rule: 'Dropdown List (Mandatory)' },
+    { header: 'Unit Name *', key: 'code', width: 16, align: 'left', isBold: true, isString: true, group: info, rule: 'Unique, letters and digits' },
+    { header: 'Unit Area (m²) *', key: 'area', width: 16, align: 'center', group: detail, rule: 'Number, decimals allowed' },
+    { header: 'Electric Capacity (VA) *', key: 'electricCapacity', width: 20, align: 'center', group: detail, rule: 'Whole number' },
+    { header: 'Water Meter No *', key: 'waterMeterNo', width: 18, align: 'center', isString: true, group: detail, rule: 'Digits only' },
+    { header: 'Electricity Meter No *', key: 'electricMeterNo', width: 20, align: 'center', isString: true, group: detail, rule: 'Digits only' },
+    { header: 'Initial Water Meter (m³) *', key: 'waterMeterStart', width: 22, align: 'center', group: detail, rule: 'Number, decimals allowed' },
+    { header: 'Initial Electricity Meter (kWh) *', key: 'electricMeterStart', width: 26, align: 'center', group: detail, rule: 'Number, decimals allowed' },
+    ...(isNonUnit ? [] : [{ header: 'NPP *', key: 'npp', width: 10, align: 'center', group: detail, rule: 'Number, decimals allowed' }]),
+    ...(category === 'hunian' ? [{ header: 'Number of Bedroom *', key: 'bedrooms', width: 18, align: 'center', group: detail, rule: 'Whole number' }] : []),
+    { header: 'Insert Electric Utility To Invoice', key: 'invoiceElectric', width: 22, align: 'center', group: billing, options: yesNo, rule: 'Dropdown List' },
+    { header: 'Insert Water Utility To Invoice', key: 'invoiceWater', width: 22, align: 'center', group: billing, options: yesNo, rule: 'Dropdown List' },
+    { header: 'Insert IPL To Invoice', key: 'invoiceIpl', width: 18, align: 'center', group: billing, options: yesNo, rule: 'Dropdown List' },
+    { header: 'IPL Bill Interval (Month)', key: 'iplInterval', width: 20, align: 'center', group: billing, rule: 'Whole number; required when IPL is Yes' }
+  ];
+}
+
+const UNIT_TEMPLATE_SAMPLES = {
+  hunian: [
+    { tower: 'Tower A', floor: '03', code: 'A0301', area: 36.5, electricCapacity: 2200, waterMeterNo: '20240101', electricMeterNo: '31240101', waterMeterStart: 0, electricMeterStart: 0, npp: 0.25, bedrooms: 2, invoiceElectric: 'Yes', invoiceWater: 'Yes', invoiceIpl: 'Yes', iplInterval: 1 },
+    { tower: 'Tower B', floor: '07', code: 'B0712', area: 54, electricCapacity: 3500, waterMeterNo: '20240102', electricMeterNo: '31240102', waterMeterStart: 12, electricMeterStart: 140, npp: 0.38, bedrooms: 3, invoiceElectric: 'Yes', invoiceWater: 'Yes', invoiceIpl: 'Yes', iplInterval: 3 },
+    { tower: 'Tower C', floor: '10', code: 'C1005', area: 28, electricCapacity: 1300, waterMeterNo: '20240103', electricMeterNo: '31240103', waterMeterStart: 0, electricMeterStart: 0, npp: 0.2, bedrooms: 1, invoiceElectric: 'Yes', invoiceWater: 'No', invoiceIpl: 'No', iplInterval: '' }
+  ],
+  non_hunian: [
+    { tower: 'Tower A', floor: 'GF', code: 'ATOKO1', area: 48, electricCapacity: 5500, waterMeterNo: '20240201', electricMeterNo: '31240201', waterMeterStart: 0, electricMeterStart: 0, npp: 0.4, invoiceElectric: 'Yes', invoiceWater: 'Yes', invoiceIpl: 'Yes', iplInterval: 1 },
+    { tower: 'Tower B', floor: 'LG', code: 'BTOKO3', area: 32.5, electricCapacity: 3500, waterMeterNo: '20240202', electricMeterNo: '31240202', waterMeterStart: 4, electricMeterStart: 85, npp: 0.3, invoiceElectric: 'Yes', invoiceWater: 'Yes', invoiceIpl: 'Yes', iplInterval: 6 },
+    { tower: 'Tower D', floor: 'GF', code: 'DTOKO2', area: 60, electricCapacity: 7700, waterMeterNo: '20240203', electricMeterNo: '31240203', waterMeterStart: 0, electricMeterStart: 0, npp: 0.45, invoiceElectric: 'Yes', invoiceWater: 'No', invoiceIpl: 'Yes', iplInterval: 1 }
+  ],
+  non_unit: [
+    { tower: 'Podium', floor: 'GF', code: 'PKIOSK1', area: 12, electricCapacity: 1300, waterMeterNo: '20240301', electricMeterNo: '31240301', waterMeterStart: 0, electricMeterStart: 0, invoiceElectric: 'Yes', invoiceWater: 'No', invoiceIpl: 'No', iplInterval: '' },
+    { tower: 'Tower A', floor: 'B1', code: 'APANEL1', area: 8, electricCapacity: 900, waterMeterNo: '20240302', electricMeterNo: '31240302', waterMeterStart: 0, electricMeterStart: 20, invoiceElectric: 'Yes', invoiceWater: 'No', invoiceIpl: 'No', iplInterval: '' },
+    { tower: 'Podium', floor: '02', code: 'PATM2', area: 4, electricCapacity: 900, waterMeterNo: '20240303', electricMeterNo: '31240303', waterMeterStart: 0, electricMeterStart: 0, invoiceElectric: 'Yes', invoiceWater: 'No', invoiceIpl: 'Yes', iplInterval: 12 }
+  ]
+};
+
+/**
+ * Builds an import template in the Employee template style: title, note, one band per form step
+ * (navy and sky in turn), headers in their band's color, sample rows, striped input rows with
+ * dropdowns down to row 100, and a Reference & Options Guide sheet.
+ * Columns: { header, key, width, align, group, options?, isString?, isBold?, rule }.
+ */
+export function buildImportTemplateWorkbook({ sheetName, title, note, refTitle, columns, samples, frozenColumns = 1 }) {
+  const totalCols = columns.length;
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'PROAPPS';
+  workbook.lastModifiedBy = 'PROAPPS System';
+  workbook.created = new Date();
+  workbook.modified = new Date();
+
+  const ws = workbook.addWorksheet(sheetName.slice(0, 31), {
+    views: [{ state: 'frozen', xSplit: frozenColumns, ySplit: 5, showGridLines: true }]
+  });
+
+  ws.mergeCells(1, 1, 1, totalCols);
+  ws.getCell('A1').value = title;
+  ws.getCell('A1').font = { name: 'Calibri', size: 14, bold: true, color: { argb: 'FF1E3A8A' } };
+  ws.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
+  ws.getRow(1).height = 26;
+
+  ws.mergeCells(2, 1, 2, totalCols);
+  ws.getCell('A2').value = note;
+  ws.getCell('A2').font = { name: 'Calibri', size: 10, italic: true, color: { argb: 'FF64748B' } };
+  ws.getCell('A2').alignment = { vertical: 'middle', horizontal: 'left' };
+  ws.getRow(2).height = 20;
+
+  const groups = [...new Set(columns.map((c) => c.group))];
+  const bandOf = Object.fromEntries(groups.map((g, i) => [g, GROUP_BANDS[i % GROUP_BANDS.length]]));
+  ws.getRow(4).height = 24;
+  groups.forEach((group) => {
+    const start = columns.findIndex((c) => c.group === group) + 1;
+    const end = start + columns.filter((c) => c.group === group).length - 1;
+    if (end > start) ws.mergeCells(4, start, 4, end);
+    const cell = ws.getCell(4, start);
+    cell.value = group;
+    cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bandOf[group] } };
+    cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    cell.border = BORDER('FFCBD5E1');
+  });
+
+  const headerRow = ws.getRow(5);
+  headerRow.height = 30;
+  columns.forEach((col, idx) => {
+    const cell = headerRow.getCell(idx + 1);
+    cell.value = col.header;
+    cell.font = { name: 'Calibri', size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } };
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: bandOf[col.group] } };
+    cell.alignment = { vertical: 'middle', horizontal: col.align, wrapText: true };
+    cell.border = BORDER('FFCBD5E1');
+    ws.getColumn(idx + 1).width = col.width;
+  });
+  ws.autoFilter = { from: { row: 5, column: 1 }, to: { row: 5, column: totalCols } };
+
+  for (let r = 6; r <= UNIT_TEMPLATE_INPUT_ROWS; r += 1) {
+    const row = ws.getRow(r);
+    row.height = r < 6 + samples.length ? 24 : 22;
+    const sample = samples[r - 6];
+    columns.forEach((col, idx) => {
+      const cell = row.getCell(idx + 1);
+      if (sample) cell.value = sample[col.key] ?? '';
+      cell.font = { name: 'Calibri', size: 10, bold: Boolean(sample && col.isBold), color: { argb: 'FF0F172A' } };
+      cell.alignment = { vertical: 'middle', horizontal: col.align };
+      if (col.isString) cell.numFmt = '@';
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: (r - 6) % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC' } };
+      cell.border = BORDER('FFE2E8F0');
+      if (col.options) cell.dataValidation = listValidation(col.options, col.header.replace(/\s*\*$/, ''));
+    });
+  }
+
+  const ref = workbook.addWorksheet('Reference & Options Guide', { views: [{ showGridLines: true }] });
+  ref.mergeCells('A1:D1');
+  ref.getCell('A1').value = refTitle;
+  ref.getCell('A1').font = { name: 'Calibri', size: 13, bold: true, color: { argb: 'FF1E3A8A' } };
+  ref.getRow(1).height = 24;
+  [30, 46, 40, 26].forEach((w, i) => { ref.getColumn(i + 1).width = w; });
+
+  const refHeader = ref.getRow(3);
+  refHeader.height = 26;
+  ['Field Name', 'Available Standard Options', 'Input Rule', 'Example Value'].forEach((h, i) => {
+    const c = refHeader.getCell(i + 1);
+    c.value = h;
+    c.font = { name: 'Calibri', size: 10.5, bold: true, color: { argb: 'FFFFFFFF' } };
+    c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } };
+    c.alignment = { vertical: 'middle', horizontal: 'left' };
+    c.border = BORDER('FFCBD5E1');
+  });
+
+  columns.forEach((col, idx) => {
+    const row = ref.getRow(4 + idx);
+    row.height = 22;
+    [col.header.replace(/\s*\*$/, ''), col.options ? col.options.join(', ') : '-', col.rule, String(samples[0]?.[col.key] || '-')].forEach((val, cIdx) => {
+      const cell = row.getCell(cIdx + 1);
+      cell.value = val;
+      cell.font = { name: 'Calibri', size: 10, bold: cIdx === 0, color: { argb: 'FF0F172A' } };
+      cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: cIdx === 1 };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: idx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC' } };
+      cell.border = BORDER('FFE2E8F0');
+    });
+  });
+
+  return workbook;
+}
+
+export function buildUnitImportTemplate(category) {
+  const type = UNIT_CATEGORIES.find((c) => c.id === category);
+  if (!type) throw new Error(`Unknown unit type: ${category}`);
+  return buildImportTemplateWorkbook({
+    sheetName: `${type.short} Import Template`,
+    title: `PROAPPS — ${type.label.toUpperCase()} BATCH IMPORT TEMPLATE`,
+    note: `Unit Type: ${type.label}. Form fields match the Add Unit wizard (Step 1 Unit Info, Step 2 Unit Detail, Step 3 Billing). Columns with (*) are mandatory.`,
+    refTitle: `PROAPPS — ${type.label.toUpperCase()} OPTIONS & VALIDATION REFERENCE`,
+    columns: getUnitTemplateColumns(category),
+    samples: UNIT_TEMPLATE_SAMPLES[category],
+    frozenColumns: 3
+  });
+}
+
+const UNIT_TEMPLATE_FILES = {
+  hunian: 'Unit_Import_Template_Residential.xlsx',
+  non_hunian: 'Unit_Import_Template_Non_Residential.xlsx',
+  non_unit: 'Unit_Import_Template_Non_Unit.xlsx'
+};
+
+export function downloadUnitImportTemplate(category) {
+  return downloadWorkbook(buildUnitImportTemplate(category), UNIT_TEMPLATE_FILES[category]);
+}
+
+const normalizeHeader = (h) => String(h ?? '').replace(/\*/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+// Splits one CSV line, keeping commas inside double quotes.
+function splitCsvLine(line) {
+  const out = [];
+  let cell = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const ch = line[i];
+    if (quoted && ch === '"' && line[i + 1] === '"') { cell += '"'; i += 1; }
+    else if (ch === '"') quoted = !quoted;
+    else if (ch === ',' && !quoted) { out.push(cell); cell = ''; }
+    else cell += ch;
+  }
+  out.push(cell);
+  return out;
+}
+
+/**
+ * Reads a filled import template (.xlsx or .csv) into { rowNumber, values } rows keyed like `columns`.
+ * The header row is the one holding `columns[headerAt]`. `otherTemplates` lists { marker, label } of
+ * templates that must not be uploaded here; their title (cell A1) contains `marker`.
+ * Throws with a readable message when the file cannot be used.
+ */
+export async function parseImportTemplateFile(file, { columns, label, noun, headerAt = 0, otherTemplates = [], hint }) {
+  if (!file) throw new Error('No file selected.');
+  const name = (file.name || '').toLowerCase();
+  if (!/\.(xlsx|csv)$/.test(name)) throw new Error('Upload the template as .xlsx or .csv.');
+  if (file.size > 10 * 1024 * 1024) throw new Error('The file is larger than 10MB.');
+
+  let table = [];
+  let title = '';
+  if (name.endsWith('.xlsx')) {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await file.arrayBuffer());
+    const ws = workbook.worksheets[0];
+    if (!ws) throw new Error('The workbook has no readable sheet.');
+    title = ws.getCell('A1').text || '';
+    ws.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      const cells = [];
+      for (let c = 1; c <= Math.max(ws.columnCount, columns.length); c += 1) cells.push(row.getCell(c).text ?? '');
+      table.push({ rowNumber, cells });
+    });
+  } else {
+    const text = await file.text();
+    table = text.split(/\r?\n/).map((line, i) => ({ rowNumber: i + 1, cells: splitCsvLine(line) }));
+  }
+
+  const other = otherTemplates.find((o) => title.toUpperCase().includes(o.marker));
+  if (other) throw new Error(`This file is the ${other.label} template. ${hint ?? `Upload the ${label} template.`}`);
+
+  const anchor = normalizeHeader(columns[headerAt].header);
+  const headerIndex = table.findIndex(({ cells }) => cells.some((c) => normalizeHeader(c) === anchor));
+  if (headerIndex === -1) throw new Error('Could not find the header row. Use the Download Template file and keep row 5 as it is.');
+
+  const header = table[headerIndex].cells.map(normalizeHeader);
+  const colOf = {};
+  columns.forEach((col) => { colOf[col.key] = header.indexOf(normalizeHeader(col.header)); });
+  const missing = columns.filter((col) => col.header.includes('*') && colOf[col.key] === -1);
+  if (missing.length) {
+    throw new Error(`The file is missing ${missing.map((c) => normalizeHeader(c.header)).join(', ')}. Use the ${label} template.`);
+  }
+
+  const rows = table.slice(headerIndex + 1)
+    .map(({ rowNumber, cells }) => ({
+      rowNumber,
+      values: Object.fromEntries(columns.map((col) => [col.key, colOf[col.key] >= 0 ? String(cells[colOf[col.key]] ?? '').trim() : '']))
+    }))
+    .filter(({ values }) => Object.values(values).some((v) => v !== ''));
+
+  if (rows.length === 0) throw new Error(`The file has no ${noun} rows below the header.`);
+  return rows;
+}
+
+export function parseUnitImportFile(file, category) {
+  const type = UNIT_CATEGORIES.find((c) => c.id === category);
+  const others = UNIT_CATEGORIES.filter((c) => c.id !== category);
+  return parseImportTemplateFile(file, {
+    columns: getUnitTemplateColumns(category),
+    label: type.label,
+    noun: 'unit',
+    headerAt: 2,
+    otherTemplates: others.map((c) => ({ marker: `— ${c.label.toUpperCase()} BATCH`, label: c.label })),
+    hint: 'Choose that unit type, or upload the matching template.'
+  });
+}
+
+// ----------------------------------------------------
+// Tenant Management and Tenant Member import templates, styled like the Employee template
+// ----------------------------------------------------
+
+const ID_TYPE_OPTIONS = ['KTP', 'Passport'];
+const DOOR_RULE = 'Comma separated. Main lobby, Tower lobby, Passenger lift, Unit door, Basement parking, Gym, Swimming pool, Rooftop garden, Function room, Service entrance';
+
+export const TENANT_IMPORT_TEMPLATE_COLUMNS = (() => {
+  const id = 'STEP 1: PERSONAL DATA & IDENTITY';
+  const address = 'STEP 2: ADDRESS';
+  const emergency = 'STEP 3: EMERGENCY CONTACT';
+  return [
+    { header: 'Full Name *', key: 'name', width: 26, align: 'left', isBold: true, group: id, rule: 'Text' },
+    { header: 'Email *', key: 'email', width: 30, align: 'left', group: id, rule: 'Valid email, not used by another tenant' },
+    { header: 'Phone Number *', key: 'phone', width: 18, align: 'center', isString: true, group: id, rule: '9 to 15 digits' },
+    { header: 'NIK (KTP) *', key: 'nik', width: 22, align: 'center', isString: true, group: id, rule: 'Exactly 16 digits, not used by another tenant' },
+    { header: 'NPWP', key: 'npwp', width: 22, align: 'center', isString: true, group: id, rule: '15 or 16 digits; dots and dashes allowed' },
+    { header: 'Citizenship', key: 'citizenship', width: 18, align: 'center', group: id, options: ['Indonesian (WNI)', 'Foreign (WNA)'], rule: 'Dropdown List' },
+    { header: 'Province', key: 'province', width: 18, align: 'left', group: address, rule: 'Text' },
+    { header: 'KTP Address', key: 'ktpAddress', width: 42, align: 'left', group: address, rule: 'Text' },
+    { header: 'Postal Code', key: 'postalCode', width: 12, align: 'center', isString: true, group: address, rule: '5 digits' },
+    { header: 'Emergency Contact Name', key: 'ecName', width: 24, align: 'left', group: emergency, rule: 'Text' },
+    { header: 'Relationship', key: 'ecRelationship', width: 16, align: 'center', group: emergency, options: ['Spouse', 'Parent', 'Sibling', 'Child', 'Relative', 'Friend', 'Other'], rule: 'Dropdown List' },
+    { header: 'Emergency Phone Number', key: 'ecPhone', width: 20, align: 'center', isString: true, group: emergency, rule: '9 to 15 digits' }
+  ];
+})();
+
+const TENANT_SAMPLES = [
+  { name: 'Rina Kusumawati', email: 'rina.kusumawati@gmail.com', phone: '081311220011', nik: '3171026503900011', npwp: '11.222.333.4-015.000', citizenship: 'Indonesian (WNI)', province: 'DKI Jakarta', ktpAddress: 'Jl. Kemang Raya No. 8, Jakarta Selatan', postalCode: '12730', ecName: 'Dodi Kusuma', ecRelationship: 'Spouse', ecPhone: '081311220012' },
+  { name: 'Bayu Aditya', email: 'bayu.aditya@corp.id', phone: '082144556677', nik: '3174047712880012', npwp: '', citizenship: 'Indonesian (WNI)', province: 'Banten', ktpAddress: 'Jl. Boulevard Bintaro Blok A2, Tangerang Selatan', postalCode: '15224', ecName: 'Sari Aditya', ecRelationship: 'Sibling', ecPhone: '082144556678' },
+  { name: 'Kenji Tanaka', email: 'kenji.tanaka@outlook.com', phone: '081299887700', nik: '3273011009850013', npwp: '', citizenship: 'Foreign (WNA)', province: 'DKI Jakarta', ktpAddress: 'Jl. Jend. Sudirman Kav. 52, Jakarta Selatan', postalCode: '12190', ecName: 'Yuki Tanaka', ecRelationship: 'Spouse', ecPhone: '081299887701' }
+];
+
+export const TENANT_UNIT_IMPORT_TEMPLATE_COLUMNS = (() => {
+  const tenant = 'STEP 1: TENANT';
+  const unit = 'STEP 2: UNIT';
+  const rent = 'STEP 3: RENT (RENTER ONLY)';
+  return [
+    { header: 'Tenant Email *', key: 'email', width: 30, align: 'left', isBold: true, group: tenant, rule: 'Email of a tenant already in Tenant Management' },
+    { header: 'Unit Code *', key: 'unitCode', width: 14, align: 'center', isString: true, group: unit, rule: 'A unit registered in the Unit menu' },
+    { header: 'Role *', key: 'role', width: 12, align: 'center', group: unit, options: ['Owner', 'Renter', 'Proxy'], rule: 'Dropdown List (Mandatory). A unit has one Owner.' },
+    { header: 'Entry Date (DD/MM/YYYY) *', key: 'entryDate', width: 22, align: 'center', isString: true, group: unit, rule: 'Date, DD/MM/YYYY' },
+    { header: 'Rent Period (months)', key: 'rentPeriod', width: 18, align: 'center', group: rent, rule: 'Required for Renter, 1 to 120' },
+    { header: 'Start Rent (DD/MM/YYYY)', key: 'startRent', width: 22, align: 'center', isString: true, group: rent, rule: 'Required for Renter, DD/MM/YYYY' }
+  ];
+})();
+
+const TENANT_UNIT_SAMPLES = [
+  { email: 'rina.kusumawati@gmail.com', unitCode: 'A0301', role: 'Owner', entryDate: '01/11/2026', rentPeriod: '', startRent: '' },
+  { email: 'bayu.aditya@corp.id', unitCode: 'A0301', role: 'Renter', entryDate: '01/11/2026', rentPeriod: 12, startRent: '01/11/2026' },
+  { email: 'kenji.tanaka@outlook.com', unitCode: 'B0712', role: 'Owner', entryDate: '15/11/2026', rentPeriod: '', startRent: '' }
+];
+
+// Renter and Member follow their own Add Tenant Member form; the owner (Member of) comes from the unit for a renter.
+export function getTenantMemberTemplateColumns(kind) {
+  const isRenter = kind === 'renter';
+  const unit = 'STEP 1: UNIT & RELATION';
+  const data = isRenter ? 'STEP 2: RENTER DATA' : 'STEP 2: MEMBER DATA';
+  const access = isRenter ? 'STEP 3: RENT & ACCESS' : 'STEP 3: ACCESS';
+  return [
+    { header: 'Unit Code *', key: 'unitCode', width: 14, align: 'center', isString: true, group: unit, rule: isRenter ? 'A unit with an owner; the owner becomes Member of' : 'A unit registered in Tenant Member' },
+    ...(isRenter ? [] : [
+      { header: 'Member of *', key: 'memberOf', width: 13, align: 'center', group: unit, options: ['Owner', 'Renter', 'Proxy'], rule: 'Dropdown List (Mandatory). Renter or Proxy only when the unit has one.' },
+      { header: 'Member Relation *', key: 'relation', width: 17, align: 'center', group: unit, options: ['Spouse', 'Child', 'Parent', 'Sibling', 'Staff'], rule: 'Dropdown List (Mandatory)' },
+      { header: 'Proxy', key: 'proxy', width: 9, align: 'center', group: unit, options: ['Yes', 'No'], rule: 'Yes only for a member of the Owner, when the unit has no renter' }
+    ]),
+    { header: 'Full Name *', key: 'name', width: 26, align: 'left', isBold: true, group: data, rule: 'Text' },
+    { header: 'Email *', key: 'email', width: 30, align: 'left', group: data, rule: 'Valid email' },
+    { header: 'ID Type *', key: 'idType', width: 11, align: 'center', group: data, options: ID_TYPE_OPTIONS, rule: 'Dropdown List (Mandatory)' },
+    { header: 'ID Number *', key: 'idNumber', width: 20, align: 'center', isString: true, group: data, rule: 'KTP: 16 digits. Passport: 6 to 9 letters or digits' },
+    { header: 'Phone Number', key: 'phone', width: 18, align: 'center', isString: true, group: data, rule: 'Up to 15 digits' },
+    ...(isRenter ? [
+      { header: 'Rent Period (months) *', key: 'rentalPeriod', width: 20, align: 'center', group: access, rule: 'Whole number, 1 to 120' },
+      { header: 'Start Rent (DD/MM/YYYY) *', key: 'startRent', width: 22, align: 'center', isString: true, group: access, rule: 'Date, DD/MM/YYYY' }
+    ] : []),
+    { header: 'Door Access *', key: 'doorAccess', width: 46, align: 'left', group: access, rule: DOOR_RULE }
+  ];
+}
+
+// Samples use units that can take them today: free units for renters, a rented unit for the renter's staff.
+const FREE_UNITS = UNIT_CHOICES.filter((u) => u.ownerName && !u.renterName && !u.proxyName).map((u) => u.code);
+const RENTED_UNIT = UNIT_CHOICES.find((u) => u.renterName)?.code ?? '';
+
+const TENANT_MEMBER_SAMPLES = {
+  renter: [
+    { unitCode: FREE_UNITS[0], name: 'Bayu Aditya', email: 'bayu.aditya@corp.id', idType: 'KTP', idNumber: '3174047712880012', phone: '082144556677', rentalPeriod: 12, startRent: '01/11/2026', doorAccess: 'Main lobby, Tower lobby, Passenger lift, Unit door' },
+    { unitCode: FREE_UNITS[1], name: 'Kenji Tanaka', email: 'kenji.tanaka@outlook.com', idType: 'Passport', idNumber: 'TK8821930', phone: '081299887700', rentalPeriod: 24, startRent: '15/11/2026', doorAccess: 'Main lobby, Tower lobby, Passenger lift, Unit door, Gym' },
+    { unitCode: FREE_UNITS[2], name: 'Laras Putri', email: 'laras.putri@gmail.com', idType: 'KTP', idNumber: '3175035508970014', phone: '', rentalPeriod: 6, startRent: '01/12/2026', doorAccess: 'Main lobby, Passenger lift, Unit door' }
+  ],
+  member: [
+    { unitCode: FREE_UNITS[3], memberOf: 'Owner', relation: 'Spouse', proxy: 'No', name: 'Dodi Kusuma', email: 'dodi.kusuma@gmail.com', idType: 'KTP', idNumber: '3171021204880015', phone: '081311220012', doorAccess: 'Main lobby, Tower lobby, Passenger lift, Unit door' },
+    { unitCode: FREE_UNITS[3], memberOf: 'Owner', relation: 'Child', proxy: 'No', name: 'Alya Kusuma', email: 'alya.kusuma@gmail.com', idType: 'KTP', idNumber: '3171024106120016', phone: '', doorAccess: 'Main lobby, Tower lobby, Passenger lift, Unit door, Swimming pool' },
+    { unitCode: RENTED_UNIT, memberOf: 'Renter', relation: 'Staff', proxy: 'No', name: 'Siti Aminah', email: 'siti.aminah@gmail.com', idType: 'KTP', idNumber: '3273015507900017', phone: '085712340017', doorAccess: 'Main lobby, Passenger lift, Service entrance' }
+  ]
+};
+
+const TEMPLATE_TITLES = {
+  tenant: 'PROAPPS — TENANT BATCH IMPORT TEMPLATE',
+  tenantUnit: 'PROAPPS — TENANT UNIT BATCH IMPORT TEMPLATE',
+  renter: 'PROAPPS — RENTER BATCH IMPORT TEMPLATE',
+  member: 'PROAPPS — MEMBER BATCH IMPORT TEMPLATE'
+};
+
+export function buildTenantImportTemplate() {
+  return buildImportTemplateWorkbook({
+    sheetName: 'Tenant Import Template',
+    title: TEMPLATE_TITLES.tenant,
+    note: 'One row per tenant. Form fields match Tenant Information and Emergency Contact. Columns with (*) are mandatory. Add their units with the Tenant Unit template.',
+    refTitle: 'PROAPPS — TENANT OPTIONS & VALIDATION REFERENCE',
+    columns: TENANT_IMPORT_TEMPLATE_COLUMNS,
+    samples: TENANT_SAMPLES
+  });
+}
+
+export function buildTenantUnitImportTemplate() {
+  return buildImportTemplateWorkbook({
+    sheetName: 'Tenant Unit Import Template',
+    title: TEMPLATE_TITLES.tenantUnit,
+    note: 'One row per tenant and unit, matching the Onboarding form. Import the tenants first. Rent Period and Start Rent are only for Renter.',
+    refTitle: 'PROAPPS — TENANT UNIT OPTIONS & VALIDATION REFERENCE',
+    columns: TENANT_UNIT_IMPORT_TEMPLATE_COLUMNS,
+    samples: TENANT_UNIT_SAMPLES
+  });
+}
+
+export function buildTenantMemberImportTemplate(kind) {
+  const isRenter = kind === 'renter';
+  return buildImportTemplateWorkbook({
+    sheetName: isRenter ? 'Renter Import Template' : 'Member Import Template',
+    title: TEMPLATE_TITLES[kind],
+    note: isRenter
+      ? 'One row per renter and unit, matching the Add Tenant Member form with Member Relation = Renter. The unit owner becomes Member of. Columns with (*) are mandatory.'
+      : 'One row per family member or staff, matching the Add Tenant Member form. Proxy is only for a member of the Owner. Columns with (*) are mandatory.',
+    refTitle: `PROAPPS — ${isRenter ? 'RENTER' : 'MEMBER'} OPTIONS & VALIDATION REFERENCE`,
+    columns: getTenantMemberTemplateColumns(kind),
+    samples: TENANT_MEMBER_SAMPLES[kind]
+  });
+}
+
+export const downloadTenantImportTemplate = () => downloadWorkbook(buildTenantImportTemplate(), 'Tenant_Import_Template.xlsx');
+export const downloadTenantUnitImportTemplate = () => downloadWorkbook(buildTenantUnitImportTemplate(), 'Tenant_Unit_Import_Template.xlsx');
+export const downloadTenantMemberImportTemplate = (kind) => downloadWorkbook(
+  buildTenantMemberImportTemplate(kind),
+  kind === 'renter' ? 'Renter_Import_Template.xlsx' : 'Member_Import_Template.xlsx'
+);
+
+const marker = (title) => title.replace('PROAPPS ', '');
+
+export function parseTenantImportFile(file) {
+  return parseImportTemplateFile(file, {
+    columns: TENANT_IMPORT_TEMPLATE_COLUMNS,
+    label: 'Tenant',
+    noun: 'tenant',
+    otherTemplates: [{ marker: marker(TEMPLATE_TITLES.tenantUnit), label: 'Tenant Unit' }],
+    hint: 'Use Import Tenant Unit for that file, or upload the Tenant template here.'
+  });
+}
+
+export function parseTenantUnitImportFile(file) {
+  return parseImportTemplateFile(file, {
+    columns: TENANT_UNIT_IMPORT_TEMPLATE_COLUMNS,
+    label: 'Tenant Unit',
+    noun: 'tenant unit',
+    otherTemplates: [{ marker: marker(TEMPLATE_TITLES.tenant), label: 'Tenant' }],
+    hint: 'Use Import Tenant for that file, or upload the Tenant Unit template here.'
+  });
+}
+
+export function parseTenantMemberImportFile(file, kind) {
+  const isRenter = kind === 'renter';
+  return parseImportTemplateFile(file, {
+    columns: getTenantMemberTemplateColumns(kind),
+    label: isRenter ? 'Renter' : 'Member',
+    noun: isRenter ? 'renter' : 'member',
+    headerAt: isRenter ? 1 : 4,
+    otherTemplates: [{ marker: marker(TEMPLATE_TITLES[isRenter ? 'member' : 'renter']), label: isRenter ? 'Member' : 'Renter' }],
+    hint: `Choose ${isRenter ? 'Member' : 'Renter'} as what you import, or upload the ${isRenter ? 'Renter' : 'Member'} template.`
+  });
 }

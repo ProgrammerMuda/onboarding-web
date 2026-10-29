@@ -6,8 +6,7 @@ import {
   getFilterOptions,
   validateUnit,
   buildUnit,
-  getPageItems,
-  unitsToCsv
+  getPageItems
 } from './UnitModel';
 
 describe('UnitModel', () => {
@@ -68,12 +67,6 @@ describe('UnitModel', () => {
     expect(getPageItems(1, 5)).toEqual([1, 2, 3, 4, 5]);
     expect(getPageItems(1, 20)).toEqual([1, 2, 'gap', 20]);
     expect(getPageItems(10, 20)).toEqual([1, 'gap', 9, 10, 11, 'gap', 20]);
-  });
-
-  it('exports CSV with escaped quotes', () => {
-    const csv = unitsToCsv([{ ...SEED_UNITS[0], ownerName: 'A "B"' }]);
-    expect(csv.split('\n')[0]).toContain('"Code"');
-    expect(csv).toContain('"A ""B"""');
   });
 });
 

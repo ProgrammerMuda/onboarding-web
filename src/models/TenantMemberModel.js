@@ -2,7 +2,7 @@
  * TenantMemberModel - Model Layer (MVP)
  * Flattens MOCK_TENANTS into two lists: renters and their members (family and staff employees).
  */
-import { MOCK_TENANTS } from './TenantModel';
+import { MOCK_TENANTS, parseDmy } from './TenantModel';
 
 // Sample doors until the building's real door list is wired in.
 export const DOOR_ACCESS_OPTIONS = [
@@ -570,3 +570,100 @@ export function memberTypeLabel(m) {
 
 // Who owns the member's unit: the parent themselves when the member belongs to the owner.
 export const unitOwnerOf = (m) => (m.parentRole === 'Owner' ? m.tenantName : m.ownerName);
+
+// ----------------------------------------------------
+// Import from the Renter and Member templates. Each row becomes a draft and goes through the
+// Add Tenant Member rules: who the unit lets in, proxy, ID format, one rented unit per ID, rent and doors.
+// Later rows see the renters and proxies of earlier rows, like members saved one after another.
+// ----------------------------------------------------
+
+const pickOption = (value, options) => options.find((o) => o.toLowerCase() === String(value ?? '').trim().toLowerCase()) ?? '';
+const isoFromDmy = (value) => {
+  const date = parseDmy(value);
+  if (!date) return '';
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+};
+
+function rowProblem(kind, raw, d, unit, units, renting) {
+  const isRenter = kind === 'renter';
+  if (!d.unitCode) return 'Unit code is required.';
+  if (!unit) return `Unit ${d.unitCode} is not registered in Tenant Member.`;
+  if (isRenter) {
+    if (!relationsFor(d.unitCode, 'Owner', units).includes('Renter')) return occupantNotice(unit) || `Unit ${d.unitCode} cannot take a renter.`;
+  } else {
+    if (!d.parentRole) return raw.memberOf ? `Member of "${raw.memberOf}" must be Owner, Renter, or Proxy.` : 'Member of is required.';
+    const parent = parentOptions(unit).find((p) => p.role === d.parentRole);
+    if (!parent.name) return `${d.unitCode}: ${parent.reason}`;
+    if (!d.relation) return raw.relation ? `Member relation "${raw.relation}" must be one of ${MEMBER_RELATIONS.join(', ')}.` : 'Member relation is required.';
+    if (raw.proxy && !['yes', 'no'].includes(raw.proxy.toLowerCase())) return 'Proxy must be Yes or No.';
+    if (d.isProxy && !canBeProxy(d, units)) {
+      return d.parentRole !== 'Owner' ? 'Only a member of the Owner can be the proxy.' : (occupantNotice(unit) || 'This unit cannot take a proxy.');
+    }
+  }
+  if (!d.name.trim()) return 'Full name is required.';
+  if (!d.email.trim()) return 'Email is required.';
+  if (!d.idType) return 'ID type must be KTP or Passport.';
+  if (!d.idNumber) return 'ID number is required.';
+  if (d.idType === 'KTP' && !/^\d+$/.test(d.idNumber)) return 'KTP number uses digits only.';
+  if (d.idType === 'Passport' && !/^[A-Z0-9]+$/.test(d.idNumber)) return 'Passport number uses letters and digits only.';
+  const errors = fieldErrors(d, renting);
+  if (errors.email || errors.idNumber || errors.phone) return errors.email || errors.idNumber || errors.phone;
+  if (isRenter) {
+    if (!raw.rentalPeriod) return 'Rent period is required for a renter.';
+    if (!/^\d+$/.test(raw.rentalPeriod)) return 'Rent period must be a whole number of months.';
+    if (errors.rentalPeriod) return errors.rentalPeriod;
+    if (!raw.startRent) return 'Start rent is required for a renter.';
+    if (!d.startRent) return `Start rent "${raw.startRent}" is not a date in DD/MM/YYYY.`;
+  }
+  if (!raw.doorAccess) return 'Door access needs at least one door.';
+  const unknown = raw.doorAccess.split(',').map((s) => s.trim()).filter(Boolean).find((door) => !pickOption(door, DOOR_ACCESS_OPTIONS));
+  if (unknown) return `Door "${unknown}" is not one of the doors. See the Reference sheet for the list.`;
+  return '';
+}
+
+/**
+ * `kind` is 'renter' or 'member'. `units` and `renting` are what the wizard sees right now.
+ * Returns { members, errors }; members are rows ready for the Member list (Pending), ids from `firstId`.
+ */
+export function importRowsToMembers(rows, kind, { units = UNIT_CHOICES, renting = new Map(), firstId = 1 } = {}) {
+  const isRenter = kind === 'renter';
+  let unitsNow = units;
+  const rentingNow = new Map([...renting].map(([id, codes]) => [id, new Set(codes)]));
+  const members = [];
+  const errors = [];
+
+  rows.forEach(({ rowNumber, values }) => {
+    const raw = Object.fromEntries(Object.entries(values).map(([k, v]) => [k, String(v ?? '').trim()]));
+    const idType = pickOption(raw.idType, Object.keys(ID_TYPES));
+    const d = {
+      ...EMPTY_MEMBER_DRAFT,
+      unitCode: (raw.unitCode || '').toUpperCase(),
+      parentRole: isRenter ? 'Owner' : pickOption(raw.memberOf, ['Owner', 'Renter', 'Proxy']),
+      relation: isRenter ? 'Renter' : pickOption(raw.relation, MEMBER_RELATIONS),
+      isProxy: !isRenter && (raw.proxy || '').toLowerCase() === 'yes',
+      name: raw.name || '',
+      email: raw.email || '',
+      idType,
+      idNumber: (raw.idNumber || '').replace(/\s/g, '').toUpperCase(),
+      phone: digitsOnly(raw.phone || ''),
+      rentalPeriod: isRenter ? (raw.rentalPeriod || '') : '',
+      startRent: isRenter ? isoFromDmy(raw.startRent) : '',
+      doorAccess: DOOR_ACCESS_OPTIONS.filter((door) => (raw.doorAccess || '').split(',').some((s) => s.trim().toLowerCase() === door.toLowerCase()))
+    };
+    const unit = getUnitChoice(d.unitCode, unitsNow);
+    const problem = rowProblem(kind, raw, d, unit, unitsNow, rentingNow);
+    if (problem) {
+      errors.push({ rowNumber, message: problem });
+      return;
+    }
+    const row = buildMemberRow(d, firstId + members.length, unitsNow);
+    members.push(row);
+    unitsNow = withNewOccupants(unitsNow, [row]);
+    if (isRenter) {
+      if (!rentingNow.has(d.idNumber)) rentingNow.set(d.idNumber, new Set());
+      rentingNow.get(d.idNumber).add(d.unitCode);
+    }
+  });
+
+  return { members, errors };
+}
