@@ -190,7 +190,7 @@ export const MOCK_TENANTS = Array.from({ length: 100 }, (_, i) => {
           handoverDate: '01 Jun 2023', 
           status: 'Occupant',
           members: [
-            { id: 104, name: 'Dewi Anggraini', relationship: 'Renter', nik: '3174055000000001', email: 'dewi.anggraini@yahoo.com', phone: '081377889900', accessCard: 'AC-1003', rentalPeriod: 12, startRent: '01/06/2026', endRentDate: '01 Jun 2027', status: 'Pending' }
+            { id: 104, name: 'Dewi Anggraini', relationship: 'Sibling', nik: '3174055000000001', email: 'dewi.anggraini@yahoo.com', phone: '081377889900', accessCard: 'AC-1003', status: 'Pending' }
           ]
         },
         { 

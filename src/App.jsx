@@ -6,6 +6,8 @@ import { TopNavbar } from './views/components/TopNavbar';
 import { OnboardingWizardView } from './views/onboarding/OnboardingWizardView';
 import { DashboardOverviewView } from './views/dashboard/DashboardOverviewView';
 import { TenantManagementView } from './views/tenant/TenantManagementView';
+import { TenantMemberView } from './views/tenant/TenantMemberView';
+import { useTenantMemberPresenter } from './presenters/useTenantMemberPresenter';
 import { ApprovalFlowView } from './views/approval/ApprovalFlowView';
 import { PermitTypeView } from './views/permit/PermitTypeView';
 import { ShiftTypeView } from './views/shift/ShiftTypeView';
@@ -40,6 +42,7 @@ export default function App() {
   const shiftPresenter = useShiftTypePresenter();
   const permitPresenter = usePermitTypePresenter();
   const tenantPresenter = useTenantPresenter();
+  const tenantMemberPresenter = useTenantMemberPresenter();
   const approvalPresenter = useApprovalFlowPresenter();
   const positionPresenter = usePositionPresenter();
   const departmentPresenter = useDepartmentPresenter();
@@ -94,6 +97,8 @@ export default function App() {
               <DashboardOverviewView presenter={dashboardPresenter} />
             ) : sidebarPresenter.activeItem === 'tenant-management' ? (
               <TenantManagementView presenter={tenantPresenter} />
+            ) : sidebarPresenter.activeItem === 'tenant-member' ? (
+              <TenantMemberView presenter={tenantMemberPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-shift-type' ? (
               <ShiftTypeView presenter={shiftPresenter} />
             ) : sidebarPresenter.activeItem === 'hr-jabatan' ? (
