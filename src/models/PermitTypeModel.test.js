@@ -208,11 +208,22 @@ describe('Ledger and adjustments stay in sync', () => {
 describe('Ledger history length', () => {
   const lengths = createInitialBalances().map((item) => item.ledger.length);
 
-  it('has employees with more than 5 entries, so the ledger paginates', () => {
-    expect(lengths.some((count) => count > 5)).toBe(true);
+  it('has employees with more than 10 entries, so the ledger paginates', () => {
+    expect(lengths.some((count) => count > 10)).toBe(true);
   });
 
   it('also has short histories that fit on one page', () => {
-    expect(lengths.some((count) => count <= 5)).toBe(true);
+    expect(lengths.some((count) => count <= 10)).toBe(true);
+  });
+});
+
+describe('Showcase ledger', () => {
+  it('keeps one employee whose history has every entry type (Tari Andini)', () => {
+    const tari = createInitialBalances().find((item) => item.employeeId === 'emp-027');
+    const types = new Set(tari.ledger.map((entry) => entry.type));
+    ['entitlement', 'carry_over', 'leave_taken', 'cuti_bersama', 'adjustment'].forEach((type) => {
+      expect(types.has(type)).toBe(true);
+    });
+    expect(tari.ledger.length).toBeGreaterThan(5);
   });
 });

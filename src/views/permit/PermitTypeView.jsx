@@ -217,7 +217,7 @@ function DepartmentBadge({ names, isAll }) {
 }
 
 const BALANCE_PAGE_SIZE = 8;
-const LEDGER_PAGE_SIZE = 5;
+const LEDGER_PAGE_SIZE = 10;
 
 function buildPageList(page, totalPages) {
   if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -2791,20 +2791,24 @@ export function PermitTypeView({ presenter: p }) {
                             </td>
                             <td>
                               <div className="fw-semibold text-dark" style={{ fontSize: '13px' }}>{entry.description}</div>
-                              {ticket ? (
+                              {entry.type === 'adjustment' ? (
                                 <div className="permit-ledger-source">
                                   <span className="permit-ledger-source-line">
                                     From adjustment request{' '}
-                                    <button
-                                      type="button"
-                                      className="permit-ledger-ref is-link"
-                                      title="Open this adjustment request"
-                                      onClick={() => { closeLedger(); openReview(ticket); }}
-                                    >
-                                      {entry.refNo}
-                                    </button>
+                                    {ticket ? (
+                                      <button
+                                        type="button"
+                                        className="permit-ledger-ref is-link"
+                                        title="Open this adjustment request"
+                                        onClick={() => { closeLedger(); openReview(ticket); }}
+                                      >
+                                        {entry.refNo}
+                                      </button>
+                                    ) : (
+                                      <span className="permit-ledger-ref">{entry.refNo}</span>
+                                    )}
                                   </span>
-                                  <span>Requested by {entry.requestedBy} &middot; Approved by {entry.approvedBy}</span>
+                                  <span>{entry.requestedBy ? `Requested by ${entry.requestedBy} \u00b7 ` : ''}Approved by {entry.approvedBy}</span>
                                 </div>
                               ) : (
                                 <div className="permit-cell-note">{entry.approvedBy}</div>

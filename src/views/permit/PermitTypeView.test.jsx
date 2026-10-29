@@ -51,19 +51,34 @@ describe('PermitTypeView renders', () => {
     expect(html).toContain('Approved by');
   });
 
-  it('paginates the balance history only when there are more than 5 entries', () => {
+  it('paginates the balance history only when there are more than 10 entries', () => {
     const base = usePermitTypePresenterSeed();
     const entries = (count) => Array.from({ length: count }, (_, i) => ({
       id: `tx-${i}`, date: `2026-0${(i % 9) + 1}-10`, type: 'leave_taken', amount: -1, balanceAfter: 11 - i,
       description: `Leave ${i}`, refNo: `LV-${i}`, approvedBy: 'HR'
     }));
 
-    const long = render({ activeTab: 'balances', selectedLedgerEmp: { ...base, ledger: entries(7) } });
+    const long = render({ activeTab: 'balances', selectedLedgerEmp: { ...base, ledger: entries(11) } });
     expect(long).toContain('History Balance');
     expect(long).toContain('entries pagination');
 
-    const short = render({ activeTab: 'balances', selectedLedgerEmp: { ...base, ledger: entries(5) } });
+    const short = render({ activeTab: 'balances', selectedLedgerEmp: { ...base, ledger: entries(10) } });
     expect(short).not.toContain('entries pagination');
+  });
+
+  it('still shows where an adjustment entry came from when its ticket cannot be found', () => {
+    const base = usePermitTypePresenterSeed();
+    const html = render({
+      activeTab: 'balances',
+      adjustments: [],
+      selectedLedgerEmp: {
+        ...base,
+        ledger: [{ id: 'tx-9', date: '2026-10-19', type: 'adjustment', amount: 2, balanceAfter: 14, description: 'Manual adjustment: old entry', refNo: 'ADJ-777', approvedBy: 'Building Manager' }]
+      }
+    });
+    expect(html).toContain('From adjustment request');
+    expect(html).toContain('ADJ-777');
+    expect(html).toContain('Approved by');
   });
 });
 
