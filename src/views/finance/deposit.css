@@ -1,0 +1,689 @@
+/* Deposit Monthly reuses the Tenant Member list, the Unit detail page, and the Employee drawer.
+   This file adds the balance cells, the top up panel, the bill list, and the deposit history. */
+
+.dep-unit { display: flex; align-items: center; gap: 10px; }
+.dep-unit__tower { font-size: 12.5px; color: #64748b; white-space: nowrap; }
+
+.dep-no-tenant { font-size: 13px; color: #94a3b8; font-style: italic; }
+
+/* Amounts line up on the right so digits compare column by column */
+.emp-table th.dep-col-balance,
+.emp-table td.dep-col-balance { text-align: right; }
+.dep-balance {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dep-balance.is-zero { font-weight: 500; color: #94a3b8; }
+.dep-sub-amount { display: block; font-size: 11.5px; color: #94a3b8; font-variant-numeric: tabular-nums; }
+.dep-row-pending { margin-left: 8px; }
+
+.dep-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.dep-chip--pending { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+
+/* ---- Top up panel ---- */
+/* Same modal as Add Division and Add Department: header, scrolling body, grey footer.
+   [open] keeps it hidden until showModal runs. */
+.dep-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: 600px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 40px);
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  color: #1e293b;
+  background: #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+.dep-dialog[open] { display: flex; flex-direction: column; }
+.dep-dialog::backdrop { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+
+.dep-dialog-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 20px 24px; border-bottom: 1px solid #f1f5f9; }
+.dep-dialog-header h2 { margin: 0; font-size: 1.15rem; font-weight: 700; color: #0f172a; }
+.dep-dialog-header p { margin: 2px 0 0; font-size: 12.5px; color: #64748b; }
+.dep-dialog-close-btn { display: flex; align-items: center; justify-content: center; flex: none; width: 32px; height: 32px; border: 0; border-radius: 8px; background: transparent; color: #64748b; cursor: pointer; transition: all 0.15s ease; }
+.dep-dialog-close-btn:hover { background: #f1f5f9; color: #0f172a; }
+
+.dep-dialog-body { flex: 1; min-height: 0; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; font-size: 0.875rem; }
+
+.dep-dialog-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid #f1f5f9; background: #f8fafc; }
+.dep-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+/* Cancel and Back react to hover; the main button (Review, Create invoice) stays as it is */
+.dep-button:not(.primary):hover:not(:disabled) { background: #f8fafc; border-color: #94a3b8; color: #0f172a; }
+.dep-button.primary { color: #ffffff; border-color: #002b7f; background: #002b7f; }
+.dep-button:disabled { background: #e2e8f0; border-color: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+
+.dep-section { display: flex; flex-direction: column; gap: 12px; }
+.dep-section__title { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #64748b; }
+
+.dep-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.dep-field > label,
+.dep-field__label { font-size: 13px; font-weight: 600; color: #334155; }
+.dep-field .req { color: #dc2626; }
+.dep-field textarea { height: auto !important; resize: vertical; }
+.dep-field-hint { margin: 0; font-size: 12px; color: #64748b; line-height: 1.5; }
+.dep-field-error { margin: 0; font-size: 12px; color: #dc2626; }
+
+.dep-money {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+.dep-money span { padding: 0 10px 0 12px; font-size: 13px; font-weight: 600; color: #64748b; }
+.dep-money input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  padding-right: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  background: transparent;
+}
+.dep-money:focus-within { border-color: #0088cc; box-shadow: 0 0 0 3px rgba(0, 136, 204, 0.15); }
+.dep-money.is-invalid { border-color: #dc2626; }
+.dep-money.is-disabled { background: #f1f5f9; }
+
+.dep-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #c3d2f5;
+  border-radius: 8px;
+  background: #e8eefc;
+  color: #002b7f;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dep-link-btn:hover:not(:disabled) { background: #dbe5ff; }
+.dep-link-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.dep-balance-note { margin: 0; padding: 10px 12px; border-radius: 8px; background: #f0f9ff; color: #075985; font-size: 12.5px; }
+.dep-empty-line { margin: 0; font-size: 13px; color: #64748b; }
+
+.dep-bills { list-style: none; margin: 0; padding: 0; border: 1px solid #e2e8f0; border-radius: 10px; }
+.dep-bills:focus { outline: none; }
+.dep-bill {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.dep-bill:last-child { border-bottom: 0; }
+.dep-bill.is-picked { background: #f8fbff; }
+.dep-bill__pick { display: flex; align-items: flex-start; gap: 10px; min-width: 0; cursor: pointer; }
+.dep-bill__pick input { width: 18px; height: 18px; margin-top: 1px; flex: none; accent-color: #002b7f; }
+.dep-bill__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dep-bill__label { font-size: 13.5px; font-weight: 600; color: #0f172a; }
+.dep-bill__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12px; color: #64748b; }
+.dep-bill .dep-money { height: 38px; }
+.dep-bill__error { grid-column: 1 / -1; text-align: right; }
+
+.dep-dialog-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 14px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+/* Footer: top up − this month = stays in the balance */
+.dep-flow { flex-basis: 100%; display: flex; align-items: flex-end; gap: 10px; }
+.dep-flow > div { display: flex; flex-direction: column; min-width: 0; }
+.dep-flow > div span { font-size: 11.5px; color: #64748b; }
+.dep-flow > div strong { font-size: 14px; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dep-flow__op { padding-bottom: 1px; font-size: 15px; font-weight: 600; color: #94a3b8; }
+.dep-flow__result { margin-left: auto; text-align: right; }
+.dep-flow > .dep-flow__result strong { font-size: 16px; color: #002b7f; }
+@media (prefers-reduced-motion: reduce) { .dep-meter__bar span { transition: none; } }
+.dep-dialog-summary .dep-field-error { flex-basis: 100%; }
+
+
+.dep-review-lead { margin: 0; padding: 12px 14px; border-radius: 10px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 13px; line-height: 1.5; }
+.dep-review { border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; }
+.dep-review__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.dep-review__head h3 { margin: 0; font-size: 14px; font-weight: 700; color: #0f172a; }
+.dep-review dl { margin: 0; }
+.dep-review dl div { display: flex; justify-content: space-between; gap: 16px; padding: 6px 0; font-size: 13px; }
+.dep-review dt { font-weight: 500; color: #64748b; }
+.dep-review dd { margin: 0; font-weight: 600; color: #0f172a; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dep-review dl div.is-total { margin-top: 4px; padding-top: 10px; border-top: 1px solid #e2e8f0; }
+.dep-review dl div.is-total dd { font-size: 14.5px; }
+.dep-review__note { margin: 0; font-size: 13px; color: #334155; }
+
+/* ---- Detail page ---- */
+.dep-card-pad { padding: 8px 0 16px; }
+
+.dep-balance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 22px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #002b7f 0%, #0b4fb3 100%);
+  color: #fff;
+}
+.dep-balance-card__label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255, 255, 255, 0.75); }
+.dep-balance-card__value { font-size: 30px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dep-balance-card__incoming { font-size: 13px; font-weight: 600; color: #bbf7d0; font-variant-numeric: tabular-nums; }
+.dep-balance-card__auto { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.2); font-size: 12.5px; }
+.dep-balance-card__auto span { color: rgba(255, 255, 255, 0.75); }
+.dep-balance-card__auto strong { font-weight: 600; overflow-wrap: anywhere; }
+.dep-balance-card__actions { display: flex; flex-direction: column; align-items: stretch; }
+.dep-balance-card__btn { margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  background: #fff;
+  color: #002b7f;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.dep-balance-card__btn:hover:not(:disabled) { background: #f1f5f9; }
+.dep-balance-card__btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.dep-balance-card__manage { align-self: center; margin-top: 10px; padding: 6px 8px; border: 0; background: transparent; color: #fff; font-size: 12.5px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.dep-balance-card__manage:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 4px; }
+.dep-active-choice { margin: 10px 0 12px; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+.dep-active-choice > strong { display: block; margin-bottom: 5px; color: #334155; font-size: 13px; }
+.dep-active-choice .dep-next-list li { border: 1px solid #cbd5e1; background: #e2e8f0; color: #475569; }
+.dep-active-choice p { margin: 8px 0 0; color: #475569; font-size: 12.5px; }
+.dep-rule-label { color: #334155; font-size: 12.5px; }
+.dep-stmt-icon--rule { color: #1d4ed8; background: #eff6ff; }
+
+.dep-entry__facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px 16px; margin: 0; }
+.dep-entry__facts dt { font-size: 11.5px; font-weight: 500; color: #64748b; }
+.dep-entry__facts dd { margin: 0; font-size: 13px; color: #0f172a; overflow-wrap: anywhere; }
+.dep-entry__actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 10px; }
+.dep-btn-sm { min-height: 34px; padding: 0 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+
+.dep-alloc-list { list-style: none; margin: 0 0 14px; padding: 10px 12px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; }
+.dep-alloc-list li { display: flex; justify-content: space-between; gap: 16px; padding: 4px 0; font-size: 13px; color: #334155; }
+.dep-alloc-list strong { color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+@media (max-width: 767.98px) {
+  .dep-bill { grid-template-columns: minmax(0, 1fr); }
+  .dep-bill__error { text-align: left; }
+  .dep-dialog-summary { padding: 12px 16px; }
+  .dep-link-btn,
+  .dep-btn-sm { min-height: 44px; }
+  .dep-row-pending { margin: 6px 0 0; }
+  .emp-table.unit-table td.dep-col-balance { flex-wrap: wrap; }
+}
+
+
+/* The rupiah total is the widest number, so its card gets more room and the figure stays on one line */
+.dep-page .emp-stat-number { white-space: nowrap; }
+@media (min-width: 1101px) { .dep-page .tm-stats-grid { grid-template-columns: 1.5fr 1fr 1fr 1fr; } }
+
+.dep-entry__actions { flex-wrap: wrap; }
+.dep-review__head h3 { display: inline-flex; align-items: center; gap: 6px; }
+
+
+/* Next month onwards: no amount yet, so bill types are toggles */
+.dep-future { margin: 0; padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; min-width: 0; }
+.dep-future__month { float: left; width: 100%; display: flex; align-items: center; gap: 6px; margin: 0 0 10px; padding: 0; font-size: 13.5px; font-weight: 600; color: #0f172a; }
+.dep-future__month svg { color: #0088cc; }
+.dep-future__types { clear: both; display: flex; flex-wrap: wrap; gap: 8px; }
+.dep-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dep-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.dep-toggle:hover { border-color: #94a3b8; }
+.dep-toggle:focus-within { outline: 2px solid #0088cc; outline-offset: 2px; }
+.dep-toggle.is-on { background: #e8eefc; border-color: #002b7f; color: #002b7f; }
+.dep-review__foot { margin-top: 8px; }
+
+.dep-alloc-list li.is-future span { color: #0f172a; }
+.dep-alloc-list li.is-future em { flex: none; font-size: 12px; font-style: normal; color: #64748b; }
+
+
+@media (max-width: 767.98px) {
+  .dep-toggle { min-height: 44px; }
+}
+
+/* ---- Other Invoice detail ----
+   Left: the invoice as the tenant receives it, a sheet with the issuer, parties, items, and total.
+   Right: what Finance acts on. */
+.dep-inv-number { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.dep-inv-doc {
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 28px 32px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.dep-inv-doc__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.dep-inv-issuer { display: flex; gap: 14px; min-width: 0; max-width: 420px; }
+.dep-inv-issuer__mark {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: #e8eefc;
+  color: #002b7f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dep-inv-issuer__name { display: block; font-size: 16px; font-weight: 700; color: #0f172a; }
+.dep-inv-issuer__addr { margin: 4px 0 0; font-size: 12.5px; line-height: 1.55; color: #64748b; }
+.dep-inv-doc__title { text-align: right; flex: none; }
+.dep-inv-doc__title span { display: block; font-size: 26px; font-weight: 700; letter-spacing: -0.01em; color: #002b7f; line-height: 1.1; }
+.dep-inv-doc__title strong { display: block; margin-top: 6px; font-size: 13px; font-weight: 600; color: #475569; font-variant-numeric: tabular-nums; }
+
+.dep-inv-void { margin: 0; padding: 10px 14px; border-radius: 10px; background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; font-size: 13px; }
+
+.dep-inv-label { display: block; margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; }
+.dep-inv-parties { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.dep-inv-to { display: block; font-size: 16px; font-weight: 700; color: #0f172a; }
+.dep-inv-contact { display: block; margin-top: 2px; font-size: 13px; color: #475569; }
+.dep-inv-dates { margin: 0; display: grid; gap: 6px; min-width: 220px; }
+.dep-inv-dates div { display: flex; justify-content: space-between; gap: 24px; font-size: 13px; }
+.dep-inv-dates dt { font-weight: 500; color: #64748b; }
+.dep-inv-dates dd { margin: 0; font-weight: 600; color: #0f172a; }
+.dep-inv-dates dd.is-overdue { color: #b91c1c; }
+
+.dep-inv-table { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+.dep-inv-table .emp-table { margin: 0; }
+.emp-table th.dep-inv-num,
+.emp-table td.dep-inv-num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dep-inv-item { display: block; font-size: 13.5px; font-weight: 600; color: #0f172a; }
+.dep-inv-item-sub { display: block; margin-top: 2px; font-size: 12px; color: #64748b; }
+.dep-inv-total {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 2px 16px;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+.dep-inv-total span { font-size: 14px; font-weight: 700; color: #0f172a; }
+.dep-inv-total strong { font-size: 20px; font-weight: 700; color: #002b7f; font-variant-numeric: tabular-nums; text-align: right; }
+.dep-inv-total em { grid-column: 1 / -1; text-align: right; font-size: 12px; font-style: italic; color: #64748b; }
+
+
+.dep-inv-due {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #002b7f 0%, #0b4fb3 100%);
+  color: #fff;
+}
+.dep-inv-due--overdue { background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%); }
+.dep-inv-due--paid { background: linear-gradient(135deg, #14532d 0%, #15803d 100%); }
+.dep-inv-due--cancelled { background: #475569; }
+.dep-inv-due__label { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255, 255, 255, 0.78); }
+.dep-inv-due__value { font-size: 30px; font-weight: 700; line-height: 1.15; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dep-inv-due__when { display: inline-flex; align-items: flex-start; gap: 6px; line-height: 1.45; font-size: 13px; color: rgba(255, 255, 255, 0.85); }
+.dep-inv-due__actions { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.dep-inv-due__actions .dep-balance-card__btn { color: inherit; }
+.dep-inv-due--unpaid .dep-balance-card__btn { color: #002b7f; }
+.dep-inv-due--overdue .dep-balance-card__btn { color: #991b1b; }
+.dep-inv-due__ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.dep-inv-due__ghost:hover { background: rgba(255, 255, 255, 0.12); }
+.dep-inv-due__ghost:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.dep-inv-due > .dep-inv-due__ghost { margin-top: 2px; }
+
+
+@media (max-width: 767.98px) {
+  .dep-inv-doc { padding: 20px 16px; gap: 20px; }
+  .dep-inv-doc__head { flex-direction: column-reverse; }
+  .dep-inv-doc__title { text-align: left; }
+  .dep-inv-dates { min-width: 0; width: 100%; }
+  .dep-inv-table { overflow-x: auto; }
+  .dep-inv-due__ghost { min-height: 44px; }
+  /* One item line: the subtotal is enough on a phone, and what to pay comes first */
+  .emp-table th.dep-inv-wide,
+  .emp-table td.dep-inv-wide { display: none; }
+  .dep-inv-page .unit-d-side { order: -1; }
+  .dep-inv-page .emp-hero-banner-content { flex-wrap: wrap; gap: 12px; }
+  .dep-inv-number { font-size: 22px; }
+}
+
+/* Print only the invoice sheet */
+@media print {
+  body * { visibility: hidden; }
+  .dep-inv-doc, .dep-inv-doc * { visibility: visible; }
+  .dep-inv-doc { position: absolute; inset: 0 auto auto 0; width: 100%; border: 0; padding: 0; }
+}
+
+/* Payment proof upload in the Mark as paid dialog */
+.dep-proof { margin: 0 0 16px; }
+.dep-proof__label { margin-bottom: 6px; font-size: 13px; font-weight: 600; color: #334155; }
+.dep-proof__label .req { color: #dc2626; }
+.dep-proof__drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 18px 16px;
+  border: 1.5px dashed #94a3b8;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #002b7f;
+  cursor: pointer;
+}
+.dep-proof__drop:hover { background: #eff6ff; border-color: #0088cc; }
+.dep-proof__drop:focus-visible { outline: 2px solid #0088cc; outline-offset: 2px; }
+.dep-proof__drop.is-invalid { border-color: #dc2626; }
+.dep-proof__drop strong { font-size: 13.5px; }
+.dep-proof__drop span { font-size: 12px; color: #64748b; }
+.dep-proof__file {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 8px 0 12px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 13px;
+}
+.dep-proof__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: #0f172a; }
+.dep-proof__size { flex: none; font-size: 12px; color: #64748b; }
+.dep-proof__file button { display: flex; padding: 6px; border: 0; border-radius: 6px; background: none; color: #64748b; cursor: pointer; }
+.dep-proof__file button:hover { background: #dcfce7; color: #0f172a; }
+.dep-proof .dep-field-hint,
+.dep-proof .dep-field-error { margin-top: 6px; }
+.tm-decide__foot .emp-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.dep-inv-proof { overflow-wrap: anywhere; }
+.dep-bill__detail { font-size: 12px; color: #475569; }
+
+/* Next month onwards: a standing list of bill types */
+.dep-next-list { list-style: none; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+.dep-review .dep-next-list { padding: 0; }
+.dep-next-list li { padding: 4px 10px; border-radius: 999px; background: #e8eefc; color: #002b7f; font-size: 12.5px; font-weight: 600; }
+.dep-future__month { font-size: 12.5px; color: #475569; }
+.dep-bill-groups { display: flex; flex-direction: column; gap: 14px; }
+.dep-bill-groups:focus { outline: none; }
+.dep-bill-group__title { margin: 0 0 8px; font-size: 12.5px; font-weight: 600; color: #475569; }
+.dep-short-note { flex-basis: 100%; margin: 0; font-size: 12px; line-height: 1.5; color: #92400e; }
+
+.dep-section__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* This month's invoice: how much of what is unpaid this allocation covers */
+.dep-meter { padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; }
+.dep-meter__head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; }
+.dep-meter__head span { font-weight: 600; color: #334155; }
+.dep-meter__head strong { color: #0f172a; font-variant-numeric: tabular-nums; }
+.dep-meter__bar { height: 8px; margin: 8px 0 6px; border-radius: 999px; background: #e2e8f0; overflow: hidden; }
+.dep-meter__bar span { display: block; height: 100%; border-radius: inherit; background: #15803d; transition: width 0.2s ease; }
+.dep-meter__legend { display: flex; justify-content: space-between; gap: 12px; margin: 0; }
+.dep-meter__legend div { display: flex; flex-direction: column; min-width: 0; }
+.dep-meter__legend .is-left { text-align: right; }
+.dep-meter__legend dt { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 500; color: #64748b; }
+.dep-meter__legend .is-left dt { justify-content: flex-end; }
+.dep-meter__legend dt::before { content: ''; width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dep-meter__legend .is-paid dt::before { background: #15803d; }
+.dep-meter__legend .is-left dt::before { background: #cbd5e1; }
+.dep-meter__legend dd { margin: 2px 0 0; font-size: 14px; font-weight: 700; color: #0f172a; font-variant-numeric: tabular-nums; }
+.dep-meter__legend .is-paid dd { color: #15803d; }
+.dep-meter__legend .is-done dd { color: #15803d; }
+.dep-bill.is-out { opacity: 0.55; }
+.dep-bill.is-out .dep-bill__pick { cursor: not-allowed; }
+.dep-future.is-disabled { background: #f8fafc; }
+.dep-future.is-disabled .dep-toggle { opacity: 0.5; cursor: not-allowed; }
+.dep-next-locked { margin: 0; padding: 10px 12px; border-radius: 8px; background: #f1f5f9; color: #475569; font-size: 12.5px; }
+
+
+/* On a phone the footer reads as rows: label left, amount right, the result under a rule */
+@media (max-width: 767.98px) {
+  .dep-flow { flex-direction: column; align-items: stretch; gap: 4px; }
+  .dep-flow > div { flex-direction: row; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .dep-flow__op { display: none; }
+  .dep-flow__result { margin: 4px 0 0; padding-top: 6px; border-top: 1px solid #e2e8f0; text-align: left; }
+}
+/* Why Review is disabled: plain guidance, not an error */
+.dep-blocker { flex-basis: 100%; margin: 0; font-size: 12.5px; color: #475569; }
+
+/* Draft invoice: only Finance sees it until it is sent */
+.dep-inv-due--draft { background: linear-gradient(135deg, #334155 0%, #475569 100%); }
+.dep-inv-due--draft .dep-balance-card__btn { color: #334155; }
+.dep-inv-draft-tag { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #f1f5f9; border: 1px solid #cbd5e1; color: #475569; font-size: 11px; font-style: normal; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; vertical-align: middle; }
+.dep-inv-doc__title span .dep-inv-draft-tag { font-size: 11px; }
+.dep-inv-note { margin: 0; padding: 10px 14px; border-radius: 10px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; font-size: 13px; }
+.dep-inv-later { color: #64748b; font-weight: 500; }
+.dep-inv-due__when svg { flex: none; margin-top: 2px; }
+
+/* Deposit history: filters, balance after each entry, paging */
+.dep-history-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-top: 16px; padding: 12px 0 0; border-top: 1px solid #f1f5f9; font-size: 12.5px; color: #64748b; }
+.dep-history-foot strong { color: #0f172a; }
+
+/* The standing rule for next month, inside the balance card */
+
+@media (max-width: 767.98px) {
+}
+
+@media (max-width: 767.98px) {
+  .dep-detail .emp-hero-banner-content { flex-wrap: wrap; gap: 12px; }
+  .dep-detail .emp-hero-edit-btn { min-height: 44px; }
+}
+
+/* ---- Deposit history ---- */
+/* The history card's own 24px padding is the only inset: everything inside runs edge to edge within it. */
+.dep-detail .unit-d-body { padding: 0; }
+.dep-hist-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0 0 14px; }
+.dep-hist-sum > div { padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; min-width: 0; }
+.dep-hist-sum dt { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #64748b; }
+.dep-hist-sum dd { margin: 2px 0 0; font-size: 16px; font-weight: 700; color: #0f172a; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.dep-hist-sum .is-in dt svg { color: #15803d; }
+.dep-hist-sum .is-in dd { color: #15803d; }
+.dep-hist-sum .is-out dt svg { color: #b91c1c; }
+.dep-hist-sum .is-out dd { color: #b91c1c; }
+.dep-hist-sum .is-wait { background: #fffbeb; border-color: #fde68a; }
+.dep-hist-sum .is-wait dt svg { color: #b45309; }
+.dep-hist-sum .is-wait dd { color: #92400e; }
+
+.dep-hist-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 36px 24px 40px; text-align: center; color: #94a3b8; }
+.dep-hist-empty strong { font-size: 14px; color: #0f172a; }
+.dep-hist-empty span { max-width: 320px; font-size: 13px; color: #64748b; }
+
+
+
+.dep-stmt-icon { flex: none; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.dep-stmt-icon--topup { background: #ecfdf5; color: #15803d; border: 1px solid #a7f3d0; }
+.dep-stmt-icon--deduction { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.dep-stmt-icon--draft { background: #f8fafc; color: #64748b; border: 1px dashed #94a3b8; }
+.dep-stmt-icon.is-unpaid,
+.dep-stmt-icon.is-planned,
+.dep-stmt-icon.is-pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.dep-stmt-icon.is-cancelled,
+.dep-stmt-icon.is-rejected { background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
+
+/* History cards: one per entry. What happened and when on the left, what it did to the money on the right. */
+.dep-hist-months { display: flex; flex-direction: column; gap: 20px; padding: 0; }
+.dep-hist-month__head { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: #0f172a; }
+
+.dep-hcards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dep-hcard { border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; transition: border-color 0.12s ease, box-shadow 0.12s ease; }
+.dep-hcard:hover { border-color: #cbd5e1; }
+.dep-hcard.is-open { border-color: #c3d2f5; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05); }
+.dep-hcard__main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.dep-hcard__main:focus-visible { outline: 2px solid #0088cc; outline-offset: -2px; }
+.dep-hcard__body { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.dep-hcard__top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.dep-hcard__title { font-size: 14px; font-weight: 700; color: #0f172a; }
+.dep-hcard__top .tm-status { height: 22px; padding: 0 8px; font-size: 11.5px; }
+.dep-hcard__meta { font-size: 12.5px; color: #64748b; font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+.dep-hcard__sub { font-size: 12.5px; color: #334155; line-height: 1.4; }
+.dep-hcard__money { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex: none; }
+.dep-hcard__amount { font-size: 16px; font-weight: 700; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dep-hcard__amount.is-in { color: #15803d; }
+.dep-hcard__amount.is-deduct { color: #b91c1c; }
+.dep-hcard__amount.is-later { font-size: 14px; font-weight: 600; color: #64748b; }
+.dep-hcard__amount.is-void { font-size: 14px; font-weight: 500; color: #94a3b8; text-decoration: line-through; }
+.dep-hcard__after { font-size: 12px; color: #94a3b8; white-space: nowrap; }
+.dep-hcard__after strong { font-weight: 600; color: #64748b; font-variant-numeric: tabular-nums; }
+.dep-hcard__caret { flex: none; color: #94a3b8; transition: transform 0.15s ease; }
+.dep-hcard.is-open .dep-hcard__caret { transform: rotate(180deg); }
+/* The divider and the bill list run the full width of the card, under the icon too */
+.dep-hcard__detail { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 14px 16px 16px; border-top: 1px solid #e2e8f0; }
+.dep-hcard__detail .dep-alloc-list { margin: 0; }
+
+@media (max-width: 767.98px) {
+  /* The three totals become one compact box of rows */
+  .dep-hist-sum { grid-template-columns: minmax(0, 1fr); gap: 0; margin: 0 0 12px; padding: 0; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+  .dep-hist-sum > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 0; border-radius: 0; border-bottom: 1px solid #e2e8f0; }
+  .dep-hist-sum > div:last-child { border-bottom: 0; }
+  .dep-hist-sum dt { white-space: nowrap; }
+  .dep-hist-sum dd { margin: 0; font-size: 14.5px; white-space: nowrap; }
+  /* Amount moves under the text so the title keeps the full width */
+  .dep-hcard__main { display: grid; grid-template-columns: 40px minmax(0, 1fr) 14px; align-items: start; gap: 8px 12px; padding: 12px; }
+  .dep-hcard__main > .dep-stmt-icon { grid-column: 1; grid-row: 1; }
+  .dep-hcard__body { grid-column: 2; grid-row: 1; }
+  .dep-hcard__caret { grid-column: 3; grid-row: 1; margin-top: 13px; }
+  .dep-hcard__money { grid-column: 2 / 4; grid-row: 2; flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 2px 12px; }
+  .dep-hcard__detail { padding: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dep-hcard,
+  .dep-hcard__caret { transition: none; }
+}
+
+/* Bills a deduction paid, under one title per monthly invoice */
+.dep-alloc-sections { display: flex; flex-direction: column; gap: 12px; }
+/* One box per invoice: the invoice is the box's header, its bills the rows */
+.dep-alloc-box { border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; overflow: hidden; }
+.dep-alloc-box__head { margin: 0; padding: 9px 12px; border-bottom: 1px solid #e2e8f0; background: #f1f5f9; font-size: 13px; font-weight: 500; color: #0f172a; }
+.dep-alloc-box .dep-alloc-list { margin: 0; border: 0; border-radius: 0; background: transparent; }
+
+/* Deduction footer: how it was reached (balance − deduction) on the left, what is left on the right */
+.dep-hcard__foot { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px 16px; margin: 2px -16px -16px; padding: 12px 16px 14px; border-top: 1px solid #e2e8f0; }
+.dep-hcard__foot > .is-total,
+.dep-hcard__calc > div { display: flex; flex-direction: column; }
+.dep-hcard__calc { display: flex; align-items: flex-end; gap: 16px; }
+.dep-hcard__calc div { align-items: flex-start; }
+.dep-hcard__foot .is-total { align-items: flex-end; }
+.dep-hcard__foot dt { font-size: 11.5px; font-weight: 500; color: #64748b; }
+.dep-hcard__foot dd { margin: 0; font-size: 14px; font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dep-hcard__foot .is-deduct dd { color: #b91c1c; }
+.dep-hcard__foot .is-total dd { font-size: 15px; font-weight: 700; }
+.dep-hcard__op { padding-bottom: 1px; font-size: 15px; font-weight: 600; color: #94a3b8; }
+
+@media (max-width: 767.98px) {
+  /* Too narrow for one line: Remaining drops under the calculation, still in the right corner */
+  .dep-hcard__foot { flex-wrap: wrap; margin: 2px -12px -12px; padding: 12px; gap: 8px; }
+  .dep-hcard__calc { gap: 12px; }
+  .dep-hcard__foot .is-total { margin-left: auto; }
+  .dep-hcard__foot dd { font-size: 12.5px; }
+  .dep-hcard__foot .is-total dd { font-size: 13.5px; }
+  .dep-hcard__op { display: none; }
+  .dep-alloc-list li.is-future { flex-direction: column; gap: 0; }
+  .dep-alloc-list li.is-future em { font-size: 11.5px; }
+}
+
+/* Top up footer: who made it on the left, the actions on the right */
+/* Scoped to the top up footer so it never changes the deduction footer */
+.dep-hcard__foot--topup { align-items: center; }
+.dep-hcard__foot--topup > .dep-hcard__by { display: flex; flex-direction: column; flex: none; margin: 0; }
+.dep-hcard__by dd { font-size: 13.5px; font-weight: 600; }
+.dep-hcard__by dd { font-variant-numeric: tabular-nums; }
+.dep-hcard__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; margin-left: auto; }
+.dep-hcard__actions .dep-btn-sm { white-space: nowrap; }
+@media (max-width: 767.98px) {
+  .dep-hcard__actions { flex: 1 1 100%; justify-content: flex-start; }
+}

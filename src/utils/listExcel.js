@@ -89,3 +89,68 @@ export function buildInstallmentWorkbook({ plans, exportedOn }) {
   addListSheet(workbook, INSTALLMENT_SHEET, plans, exportedOn);
   return workbook;
 }
+
+const DEPOSIT_SHEET = {
+  name: 'Deposit Monthly',
+  noun: 'units',
+  title: 'PROAPPS | DEPOSIT MONTHLY',
+  note: 'VIEW ONLY | Unit deposits from the Deposit Monthly menu, with the filters applied at export time.',
+  groups: [
+    { label: 'UNIT', columns: [
+      ['Unit Name', 16, (d) => d.unitCode],
+      ['Tower or Area', 14, (d) => d.tower]
+    ] },
+    { label: 'BILLED TO', columns: [
+      ['Tenant', 28, (d) => d.tenantName],
+      ['Role', 'fit', (d) => d.tenantRole]
+    ] },
+    { label: 'DEPOSIT (IDR)', columns: [
+      ['Deposit Balance', 18, (d) => d.balance, 'money']
+    ] }
+  ]
+};
+
+const HISTORY_STATUS_LABELS = {
+  draft: 'Draft', unpaid: 'Unpaid', paid: 'Paid', planned: 'Planned', pending: 'Awaiting approval',
+  deducted: 'Deducted', rejected: 'Rejected', cancelled: 'Cancelled', active: 'Active'
+};
+const DEDUCTION_SOURCES = { topup: 'With top up', manual: 'Manual', auto: 'Auto' };
+
+// One unit's deposit history, one row per line. `lines` carry `balanceAfter` (a number, or null when the
+// line moved no money).
+export function buildDepositHistoryWorkbook({ unitCode, tenantName, lines, exportedOn }) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'PROAPPS';
+  const sheet = {
+    name: `Deposit ${unitCode}`.slice(0, 31),
+    noun: 'lines',
+    title: `PROAPPS | DEPOSIT HISTORY ${unitCode}`,
+    note: `VIEW ONLY | Deposit history of ${unitCode}, billed to ${tenantName}, with the filters applied at export time.`,
+    groups: [
+      { label: 'LINE', columns: [
+        ['Date', 14, (l) => l.moment.slice(0, 10), 'text'],
+        ['Type', 22, (l) => (l.kind === 'topup' ? 'Top up' : l.kind === 'rule' ? 'Auto deduction choices' : 'Deduction')],
+        ['Source', 14, (l) => (l.kind === 'deduction' ? DEDUCTION_SOURCES[l.source] : '')],
+        ['Invoice', 'fit', (l) => l.entry.invoice?.number ?? '', 'text']
+      ] },
+      { label: 'AMOUNT (IDR)', columns: [
+        ['Amount', 16, (l) => (l.kind === 'rule' ? '' : l.kind === 'topup' ? l.amount : -l.amount), 'money'],
+        ['Balance after', 16, (l) => l.balanceAfter ?? '', 'money']
+      ] },
+      { label: 'STATUS', columns: [
+        ['Status', 'fit', (l) => HISTORY_STATUS_LABELS[l.status] ?? l.status, 'status'],
+        ['Created By', 22, (l) => l.entry.createdBy],
+        ['Note', 30, (l) => l.entry.note ?? '']
+      ] }
+    ]
+  };
+  addListSheet(workbook, sheet, lines, exportedOn);
+  return workbook;
+}
+
+export function buildDepositWorkbook({ deposits, exportedOn }) {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'PROAPPS';
+  addListSheet(workbook, DEPOSIT_SHEET, deposits, exportedOn);
+  return workbook;
+}

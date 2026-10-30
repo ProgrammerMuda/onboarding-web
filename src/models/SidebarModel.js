@@ -229,7 +229,16 @@ export const SIDEBAR_SECTIONS = [
       { id: 'finance-installments', label: 'Installments', icon: 'CalendarClock', hasChildren: false },
       { id: 'finance-payment-approval', label: 'Payment Approval', icon: 'Checks', hasChildren: false },
       { id: 'finance-fine-removal', label: 'Fine Removal', icon: 'MinusCircle', hasChildren: false },
-      { id: 'finance-deposit', label: 'Deposit', icon: 'Wallet', hasChildren: true, children: [] },
+      {
+        id: 'finance-deposit',
+        label: 'Deposit',
+        icon: 'Wallet',
+        hasChildren: true,
+        children: [
+          { id: 'finance-deposit-monthly', label: 'Deposit Monthly' },
+          { id: 'finance-deposit-other', label: 'Deposit Other' }
+        ]
+      },
       { id: 'finance-invoice', label: 'Invoice', icon: 'Invoice', hasChildren: true, children: [] },
       { id: 'finance-transactions', label: 'Transactions', icon: 'Receipt', hasChildren: true, children: [] },
       { id: 'finance-warning-letter', label: 'Surat Peringatan', icon: 'WarningCircle', hasChildren: false },

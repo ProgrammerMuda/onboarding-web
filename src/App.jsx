@@ -22,6 +22,8 @@ import WorkScheduleView from './views/schedule/WorkScheduleView';
 import { useWorkSchedulePresenter } from './presenters/useWorkSchedulePresenter';
 import EmployeeView from './views/employee/EmployeeView';
 import InstallmentView from './views/finance/InstallmentView';
+import { DepositMonthlyView } from './views/finance/DepositMonthlyView';
+import { useDepositMonthlyPresenter } from './presenters/useDepositMonthlyPresenter';
 import { UnitView } from './views/unit/UnitView';
 import { useUnitPresenter } from './presenters/useUnitPresenter';
 import { useEmployeePresenter } from './presenters/useEmployeePresenter';
@@ -50,6 +52,7 @@ export default function App() {
   const workSchedulePresenter = useWorkSchedulePresenter();
   const employeePresenter = useEmployeePresenter();
   const unitPresenter = useUnitPresenter();
+  const depositMonthlyPresenter = useDepositMonthlyPresenter();
 
   const activeMenu = sidebarPresenter.sections
     .flatMap((section) => section.items.flatMap((item) => [item, ...(item.children || [])]))
@@ -121,6 +124,8 @@ export default function App() {
               <UnitView presenter={unitPresenter} />
             ) : sidebarPresenter.activeItem === 'finance-installments' ? (
               <InstallmentView />
+            ) : sidebarPresenter.activeItem === 'finance-deposit-monthly' ? (
+              <DepositMonthlyView presenter={depositMonthlyPresenter} />
             ) : (
               <div className="bg-white p-5 border text-center my-4 shadow-sm" style={{ borderRadius: '12px' }}>
                 <h4 className="fw-bold text-dark mb-2 text-capitalize">
