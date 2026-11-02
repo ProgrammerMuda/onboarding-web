@@ -85,7 +85,9 @@ export function buildScheduleWorkbook({ employees, departments, shifts, dates, r
   return workbook;
 }
 
-export async function protectScheduleWorkbook(workbook) {
+// `spinCount` is how many times the lock password is hashed. The password is random and never shown, so a
+// workbook with many sheets can use fewer rounds and finish sooner.
+export async function protectScheduleWorkbook(workbook, { spinCount } = {}) {
   const password = Array.from(globalThis.crypto.getRandomValues(new Uint32Array(4)), (value) => value.toString(16)).join('');
   for (const sheet of workbook.worksheets) {
     sheet.eachRow((row) => row.eachCell((cell) => { cell.protection = { locked: true }; }));
@@ -102,7 +104,8 @@ export async function protectScheduleWorkbook(workbook) {
       insertHyperlinks: false,
       sort: false,
       autoFilter: true,
-      pivotTables: false
+      pivotTables: false,
+      ...(spinCount ? { spinCount } : {})
     });
   }
   return workbook;

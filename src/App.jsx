@@ -21,6 +21,8 @@ import OrganizationalStructureView from './views/organization/OrganizationalStru
 import WorkScheduleView from './views/schedule/WorkScheduleView';
 import { useWorkSchedulePresenter } from './presenters/useWorkSchedulePresenter';
 import EmployeeView from './views/employee/EmployeeView';
+import { AttendanceReportView } from './views/attendance/AttendanceReportView';
+import { useAttendanceReportPresenter } from './presenters/useAttendanceReportPresenter';
 import InstallmentView from './views/finance/InstallmentView';
 import { DepositMonthlyView } from './views/finance/DepositMonthlyView';
 import { useDepositMonthlyPresenter } from './presenters/useDepositMonthlyPresenter';
@@ -51,6 +53,7 @@ export default function App() {
   const divisionPresenter = useDivisionPresenter();
   const workSchedulePresenter = useWorkSchedulePresenter();
   const employeePresenter = useEmployeePresenter();
+  const attendanceReportPresenter = useAttendanceReportPresenter();
   const unitPresenter = useUnitPresenter();
   const depositMonthlyPresenter = useDepositMonthlyPresenter();
 
@@ -120,6 +123,8 @@ export default function App() {
               <WorkScheduleView presenter={workSchedulePresenter} />
             ) : sidebarPresenter.activeItem === 'hr-data-karyawan' ? (
               <EmployeeView presenter={employeePresenter} />
+            ) : sidebarPresenter.activeItem === 'hr-report-attendance' ? (
+              <AttendanceReportView presenter={attendanceReportPresenter} />
             ) : sidebarPresenter.activeItem === 'unit' ? (
               <UnitView presenter={unitPresenter} />
             ) : sidebarPresenter.activeItem === 'finance-installments' ? (
