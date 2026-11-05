@@ -53,6 +53,8 @@
 .permit-stat-icon-wrap.navy { background: #eff6ff; color: #002B7F; }
 .permit-stat-icon-wrap.teal { background: #f0fdfa; color: #0d9488; }
 .permit-stat-icon-wrap.amber { background: #fffbeb; color: #d97706; }
+.permit-stat-icon-wrap.red { background: #fef2f2; color: #dc2626; }
+.permit-stat-icon-wrap.yellow { background: #fefce8; color: #ca8a04; }
 .permit-stat-icon-wrap.emerald { background: #ecfdf5; color: #059669; }
 
 .permit-stat-meta span {
@@ -1617,7 +1619,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 22px 26px;
+  padding: 26px;
 }
 .permit-policy-editor-form .permit-dialog-footer .btn {
   padding: 8px 18px;
@@ -1816,6 +1818,8 @@
 }
 
 .permit-policy-category-panel { margin-top: 22px; padding: 18px; border: 1px solid #dce5ef; border-radius: 10px; background: #f8fafc; }
+.permit-policy-form > .permit-policy-category-panel:first-child { margin-top: 0; }
+.permit-policy-editor-dialog.is-compact { height: auto; }
 .permit-policy-category-panel h3 { margin: 0 0 4px; font-size: 14px; font-weight: 700; color: #163667; }
 .permit-policy-category-panel p { margin: 0 0 16px; color: #64748b; font-size: 12px; line-height: 1.5; }
 .permit-policy-category-panel p:last-child { margin-bottom: 0; }
@@ -2744,3 +2748,14 @@
 .permit-step-dots i { width: 8px; height: 8px; border: 1.5px solid #cbd5e1; border-radius: 9999px; background: #ffffff; }
 .permit-step-dots i.is-done { border-color: #059669; background: #059669; }
 .permit-step-dots i.is-current { border-color: #d97706; background: #fbbf24; }
+
+.permit-system-tag {
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  vertical-align: middle;
+}

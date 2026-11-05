@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getNextPermitReset, validatePermitType, INITIAL_PERMIT_TYPES, calculateHolidayImpact, buildApprovalChain, getCurrentApprovalStep, INITIAL_ADJUSTMENTS, createInitialBalances } from './PermitTypeModel';
+import { mergeSystemSpecialLeaves, SYSTEM_SPECIAL_LEAVES, getNextPermitReset, validatePermitType, INITIAL_PERMIT_TYPES, calculateHolidayImpact, buildApprovalChain, getCurrentApprovalStep, INITIAL_ADJUSTMENTS, createInitialBalances } from './PermitTypeModel';
 
 describe('Permit reset calendar in Jakarta', () => {
   it.each([
@@ -36,11 +36,18 @@ describe('Supporting document policy', () => {
     expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], requiresDocument: 'duration_exceeded' }, [])).toBeTruthy();
     expect(validatePermitType(INITIAL_PERMIT_TYPES[0], [])).toBe('');
   });
+  it('lets only Other Leave skip the document', () => {
+    const other = INITIAL_PERMIT_TYPES.find((item) => item.id === 'permit-sick-no-note');
+    expect(other.requiresDocument).toBe('none');
+    expect(validatePermitType(other, [])).toBe('');
+    expect(validatePermitType({ ...other, category: 'special', eventDurationDays: 2 }, [])).toBeTruthy();
+  });
 });
 
 describe('Leave category entitlements', () => {
-  it('accepts only the three supported categories', () => {
-    expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], category: 'other' }, [])).toBeTruthy();
+  it('accepts only the four supported categories', () => {
+    expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], category: 'bogus' }, [])).toBeTruthy();
+    expect(validatePermitType({ ...{ ...INITIAL_PERMIT_TYPES[0], id: 'x-unpaid', name: 'Unpaid test', category: 'unpaid' }, category: 'other' }, [])).toBe('');
   });
   it('requires a positive annual allowance', () => {
     expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], quota: '' }, [])).toBeTruthy();
@@ -51,7 +58,7 @@ describe('Leave category entitlements', () => {
     expect(validatePermitType({ ...special, eventDurationDays: 3 }, [])).toBe('');
   });
   it('does not require a quota for unpaid leave', () => {
-    expect(validatePermitType(INITIAL_PERMIT_TYPES.find((item) => item.category === 'unpaid'), [])).toBe('');
+    expect(validatePermitType({ ...INITIAL_PERMIT_TYPES[0], id: 'x-unpaid', name: 'Unpaid test', category: 'unpaid' }, [])).toBe('');
   });
 });
 
@@ -225,5 +232,21 @@ describe('Showcase ledger', () => {
       expect(types.has(type)).toBe(true);
     });
     expect(tari.ledger.length).toBeGreaterThan(5);
+  });
+});
+
+describe('System special leaves', () => {
+  it('seeds every default special leave and keeps them valid', () => {
+    const merged = mergeSystemSpecialLeaves([]);
+    expect(merged).toHaveLength(SYSTEM_SPECIAL_LEAVES.length + 3);
+    expect(merged.find((item) => item.id === "permit-annual").isSystemDefault).toBe(true);
+    merged.forEach((item) => expect(validatePermitType(item, [])).toBe(''));
+  });
+  it('keeps saved quota and status but restores locked fields', () => {
+    const [marriage] = mergeSystemSpecialLeaves([{ id: 'permit-marriage', name: 'Hacked', category: 'annual', eventDurationDays: 5, isActive: false }]);
+    expect(marriage.name).not.toBe('Hacked');
+    expect(marriage.category).toBe('special');
+    expect(marriage.eventDurationDays).toBe(5);
+    expect(marriage.isActive).toBe(false);
   });
 });

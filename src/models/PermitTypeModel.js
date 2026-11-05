@@ -20,7 +20,8 @@ export const ALLOWED_DATE_OPTIONS = [
 export const PERMIT_CATEGORIES = [
   { value: 'annual', label: 'Annual Leave', badgeColor: '#002B7F', bg: '#EFF6FF' },
   { value: 'special', label: 'Special Leave', badgeColor: '#0D9488', bg: '#F0FDFA' },
-  { value: 'unpaid', label: 'Unpaid Leave', badgeColor: '#D97706', bg: '#FFFBEB' },
+  { value: 'unpaid', label: 'Unpaid Leave', badgeColor: '#DC2626', bg: '#FEF2F2' },
+  { value: 'other', label: 'Other Leave', badgeColor: '#CA8A04', bg: '#FEFCE8' },
 ];
 
 export const DAY_COUNT_OPTIONS = [
@@ -65,11 +66,87 @@ export const RESET_FREQUENCIES = [
   { value: 'annual', label: 'Annual', detail: 'Every year', period: 'year', resetCycleNote: 'Start of next year • 00:00 WIB' },
 ];
 
+// Special leave defaults from UU 13/2003, UU 6/2023 (Cipta Kerja) and UU 4/2024 (KIA).
+// Quotas are legal minimums. HR may only change the quota and the active status.
+const specialLeave = (id, name, days, description, legalBasis, extra = {}) => ({
+  id,
+  name,
+  category: 'special',
+  eventDurationDays: days,
+  description,
+  legalBasis,
+  isSystemDefault: true,
+  hasQuota: false,
+  quota: null,
+  isProrated: false,
+  frequency: null,
+  allowedDates: 'both',
+  dayCountType: 'work_days',
+  allowHalfDay: false,
+  requiresDocument: 'always',
+  documentMinDays: 1,
+  allowNegativeBalance: false,
+  maxNegativeDays: 0,
+  allowCarryOver: false,
+  maxCarryOverDays: 0,
+  carryOverExpiryMonths: 0,
+  isActive: true,
+  ...extra,
+});
+
+export const SYSTEM_SPECIAL_LEAVES = [
+  specialLeave('permit-marriage', 'Cuti Pernikahan Karyawan (Marriage Leave)', 3, 'Pekerja menikah.', 'Pasal 93 ayat (4) huruf a UU 13/2003', { allowedDates: 'future' }),
+  specialLeave('permit-child-marriage', 'Cuti Menikahkan Anak (Child Marriage Leave)', 2, 'Pekerja menikahkan anaknya.', 'Pasal 93 ayat (4) huruf b UU 13/2003', { allowedDates: 'future' }),
+  specialLeave('permit-child-circumcision', 'Cuti Mengkhitankan Anak (Child Circumcision Leave)', 2, 'Pekerja mengkhitankan anaknya.', 'Pasal 93 ayat (4) huruf c UU 13/2003', { allowedDates: 'future' }),
+  specialLeave('permit-child-baptism', 'Cuti Membaptiskan Anak (Child Baptism Leave)', 2, 'Pekerja membaptiskan anaknya.', 'Pasal 93 ayat (4) huruf d UU 13/2003', { allowedDates: 'future' }),
+  specialLeave('permit-paternity', 'Cuti Istri Melahirkan (Paternity Leave)', 2, 'Suami mendampingi istri melahirkan: 2 hari wajib, dapat ditambah maksimal 3 hari sesuai kesepakatan.', 'Pasal 6 ayat (2) UU 4/2024 (KIA)'),
+  specialLeave('permit-wife-miscarriage', 'Cuti Istri Keguguran (Wife Miscarriage Leave)', 2, 'Suami mendampingi istri yang mengalami keguguran.', 'Pasal 6 ayat (2) UU 4/2024 (KIA)'),
+  specialLeave('permit-bereavement', 'Cuti Duka Keluarga Inti (Bereavement Leave)', 2, 'Suami/istri, orang tua/mertua, atau anak/menantu meninggal dunia.', 'Pasal 93 ayat (4) huruf f UU 13/2003', { allowedDates: 'past' }),
+  specialLeave('permit-bereavement-household', 'Cuti Duka Anggota Serumah (Household Bereavement Leave)', 1, 'Anggota keluarga dalam satu rumah meninggal dunia.', 'Pasal 93 ayat (4) huruf g UU 13/2003', { allowedDates: 'past' }),
+  specialLeave('permit-hajj', 'Cuti Ibadah Keagamaan (Hajj / Pilgrimage Leave)', 50, 'Menjalankan ibadah yang diperintahkan agama (Haji, Umrah, dll.). Durasi diatur perusahaan melalui PP/PKB.', 'Pasal 93 ayat (2) UU 13/2003', { allowedDates: 'future' }),
+  specialLeave('permit-menstrual', 'Cuti Haid (Menstrual Leave)', 2, 'Karyawan perempuan yang merasakan sakit pada hari pertama dan kedua haid.', 'Pasal 81 UU 13/2003'),
+  specialLeave('permit-maternity', 'Cuti Melahirkan (Maternity Leave)', 90, 'Cuti melahirkan 3 bulan (1,5 bulan sebelum dan 1,5 bulan sesudah), dapat diperpanjang hingga 6 bulan bila ada kondisi khusus.', 'Pasal 82 UU 13/2003; UU 4/2024 (KIA)', { dayCountType: 'calendar_days' }),
+  specialLeave('permit-miscarriage', 'Cuti Keguguran Karyawan (Miscarriage Leave)', 45, 'Karyawan perempuan yang mengalami keguguran: 1,5 bulan atau sesuai surat keterangan dokter/bidan.', 'Pasal 82 ayat (2) UU 13/2003', { dayCountType: 'calendar_days' }),
+  specialLeave('permit-sick', 'Izin Sakit (Sick Leave)', 14, 'Sakit sesuai surat keterangan dokter.', 'Pasal 93 ayat (2) UU 13/2003', { allowedDates: 'both' }),
+];
+
+// A supporting document is always required, except Other Leave which can opt out.
+export const documentPolicyFor = (permit) => (permit?.category === 'other' && permit.requiresDocument === 'none' ? 'none' : 'always');
+
+const otherLeave = (id, name, description, requiresDocument) => ({
+  id,
+  name,
+  category: 'other',
+  description,
+  hasQuota: false,
+  quota: null,
+  isProrated: false,
+  frequency: null,
+  allowedDates: 'both',
+  dayCountType: 'work_days',
+  allowHalfDay: true,
+  requiresDocument,
+  documentMinDays: 1,
+  allowNegativeBalance: false,
+  maxNegativeDays: 0,
+  allowCarryOver: false,
+  maxCarryOverDays: 0,
+  carryOverExpiryMonths: 0,
+  isActive: true,
+});
+
+export const SEEDED_OTHER_LEAVES = [
+  otherLeave('permit-sick-with-note', 'Izin Sakit dengan Surat Dokter (Sick Leave with Doctor\'s Note)', 'Izin sakit yang wajib melampirkan surat keterangan sakit dari dokter.', 'always'),
+  otherLeave('permit-sick-no-note', 'Izin Sakit Tanpa Surat Dokter (Sick Leave without Doctor\'s Note)', 'Izin sakit ringan yang tidak wajib melampirkan surat keterangan sakit.', 'none'),
+];
+
 export const INITIAL_PERMIT_TYPES = [
   {
     id: 'permit-annual',
     name: 'Cuti Tahunan (Annual Leave)',
     category: 'annual',
+    isSystemDefault: true,
+    legalBasis: 'Pasal 79 ayat (2) huruf c UU 13/2003 jo. UU 6/2023',
     description: 'Jatah hak cuti tahunan resmi sesuai UU Ketenagakerjaan dan Peraturan Perusahaan.',
     hasQuota: true,
     quota: 12,
@@ -87,165 +164,15 @@ export const INITIAL_PERMIT_TYPES = [
     carryOverExpiryMonths: 3,
     isActive: true
   },
-  {
-    id: 'permit-sick',
-    name: 'Sick Leave (Izin Sakit)',
-    category: 'special',
-    description: 'Izin istirahat untuk pemulihan dari sakit atau perawatan medis dengan surat keterangan.',
-    hasQuota: true,
-    quota: 14,
-    isProrated: false,
-    frequency: 'annual',
-    allowedDates: 'both',
-    dayCountType: 'work_days',
-    allowHalfDay: false,
-    requiresDocument: 'always',
-    documentMinDays: 1,
-    allowNegativeBalance: false,
-    maxNegativeDays: 0,
-    allowCarryOver: false,
-    maxCarryOverDays: 0,
-    carryOverExpiryMonths: 0,
-    isActive: true
-  },
-  {
-    id: 'permit-marriage',
-    name: 'Marriage Leave (Cuti Pernikahan Karyawan)',
-    category: 'special',
-    eventDurationDays: 3,
-    description: 'Cuti khusus untuk pernikahan karyawan sendiri sesuai ketentuan perundang-undangan (3 hari).',
-    hasQuota: true,
-    quota: 3,
-    isProrated: false,
-    frequency: 'annual',
-    allowedDates: 'future',
-    dayCountType: 'work_days',
-    allowHalfDay: false,
-    requiresDocument: 'always',
-    documentMinDays: 1,
-    allowNegativeBalance: false,
-    maxNegativeDays: 0,
-    allowCarryOver: false,
-    maxCarryOverDays: 0,
-    carryOverExpiryMonths: 0,
-    isActive: true
-  },
-  {
-    id: 'permit-maternity',
-    name: 'Maternity Leave (Cuti Melahirkan)',
-    category: 'special',
-    eventDurationDays: 90,
-    description: 'Cuti melahirkan bagi karyawan perempuan selama 3 bulan (90 hari kalender).',
-    hasQuota: true,
-    quota: 90,
-    isProrated: false,
-    frequency: 'annual',
-    allowedDates: 'future',
-    dayCountType: 'calendar_days',
-    allowHalfDay: false,
-    requiresDocument: 'always',
-    documentMinDays: 1,
-    allowNegativeBalance: false,
-    maxNegativeDays: 0,
-    allowCarryOver: false,
-    maxCarryOverDays: 0,
-    carryOverExpiryMonths: 0,
-    isActive: true
-  },
-  {
-    id: 'permit-paternity',
-    name: 'Paternity Leave (Cuti Istri Melahirkan)',
-    category: 'special',
-    eventDurationDays: 2,
-    description: 'Pendampingan saat istri melahirkan atau mengalami keguguran kandungan (2 hari kerja).',
-    hasQuota: true,
-    quota: 2,
-    isProrated: false,
-    frequency: 'annual',
-    allowedDates: 'both',
-    dayCountType: 'work_days',
-    allowHalfDay: false,
-    requiresDocument: 'always',
-    documentMinDays: 1,
-    allowNegativeBalance: false,
-    maxNegativeDays: 0,
-    allowCarryOver: false,
-    maxCarryOverDays: 0,
-    carryOverExpiryMonths: 0,
-    isActive: true
-  },
-  {
-    id: 'permit-bereavement',
-    name: 'Bereavement Leave (Cuti Duka Cita)',
-    category: 'special',
-    eventDurationDays: 2,
-    description: 'Cuti duka cita atas meninggalnya anggota keluarga inti (orang tua, pasangan, anak).',
-    hasQuota: true,
-    quota: 2,
-    isProrated: false,
-    frequency: 'annual',
-    allowedDates: 'both',
-    dayCountType: 'work_days',
-    allowHalfDay: false,
-    requiresDocument: 'always',
-    documentMinDays: 1,
-    allowNegativeBalance: false,
-    maxNegativeDays: 0,
-    allowCarryOver: false,
-    maxCarryOverDays: 0,
-    carryOverExpiryMonths: 0,
-    isActive: true
-  },
-  {
-    id: 'permit-hajj',
-    name: 'Hajj / Pilgrimage Leave (Ibadah Keagamaan)',
-    category: 'special',
-    eventDurationDays: 40,
-    description: 'Penunaian kewajiban ibadah haji atau ziarah keagamaan resmi sekali selama masa kerja.',
-    hasQuota: true,
-    quota: 40,
-    isProrated: false,
-    frequency: 'annual',
-    allowedDates: 'future',
-    dayCountType: 'calendar_days',
-    allowHalfDay: false,
-    requiresDocument: 'always',
-    documentMinDays: 1,
-    allowNegativeBalance: false,
-    maxNegativeDays: 0,
-    allowCarryOver: false,
-    maxCarryOverDays: 0,
-    carryOverExpiryMonths: 0,
-    isActive: true
-  },
-  {
-    id: 'permit-unpaid',
-    name: 'Unpaid Leave (Cuti di Luar Tanggungan)',
-    category: 'unpaid',
-    description: 'Izin meninggalkan pekerjaan tanpa menerima upah setelah jatah cuti tahunan habis.',
-    hasQuota: false,
-    quota: null,
-    isProrated: false,
-    frequency: null,
-    allowedDates: 'future',
-    dayCountType: 'work_days',
-    allowHalfDay: true,
-    requiresDocument: 'always',
-    documentMinDays: 1,
-    allowNegativeBalance: false,
-    maxNegativeDays: 0,
-    allowCarryOver: false,
-    maxCarryOverDays: 0,
-    carryOverExpiryMonths: 0,
-    isActive: true
-  }
+  ...SYSTEM_SPECIAL_LEAVES,
+  ...SEEDED_OTHER_LEAVES
 ];
 
 export function validatePermitType(draft, permits) {
   if (!ALLOWED_DATE_OPTIONS.some((option) => option.value === draft.allowedDates)) return 'Invalid date policy on this leave type.';
   if (!draft.name?.trim()) return 'Enter a leave name.';
-  if (!PERMIT_CATEGORIES.some((category) => category.value === draft.category)) return 'Choose Annual Leave, Special Leave, or Unpaid Leave.';
-  if (draft.requiresDocument !== 'always') return 'A supporting document is required for every leave type.';
+  if (!PERMIT_CATEGORIES.some((category) => category.value === draft.category)) return 'Choose Annual, Special, Unpaid, or Other Leave.';
+  if (draft.requiresDocument !== 'always' && !(draft.category === 'other' && draft.requiresDocument === 'none')) return 'A supporting document is required unless this is Other Leave.';
   if (permits.some((permit) => permit.id !== draft.id && permit.name.toLocaleLowerCase('id') === draft.name.trim().toLocaleLowerCase('id'))) {
     return 'This leave name is already in use.';
   }
@@ -914,4 +841,28 @@ export function persistAdjustments(adjustments) {
     return false;
   }
   return false;
+}
+
+// Fields HR can change on a system default. Everything else is restored from the default.
+export function isSystemPermit(permit) {
+  return Boolean(permit?.isSystemDefault);
+}
+
+// Add missing system leaves and restore their locked fields, keeping saved quota and status.
+export function mergeSystemSpecialLeaves(saved) {
+  const defaults = new Map([...INITIAL_PERMIT_TYPES.filter((item) => item.isSystemDefault)].map((item) => [item.id, item]));
+  const merged = saved.map((item) => {
+    const base = defaults.get(item?.id);
+    if (!base) return item;
+    defaults.delete(item.id);
+    const field = base.category === 'annual' ? 'quota' : 'eventDurationDays';
+    const days = Number(item[field]);
+    return {
+      ...base,
+      [field]: Number.isSafeInteger(days) && days >= 1 ? days : base[field],
+      isActive: item.isActive !== false,
+    };
+  });
+  const seeded = SEEDED_OTHER_LEAVES.filter((item) => !saved.some((entry) => entry?.id === item.id));
+  return [...merged, ...defaults.values(), ...seeded];
 }

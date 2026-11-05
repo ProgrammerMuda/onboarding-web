@@ -1,6 +1,10 @@
 import { useState, useCallback, useMemo } from 'react';
 import {
   PERMIT_STORAGE_KEY,
+  INITIAL_PERMIT_TYPES,
+  mergeSystemSpecialLeaves,
+  isSystemPermit,
+  documentPolicyFor,
   validatePermitType,
   readHolidays,
   persistHolidays,
@@ -35,7 +39,7 @@ export function usePermitTypePresenter() {
         isActive: item.isActive !== false,
         dayCountType: item.dayCountType || 'work_days',
         allowHalfDay: item.allowHalfDay ?? true,
-        requiresDocument: 'always',
+        requiresDocument: documentPolicyFor(item),
         documentMinDays: 1,
         allowNegativeBalance: item.allowNegativeBalance ?? false,
         maxNegativeDays: item.maxNegativeDays ?? 0,
@@ -43,9 +47,9 @@ export function usePermitTypePresenter() {
         maxCarryOverDays: item.maxCarryOverDays ?? 0,
         carryOverExpiryMonths: item.carryOverExpiryMonths ?? 0
       })) : raw;
-      if (Array.isArray(saved)) existing = saved;
-    } catch { /* storage fallback */ }
-    return existing;
+      existing = Array.isArray(saved) ? saved : INITIAL_PERMIT_TYPES;
+    } catch { existing = INITIAL_PERMIT_TYPES; }
+    return mergeSystemSpecialLeaves(existing).filter((item) => item.id !== 'permit-unpaid');
   });
 
   const [page, setPage] = useState(1);
@@ -61,7 +65,7 @@ export function usePermitTypePresenter() {
 
   function persistPermits(next, message = '') {
     try {
-      const normalized = next.map((permit) => ({ ...permit, requiresDocument: 'always', documentMinDays: 1 }));
+      const normalized = next.map((permit) => ({ ...permit, requiresDocument: documentPolicyFor(permit), documentMinDays: 1 }));
       localStorage.setItem(PERMIT_STORAGE_KEY, JSON.stringify(normalized));
       setPermits(normalized);
       setPage(1);
@@ -90,7 +94,7 @@ export function usePermitTypePresenter() {
 
   const openEditor = (permit) => {
     setError('');
-    setDraft(permit ? { ...permit, requiresDocument: 'always', documentMinDays: 1 } : {
+    setDraft(permit ? { ...permit, requiresDocument: documentPolicyFor(permit), documentMinDays: 1 } : {
       id: `permit-${Date.now()}`,
       name: '',
       category: 'annual',
@@ -129,11 +133,14 @@ export function usePermitTypePresenter() {
     }
 
     const isNew = !permits.some((p) => p.id === draft.id);
-    const normalizedDraft = {
+    const normalizedDraft = isSystemPermit(draft) ? {
+      ...permits.find((p) => p.id === draft.id),
+      ...(draft.category === 'annual' ? { quota: Number(draft.quota) } : { eventDurationDays: Number(draft.eventDurationDays) }),
+    } : {
       ...draft,
       name: draft.name.trim(),
       isActive: isNew ? true : draft.isActive !== false,
-      requiresDocument: 'always',
+      requiresDocument: documentPolicyFor(draft),
       documentMinDays: 1,
       hasQuota: draft.category === 'annual',
       quota: draft.category === 'annual' ? Number(draft.quota) : null,

@@ -487,7 +487,7 @@ export function PermitTypeView({ presenter: p }) {
   const totalPermits = p.permits.length;
   const annualPermits = p.permits.filter(item => item.category === 'annual').length;
   const specialPermits = p.permits.filter(item => item.category === 'special').length;
-  const unpaidPermits = p.permits.filter(item => item.category === 'unpaid').length;
+  const otherPermits = p.permits.filter(item => item.category === 'other').length;
 
   const pendingAdjustmentsCount = p.adjustments.filter(a => a.status === 'pending').length;
   const pendingHolidayAmendments = p.holidays.filter(h => Boolean(h.pendingAmendment));
@@ -605,12 +605,12 @@ export function PermitTypeView({ presenter: p }) {
             </div>
 
             <div className="permit-stat-box">
-              <div className="permit-stat-icon-wrap amber">
-                <Scales size={22} weight="bold" />
+              <div className="permit-stat-icon-wrap yellow">
+                <Briefcase size={22} weight="bold" />
               </div>
               <div className="permit-stat-meta">
-                <span>Unpaid leave</span>
-                <strong>{unpaidPermits} types</strong>
+                <span>Other leave</span>
+                <strong>{otherPermits} types</strong>
               </div>
             </div>
           </div>
@@ -666,9 +666,9 @@ export function PermitTypeView({ presenter: p }) {
                             ? `${permit.quota} days / year`
                             : permit.category === 'special'
                               ? permit.eventDurationDays ? `${permit.eventDurationDays} days / event` : 'Needs event duration'
-                              : permit.category === 'unpaid' ? 'No annual balance' : 'Needs category review';
+                              : (permit.category === 'unpaid' || permit.category === 'other') ? 'No annual balance' : 'Needs category review';
                           return <tr key={permit.id} className={!isActive ? 'permit-row-inactive' : ''}>
-                            <td><strong className="permit-policy-name">{permit.name}</strong></td>
+                            <td><strong className="permit-policy-name">{permit.name}</strong>{permit.isSystemDefault && <span className="permit-system-tag" title={`Default: ${permit.legalBasis}`}>Default</span>}</td>
                             <td><span className="permit-category-pill" style={category ? { backgroundColor: category.bg, color: category.badgeColor } : undefined}>
                               {category?.label || 'Needs review'}
                             </span></td>
@@ -1575,7 +1575,7 @@ export function PermitTypeView({ presenter: p }) {
 
         const isAnnual = d.category === 'annual';
         const isSpecial = d.category === 'special';
-        const isUnpaid = d.category === 'unpaid';
+        const isUnpaid = d.category === 'unpaid' || d.category === 'other';
 
         const renderCategoryIcon = () => {
           if (isAnnual) return <CalendarStar size={22} weight="fill" />;
@@ -1752,7 +1752,7 @@ export function PermitTypeView({ presenter: p }) {
 
               {isUnpaid && (
                 <div className="permit-detail-group">
-                  <span className="permit-detail-group-title">Unpaid Leave Policy</span>
+                  <span className="permit-detail-group-title">{d.category === 'other' ? 'Other Leave Policy' : 'Unpaid Leave Policy'}</span>
                   <div className="permit-detail-card">
                     <div className="permit-detail-row">
                       <div className="permit-row-label">
@@ -1761,7 +1761,7 @@ export function PermitTypeView({ presenter: p }) {
                       </div>
                       <div className="permit-row-value">
                         <strong>No annual quota</strong>
-                        <span className="text-muted fw-normal">(Unpaid)</span>
+                        <span className="text-muted fw-normal">({d.category === 'other' ? 'Other' : 'Unpaid'})</span>
                       </div>
                     </div>
                     <div className="permit-detail-row">
@@ -1782,6 +1782,17 @@ export function PermitTypeView({ presenter: p }) {
                         <span className="badge-soft badge-soft-success">Not deducted</span>
                       </div>
                     </div>
+                    {d.category === 'other' ? (
+                      <div className="permit-detail-row">
+                        <div className="permit-row-label">
+                          <ClipboardText size={16} />
+                          <span>Supporting document</span>
+                        </div>
+                        <div className="permit-row-value">
+                          <span className="badge-soft badge-soft-secondary">{d.requiresDocument === 'none' ? 'Not required' : 'Required'}</span>
+                        </div>
+                      </div>
+                    ) : (
                     <div className="permit-detail-row">
                       <div className="permit-row-label">
                         <ClipboardText size={16} />
@@ -1791,6 +1802,7 @@ export function PermitTypeView({ presenter: p }) {
                         <span className="badge-soft badge-soft-secondary">Salary deduction applies</span>
                       </div>
                     </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1802,13 +1814,13 @@ export function PermitTypeView({ presenter: p }) {
       {p.draft && (
         <PermitDialog title={p.permits.some((permit) => permit.id === p.draft.id) ? 'Edit leave type' : 'Add leave type'}
           description="Set the entitlement for this leave type."
-          onClose={p.closeEditor} maxWidthClass="modal-wide permit-policy-editor-dialog">
+          onClose={p.closeEditor} maxWidthClass={`modal-wide permit-policy-editor-dialog${(p.draft.isSystemDefault || (p.draft.category === 'other' && p.permits.some((permit) => permit.id === p.draft.id))) ? ' is-compact' : ''}`}>
           <form className="permit-policy-editor-form" onSubmit={p.saveDraft}>
             <div className="permit-form-body permit-policy-form">
               {p.error && <div className="alert alert-danger py-2 px-3 small mb-3 d-flex align-items-center gap-2" role="alert">
                 <WarningCircle size={16} weight="fill" /><span>{p.error}</span>
               </div>}
-              <div className="row g-3">
+              {!(p.draft.isSystemDefault || (p.draft.category === 'other' && p.permits.some((permit) => permit.id === p.draft.id))) && <div className="row g-3">
                 <div className="col-md-7">
                   <label htmlFor="permit-name" className="form-label">Leave name <span className="text-danger">*</span></label>
                   <input id="permit-name" type="text" className="form-control" placeholder="e.g. Marriage leave"
@@ -1834,10 +1846,10 @@ export function PermitTypeView({ presenter: p }) {
                     <option value="active">Active</option><option value="inactive">Inactive</option>
                   </select>
                 </div>}
-              </div>
+              </div>}
 
               {/* Request dates */}
-              <div className="permit-date-policy-group">
+              {!(p.draft.isSystemDefault || (p.draft.category === 'other' && p.permits.some((permit) => permit.id === p.draft.id))) && <div className="permit-date-policy-group">
                 <label className="permit-date-policy-label">
                   Request dates <span className="text-danger">*</span>
                 </label>
@@ -1854,7 +1866,7 @@ export function PermitTypeView({ presenter: p }) {
                         aria-checked={isSelected}
                         tabIndex={0}
                         className={`permit-date-policy-card ${isSelected ? 'selected' : ''}`}
-                        onClick={() => p.setDraft({ ...p.draft, allowedDates: opt.value })}
+                                                onClick={() => p.setDraft({ ...p.draft, allowedDates: opt.value })}
                         onKeyDown={(e) => {
                           if (e.key === ' ' || e.key === 'Enter') {
                             e.preventDefault();
@@ -1870,11 +1882,11 @@ export function PermitTypeView({ presenter: p }) {
                     );
                   })}
                 </div>
-              </div>
+              </div>}
 
               {p.draft.category === 'annual' && <div className="permit-policy-category-panel">
                 <h3>Annual leave rules</h3>
-                <p>A yearly balance from 1 January to 31 December.</p>
+                <p>{p.draft.isSystemDefault ? 'Default annual leave. Only the allowance can be changed.' : 'A yearly balance from 1 January to 31 December.'}</p>
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label htmlFor="permit-annual-days" className="form-label">Leave allowance <span className="text-danger">*</span></label>
@@ -1884,6 +1896,7 @@ export function PermitTypeView({ presenter: p }) {
                       <span aria-hidden="true">days</span>
                     </div>
                   </div>
+                  {!p.draft.isSystemDefault && <>
                   <div className="col-12"><label className="permit-policy-check"><input type="checkbox" checked={Boolean(p.draft.isProrated)}
                     onChange={(e) => p.setDraft({ ...p.draft, isProrated: e.target.checked })} />
                     <span>Prorate for new hires based on their actual start date</span></label>
@@ -1920,12 +1933,15 @@ export function PermitTypeView({ presenter: p }) {
                         <span aria-hidden="true">months</span>
                       </div></div>
                   </>}
+                  </>}
                 </div>
               </div>}
 
               {p.draft.category === 'special' && <div className="permit-policy-category-panel">
                 <h3>Per-event entitlement</h3>
-                <p>Granted for each eligible event. The annual leave balance is not deducted.</p>
+                <p>{p.draft.isSystemDefault
+                  ? `Default leave from ${p.draft.legalBasis}. Only the quota can be changed; the legal minimum is a guide, not a limit.`
+                  : 'Granted for each eligible event. The annual leave balance is not deducted.'}</p>
                 <div className="row g-3">
                   <div className="col-md-6">
                     <label htmlFor="permit-event-days" className="form-label">Days per event <span className="text-danger">*</span></label>
@@ -1940,8 +1956,33 @@ export function PermitTypeView({ presenter: p }) {
               {p.draft.category === 'unpaid' && <div className="permit-policy-category-panel">
                 <h3>Unpaid leave</h3><p>This leave type does not deduct the annual leave balance. Payroll handling is managed separately.</p>
               </div>}
+              {p.draft.category === 'other' && <div className="permit-policy-category-panel">
+                <h3>Other leave</h3><p>This leave type does not deduct the annual leave balance. Use it for leave that fits none of the other categories.</p>
+                <label className="form-label" id="permit-document-label">Supporting document <span className="text-danger">*</span></label>
+                <div className="permit-date-policy-grid" role="radiogroup" aria-labelledby="permit-document-label">
+                  {[{ value: 'always', label: 'Required' }, { value: 'none', label: 'Not required' }].map((opt) => {
+                    const isSelected = (p.draft.requiresDocument === 'none' ? 'none' : 'always') === opt.value;
+                    return (
+                      <div key={opt.value} role="radio" aria-checked={isSelected} tabIndex={0}
+                        className={`permit-date-policy-card ${isSelected ? 'selected' : ''}`}
+                        onClick={() => p.setDraft({ ...p.draft, requiresDocument: opt.value })}
+                        onKeyDown={(e) => {
+                          if (e.key === ' ' || e.key === 'Enter') {
+                            e.preventDefault();
+                            p.setDraft({ ...p.draft, requiresDocument: opt.value });
+                          }
+                        }}>
+                        <span className="permit-radio-circle" aria-hidden="true">
+                          {isSelected && <span className="permit-radio-circle-dot" />}
+                        </span>
+                        <span>{opt.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>}
               {!PERMIT_CATEGORIES.some((item) => item.value === p.draft.category) && <div className="permit-policy-category-panel">
-                <h3>Choose a category</h3><p>This older leave type needs to be assigned to Annual, Special, or Unpaid before it can be saved.</p>
+                <h3>Choose a category</h3><p>This older leave type needs to be assigned to Annual, Special, Unpaid, or Other before it can be saved.</p>
               </div>}
               {(() => {
                 const draft = p.draft;
@@ -2004,7 +2045,7 @@ export function PermitTypeView({ presenter: p }) {
                     <div className="permit-summary-hero">
                       <div className="permit-summary-hero-item">
                         <span className="permit-summary-label">Entitlement</span>
-                        {draft.category === 'unpaid' ? (
+                        {(draft.category === 'unpaid' || draft.category === 'other') ? (
                           <strong className="permit-summary-big is-text">No annual balance</strong>
                         ) : entitlementValue ? (
                           <strong className="permit-summary-big">
